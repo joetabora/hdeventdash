@@ -29,6 +29,7 @@ import { ChecklistSectionComponent } from "@/components/events/checklist-section
 import { DocumentManager } from "@/components/events/document-manager";
 import { CommentsSection } from "@/components/events/comments-section";
 import { EventRecap } from "@/components/events/event-recap";
+import { ProgressBar } from "@/components/events/progress-bar";
 import {
   ArrowLeft,
   Loader2,
@@ -179,6 +180,8 @@ export default function EventDetailPage() {
               </Button>
             </div>
 
+            <ProgressBar checklist={checklist} />
+
             {allChecklistComplete && (
               <div className="mb-6 p-4 rounded-xl bg-harley-success/10 border border-harley-success/30 flex items-center gap-3">
                 <CheckCircle2 className="w-5 h-5 text-harley-success" />
@@ -223,6 +226,8 @@ export default function EventDetailPage() {
             <ArrowLeft className="w-4 h-4" />
             Back to Dashboard
           </Link>
+
+          <ProgressBar checklist={checklist} />
 
           {/* Header */}
           <div className="bg-harley-dark rounded-xl border border-harley-gray p-6 mb-6">
