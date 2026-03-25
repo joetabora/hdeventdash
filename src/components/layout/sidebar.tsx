@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { buttonStyles } from "@/components/ui/button";
 import {
   Zap,
   LayoutGrid,
@@ -66,7 +67,7 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
           <Link
             href="/events/new"
             onClick={onClose}
-            className="flex items-center gap-2 w-full px-4 py-2.5 bg-harley-orange text-white rounded-lg font-medium hover:bg-harley-orange-light transition-colors text-sm"
+            className={`${buttonStyles.primary("md")} w-full`}
           >
             <PlusCircle className="w-4 h-4" />
             New Event

@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Zap, Loader2 } from "lucide-react";
 
 export default function LoginPage() {
@@ -86,14 +87,10 @@ export default function LoginPage() {
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-2.5 bg-harley-orange text-white font-semibold rounded-lg hover:bg-harley-orange-light transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-            >
+            <Button type="submit" size="lg" disabled={loading} className="w-full">
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
               Sign In
-            </button>
+            </Button>
           </form>
 
           <p className="mt-6 text-center text-sm text-harley-text-muted">

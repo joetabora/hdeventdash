@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
+import { buttonStyles } from "@/components/ui/button";
 import { Calendar, LayoutGrid, Zap } from "lucide-react";
 
 export default function Home() {
@@ -43,16 +44,10 @@ export default function Home() {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link
-            href="/auth/login"
-            className="px-8 py-3 bg-harley-orange text-white font-semibold rounded-lg hover:bg-harley-orange-light transition-colors"
-          >
+          <Link href="/auth/login" className={buttonStyles.primary("lg")}>
             Sign In
           </Link>
-          <Link
-            href="/auth/signup"
-            className="px-8 py-3 bg-harley-gray text-harley-text font-semibold rounded-lg hover:bg-harley-gray-light transition-colors border border-harley-gray-lighter"
-          >
+          <Link href="/auth/signup" className={buttonStyles.secondary("lg")}>
             Create Account
           </Link>
         </div>
