@@ -93,14 +93,8 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-harley-text-muted">
-            Don&apos;t have an account?{" "}
-            <Link
-              href="/auth/signup"
-              className="text-harley-orange hover:text-harley-orange-light"
-            >
-              Sign up
-            </Link>
+          <p className="mt-6 text-center text-xs text-harley-text-muted/50">
+            Contact your administrator for account access.
           </p>
         </Card>
       </div>

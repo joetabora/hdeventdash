@@ -1,7 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { isAdmin } from "@/lib/roles";
 import { buttonStyles } from "@/components/ui/button";
 import {
   Zap,
@@ -10,12 +13,17 @@ import {
   List,
   PlusCircle,
   X,
+  ShieldCheck,
 } from "lucide-react";
 
 const navItems = [
   { href: "/dashboard", label: "Kanban", icon: LayoutGrid },
   { href: "/dashboard?view=calendar", label: "Calendar", icon: Calendar },
   { href: "/dashboard?view=list", label: "List", icon: List },
+];
+
+const adminItems = [
+  { href: "/admin/users", label: "User Management", icon: ShieldCheck },
 ];
 
 interface SidebarProps {
@@ -25,6 +33,16 @@ interface SidebarProps {
 
 export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const [showAdmin, setShowAdmin] = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        isAdmin(supabase, data.user.id).then(setShowAdmin);
+      }
+    });
+  }, []);
 
   return (
     <>
@@ -103,6 +121,31 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
               </Link>
             );
           })}
+          {showAdmin && (
+            <>
+              <p className="px-3 pt-5 pb-2 text-[10px] font-semibold text-harley-text-muted uppercase tracking-widest">
+                Admin
+              </p>
+              {adminItems.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={onClose}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${
+                      isActive
+                        ? "bg-harley-orange/15 text-harley-orange"
+                        : "text-harley-text-muted hover:bg-harley-gray-light/30 hover:text-harley-text hover:translate-x-0.5"
+                    }`}
+                  >
+                    <item.icon className="w-4 h-4" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </>
+          )}
         </nav>
 
         {/* Footer */}

@@ -12,6 +12,7 @@ interface TopHeaderProps {
 const pageTitles: Record<string, string> = {
   "/dashboard": "Events Dashboard",
   "/events/new": "Create New Event",
+  "/admin/users": "User Management",
 };
 
 export function TopHeader({ onMenuToggle }: TopHeaderProps) {

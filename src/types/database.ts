@@ -1,3 +1,12 @@
+export type UserRole = "admin" | "staff";
+
+export interface UserRoleRecord {
+  id: string;
+  user_id: string;
+  role: UserRole;
+  created_at: string;
+}
+
 export type EventStatus =
   | "idea"
   | "planning"

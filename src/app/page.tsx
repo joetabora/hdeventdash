@@ -43,12 +43,9 @@ export default function Home() {
           </Card>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        <div className="flex justify-center">
           <Link href="/auth/login" className={buttonStyles.primary("lg")}>
             Sign In
-          </Link>
-          <Link href="/auth/signup" className={buttonStyles.secondary("lg")}>
-            Create Account
           </Link>
         </div>
       </div>
