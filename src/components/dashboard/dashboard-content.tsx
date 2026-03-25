@@ -15,7 +15,9 @@ import { KanbanBoard } from "@/components/dashboard/kanban-board";
 import { CalendarView } from "@/components/dashboard/calendar-view";
 import { ListView } from "@/components/dashboard/list-view";
 import { Filters } from "@/components/dashboard/filters";
+import { DashboardMetrics } from "@/components/dashboard/metrics";
 import { LayoutGrid, Calendar, List, Loader2 } from "lucide-react";
+import { parseISO, isBefore, startOfDay } from "date-fns";
 
 type ViewType = "kanban" | "calendar" | "list";
 
@@ -73,6 +75,57 @@ export function DashboardContent() {
     }
     return ids;
   }, [events, checklistStats]);
+
+  const metrics = useMemo(() => {
+    const today = startOfDay(new Date());
+    const upcoming = events.filter(
+      (e) =>
+        !isBefore(parseISO(e.date), today) &&
+        e.status !== "completed"
+    );
+
+    const completions: number[] = [];
+    for (const event of events) {
+      const stats = checklistStats[event.id];
+      if (stats && stats.total > 0) {
+        completions.push((stats.completed / stats.total) * 100);
+      }
+    }
+    const avgCompletion =
+      completions.length > 0
+        ? Math.round(completions.reduce((a, b) => a + b, 0) / completions.length)
+        : 0;
+
+    // Event score: weighted blend of checklist completion (70%) and
+    // status progression (30%), scaled to 10
+    const scores: number[] = [];
+    const statusWeight: Record<string, number> = {
+      idea: 0,
+      planning: 0.2,
+      in_progress: 0.4,
+      ready_for_execution: 0.7,
+      live_event: 0.9,
+      completed: 1.0,
+    };
+    for (const event of events) {
+      const stats = checklistStats[event.id];
+      const checkPct = stats && stats.total > 0 ? stats.completed / stats.total : 0;
+      const statusPct = statusWeight[event.status] ?? 0;
+      scores.push((checkPct * 0.7 + statusPct * 0.3) * 10);
+    }
+    const avgScore =
+      scores.length > 0
+        ? scores.reduce((a, b) => a + b, 0) / scores.length
+        : 0;
+
+    return {
+      upcomingCount: upcoming.length,
+      atRiskCount: atRiskIds.size,
+      avgCompletion,
+      avgScore,
+      totalEvents: events.length,
+    };
+  }, [events, checklistStats, atRiskIds]);
 
   const filteredEvents = useMemo(() => {
     return events.filter((event) => {
@@ -143,6 +196,14 @@ export function DashboardContent() {
           ))}
         </div>
       </div>
+
+      <DashboardMetrics
+        upcomingCount={metrics.upcomingCount}
+        atRiskCount={metrics.atRiskCount}
+        avgCompletion={metrics.avgCompletion}
+        avgScore={metrics.avgScore}
+        totalEvents={metrics.totalEvents}
+      />
 
       <Filters
         events={events}
