@@ -60,11 +60,11 @@ export function EventRecap({ event, onUpdate }: EventRecapProps) {
   }
 
   return (
-    <Card>
+    <Card className="!p-3.5 md:!p-5">
       <h3 className="font-semibold text-harley-text mb-4">Event Recap</h3>
 
       <div className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input
             label="Attendance"
             type="number"
@@ -89,8 +89,8 @@ export function EventRecap({ event, onUpdate }: EventRecapProps) {
           rows={4}
         />
 
-        <div className="flex items-center gap-3">
-          <Button onClick={handleSave} disabled={saving}>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
             {saving ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
@@ -100,7 +100,7 @@ export function EventRecap({ event, onUpdate }: EventRecapProps) {
           </Button>
 
           {event.status === "completed" && !event.is_archived && (
-            <Button variant="secondary" onClick={handleArchive}>
+            <Button variant="secondary" onClick={handleArchive} className="w-full sm:w-auto">
               <Archive className="w-4 h-4" />
               Archive Event
             </Button>

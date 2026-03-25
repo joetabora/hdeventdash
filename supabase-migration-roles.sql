@@ -11,30 +11,32 @@ CREATE TABLE IF NOT EXISTS public.user_roles (
 
 CREATE INDEX IF NOT EXISTS idx_user_roles_user_id ON public.user_roles(user_id);
 
+-- Helper function: checks admin status without triggering RLS recursion
+CREATE OR REPLACE FUNCTION public.is_admin(check_user_id UUID)
+RETURNS BOOLEAN AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.user_roles
+    WHERE user_id = check_user_id AND role = 'admin'
+  );
+$$ LANGUAGE sql SECURITY DEFINER;
+
 -- RLS policies
 ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
 
--- Admins can read all roles
-CREATE POLICY "Admins can read all roles" ON public.user_roles
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM public.user_roles ur
-      WHERE ur.user_id = auth.uid() AND ur.role = 'admin'
-    )
-  );
-
--- Users can read their own role
 CREATE POLICY "Users can read own role" ON public.user_roles
   FOR SELECT USING (auth.uid() = user_id);
 
--- Only admins can insert/update/delete roles
-CREATE POLICY "Admins can manage roles" ON public.user_roles
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM public.user_roles ur
-      WHERE ur.user_id = auth.uid() AND ur.role = 'admin'
-    )
-  );
+CREATE POLICY "Admins can read all roles" ON public.user_roles
+  FOR SELECT USING (public.is_admin(auth.uid()));
+
+CREATE POLICY "Admins can insert roles" ON public.user_roles
+  FOR INSERT WITH CHECK (public.is_admin(auth.uid()));
+
+CREATE POLICY "Admins can update roles" ON public.user_roles
+  FOR UPDATE USING (public.is_admin(auth.uid()));
+
+CREATE POLICY "Admins can delete roles" ON public.user_roles
+  FOR DELETE USING (public.is_admin(auth.uid()));
 
 -- IMPORTANT: After running this migration, manually insert an admin role
 -- for your first user. Find your user ID in Supabase Auth > Users, then:

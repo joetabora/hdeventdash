@@ -56,9 +56,54 @@ import {
   MessageSquare,
   BarChart3,
   Sparkles,
+  ChevronDown,
 } from "lucide-react";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
+
+function CollapsibleSection({
+  icon,
+  title,
+  count,
+  defaultOpen = true,
+  mobileCollapsed = false,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  count?: number;
+  defaultOpen?: boolean;
+  mobileCollapsed?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+
+  return (
+    <section className="mb-8 md:mb-10">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2.5 mb-4 w-full group"
+      >
+        <span className="text-harley-text-muted">{icon}</span>
+        <h2 className="text-sm font-semibold text-harley-text uppercase tracking-wide">
+          {title}
+        </h2>
+        {count !== undefined && (
+          <span className="text-xs text-harley-text-muted bg-harley-gray-light/50 rounded-full px-2 py-0.5">
+            {count}
+          </span>
+        )}
+        <div className="flex-1 border-t border-harley-gray/40 ml-2" />
+        <ChevronDown
+          className={`w-4 h-4 text-harley-text-muted transition-transform duration-200 ${
+            open ? "rotate-0" : "-rotate-90"
+          } ${mobileCollapsed ? "md:hidden" : ""}`}
+        />
+      </button>
+      {open && <div className="animate-fade-in-up">{children}</div>}
+    </section>
+  );
+}
 
 export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -74,6 +119,7 @@ export default function EventDetailPage() {
   const [media, setMedia] = useState<EventMedia[]>([]);
   const [loading, setLoading] = useState(true);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [showStatusPills, setShowStatusPills] = useState(false);
 
   const loadAll = useCallback(async () => {
     const supabase = supabaseRef.current;
@@ -175,17 +221,17 @@ export default function EventDetailPage() {
   if (isLiveMode) {
     return (
       <div className="max-w-3xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <span className="w-3 h-3 rounded-full bg-harley-success animate-pulse" />
-            <h1 className="text-2xl font-bold text-harley-text">
+        <div className="flex items-center justify-between mb-6 gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="w-3 h-3 rounded-full bg-harley-success animate-pulse shrink-0" />
+            <h1 className="text-xl md:text-2xl font-bold text-harley-text truncate">
               {event.name}
             </h1>
             <Badge variant="success">LIVE</Badge>
           </div>
           <Button variant="secondary" size="sm" onClick={handleToggleLiveMode}>
             <ZapOff className="w-4 h-4" />
-            Exit Live Mode
+            <span className="hidden sm:inline">Exit Live Mode</span>
           </Button>
         </div>
 
@@ -193,14 +239,14 @@ export default function EventDetailPage() {
 
         {allChecklistComplete && (
           <div className="mb-6 p-4 rounded-xl bg-harley-success/10 border border-harley-success/30 flex items-center gap-3">
-            <CheckCircle2 className="w-5 h-5 text-harley-success" />
+            <CheckCircle2 className="w-5 h-5 text-harley-success shrink-0" />
             <span className="text-sm text-harley-success font-medium">
               All checklist items complete!
             </span>
           </div>
         )}
 
-        <div className="space-y-4">
+        <div className="space-y-3 md:space-y-4">
           {CHECKLIST_SECTIONS.map((section) => {
             const items = checklist.filter((item) => item.section === section);
             return (
@@ -222,59 +268,72 @@ export default function EventDetailPage() {
   const totalCount = checklist.length;
   const percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
-  // Full detail view
   return (
     <>
       <div className="max-w-5xl">
         {/* Back link */}
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-2 text-sm text-harley-text-muted hover:text-harley-orange mb-5 transition-colors"
+          className="inline-flex items-center gap-2 text-sm text-harley-text-muted hover:text-harley-orange mb-4 md:mb-5 transition-colors py-1"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Dashboard
         </Link>
 
-        {/* ── SECTION 1: Sticky Header ─────────────────────────── */}
-        <div className="sticky top-16 z-10 -mx-2 px-2 pb-4 pt-1 bg-harley-black/80 backdrop-blur-xl">
+        {/* ── STICKY HEADER ─────────────────────────────────────── */}
+        <div className="sticky top-16 z-10 -mx-2 px-2 pb-3 md:pb-4 pt-1 bg-harley-black/80 backdrop-blur-xl">
           <Card padding="none">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 px-5 py-4">
-              {/* Left: Title + badges */}
-              <div className="flex items-center gap-3 flex-wrap min-w-0">
-                <h1 className="text-xl font-bold text-harley-text truncate">
-                  {event.name}
-                </h1>
-                <StatusBadge status={event.status} />
-                {atRisk && <Badge variant="danger">At Risk</Badge>}
-                {allChecklistComplete &&
-                  event.status !== "ready_for_execution" &&
-                  event.status !== "live_event" &&
-                  event.status !== "completed" && (
-                    <Badge variant="orange">Ready</Badge>
-                  )}
-                {event.is_live_mode && <Badge variant="success">LIVE</Badge>}
+            {/* Title + badges + actions */}
+            <div className="px-4 py-3 md:px-5 md:py-4">
+              <div className="flex items-start justify-between gap-3 mb-2 md:mb-0">
+                {/* Left: Title + badges */}
+                <div className="flex flex-col gap-2 min-w-0 md:flex-row md:items-center md:gap-3 md:flex-wrap">
+                  <h1 className="text-lg md:text-xl font-bold text-harley-text leading-tight">
+                    {event.name}
+                  </h1>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <StatusBadge status={event.status} />
+                    {atRisk && <Badge variant="danger">At Risk</Badge>}
+                    {allChecklistComplete &&
+                      event.status !== "ready_for_execution" &&
+                      event.status !== "live_event" &&
+                      event.status !== "completed" && (
+                        <Badge variant="orange">Ready</Badge>
+                      )}
+                    {event.is_live_mode && <Badge variant="success">LIVE</Badge>}
+                  </div>
+                </div>
+
+                {/* Right: Actions */}
+                <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
+                  <Button variant="secondary" size="sm" onClick={handleToggleLiveMode} className="!px-2.5 md:!px-3">
+                    <Zap className="w-4 h-4" />
+                    <span className="hidden md:inline">Live Mode</span>
+                  </Button>
+                  <Button variant="secondary" size="sm" onClick={() => setEditModalOpen(true)} className="!px-2.5 md:!px-3">
+                    <Edit className="w-4 h-4" />
+                    <span className="hidden md:inline">Edit</span>
+                  </Button>
+                  <Button variant="danger" size="sm" onClick={handleDelete} className="!px-2.5 md:!px-3">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
 
-              {/* Right: Actions */}
-              <div className="flex items-center gap-2 shrink-0">
-                <Button variant="secondary" size="sm" onClick={handleToggleLiveMode}>
-                  <Zap className="w-4 h-4" />
-                  <span className="hidden sm:inline">Live Mode</span>
-                </Button>
-                <Button variant="secondary" size="sm" onClick={() => setEditModalOpen(true)}>
-                  <Edit className="w-4 h-4" />
-                  <span className="hidden sm:inline">Edit</span>
-                </Button>
-                <Button variant="danger" size="sm" onClick={handleDelete}>
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+              {/* Key stats row — always visible */}
+              <div className="flex items-center gap-3 md:gap-4 text-xs md:text-sm text-harley-text-muted mt-1">
+                <DaysUntilEvent date={event.date} size="sm" />
+                <span className="flex items-center gap-1">
+                  <ClipboardList className="w-3.5 h-3.5" />
+                  {completedCount}/{totalCount}
+                </span>
               </div>
             </div>
 
             {/* Inline progress strip */}
-            <div className="px-5 pb-3">
-              <div className="flex items-center gap-4">
-                <div className="flex-1 h-2 bg-harley-gray rounded-full overflow-hidden">
+            <div className="px-4 pb-3 md:px-5">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="flex-1 h-2.5 md:h-2 bg-harley-gray rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all duration-500 ease-out ${
                       percentage === 100
@@ -294,11 +353,11 @@ export default function EventDetailPage() {
           </Card>
         </div>
 
-        {/* ── SECTION 2: Event Info + Status ───────────────────── */}
-        <div className="space-y-4 mb-10">
+        {/* ── EVENT INFO + STATUS ───────────────────────────────── */}
+        <div className="space-y-3 md:space-y-4 mb-8 md:mb-10">
           {/* At-risk alert */}
           {atRisk && (
-            <div className="p-4 rounded-xl bg-harley-danger/8 border border-harley-danger/25 flex items-center gap-3">
+            <div className="p-3.5 md:p-4 rounded-xl bg-harley-danger/8 border border-harley-danger/25 flex items-center gap-3">
               <AlertTriangle className="w-5 h-5 text-harley-danger shrink-0" />
               <div>
                 <span className="text-sm font-semibold text-harley-danger">At Risk — </span>
@@ -314,38 +373,37 @@ export default function EventDetailPage() {
             event.status !== "ready_for_execution" &&
             event.status !== "live_event" &&
             event.status !== "completed" && (
-              <div className="p-4 rounded-xl bg-harley-orange/8 border border-harley-orange/25 flex items-center justify-between flex-wrap gap-3">
+              <div className="p-3.5 md:p-4 rounded-xl bg-harley-orange/8 border border-harley-orange/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 text-harley-orange" />
+                  <AlertCircle className="w-4 h-4 text-harley-orange shrink-0" />
                   <span className="text-sm text-harley-orange">
                     All checklist items complete. Update status to &quot;Ready for Execution&quot;?
                   </span>
                 </div>
-                <Button size="sm" onClick={() => handleStatusChange("ready_for_execution")}>
+                <Button size="sm" onClick={() => handleStatusChange("ready_for_execution")} className="w-full sm:w-auto">
                   Update Status
                 </Button>
               </div>
             )}
 
-          {/* Info row */}
-          <Card>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-harley-text-muted">
+          {/* Info card */}
+          <Card className="!p-3.5 md:!p-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+              <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-x-5 gap-y-2.5 text-sm text-harley-text-muted">
                 <span className="flex items-center gap-1.5">
-                  <CalendarDays className="w-4 h-4" />
-                  {format(parseISO(event.date), "MMMM d, yyyy")}
+                  <CalendarDays className="w-4 h-4 shrink-0" />
+                  <span className="truncate">{format(parseISO(event.date), "MMM d, yyyy")}</span>
                 </span>
-                <DaysUntilEvent date={event.date} size="md" />
                 {event.location && (
                   <span className="flex items-center gap-1.5">
-                    <MapPin className="w-4 h-4" />
-                    {event.location}
+                    <MapPin className="w-4 h-4 shrink-0" />
+                    <span className="truncate">{event.location}</span>
                   </span>
                 )}
                 {event.owner && (
                   <span className="flex items-center gap-1.5">
-                    <User className="w-4 h-4" />
-                    {event.owner}
+                    <User className="w-4 h-4 shrink-0" />
+                    <span className="truncate">{event.owner}</span>
                   </span>
                 )}
                 {event.onedrive_link && (
@@ -355,14 +413,10 @@ export default function EventDetailPage() {
                     rel="noopener noreferrer"
                     className="flex items-center gap-1.5 text-harley-orange hover:text-harley-orange-light transition-colors"
                   >
-                    <ExternalLink className="w-4 h-4" />
+                    <ExternalLink className="w-4 h-4 shrink-0" />
                     OneDrive
                   </a>
                 )}
-              </div>
-              <div className="flex items-center gap-1.5 text-xs text-harley-text-muted">
-                <ClipboardList className="w-3.5 h-3.5" />
-                {completedCount}/{totalCount} tasks
               </div>
             </div>
             {event.description && (
@@ -372,27 +426,39 @@ export default function EventDetailPage() {
             )}
           </Card>
 
-          {/* Status pills */}
-          <div className="flex flex-wrap gap-1.5">
-            {EVENT_STATUSES.map(({ value, label }) => (
-              <button
-                key={value}
-                onClick={() => handleStatusChange(value)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-150 ${
-                  event.status === value
-                    ? "bg-harley-orange text-white shadow-sm shadow-harley-orange/20"
-                    : "bg-harley-gray-light/40 text-harley-text-muted hover:bg-harley-gray-light hover:text-harley-text"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
+          {/* Status pills — collapsed on mobile behind a toggle */}
+          <div>
+            <button
+              onClick={() => setShowStatusPills(!showStatusPills)}
+              className="md:hidden flex items-center gap-2 text-xs text-harley-text-muted mb-2 py-1"
+            >
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showStatusPills ? "" : "-rotate-90"}`} />
+              Change Status
+            </button>
+            <div className={`flex flex-wrap gap-1.5 ${showStatusPills ? "" : "hidden md:flex"}`}>
+              {EVENT_STATUSES.map(({ value, label }) => (
+                <button
+                  key={value}
+                  onClick={() => handleStatusChange(value)}
+                  className={`px-3 py-1.5 md:py-1 rounded-full text-xs font-medium transition-all duration-150 ${
+                    event.status === value
+                      ? "bg-harley-orange text-white shadow-sm shadow-harley-orange/20"
+                      : "bg-harley-gray-light/40 text-harley-text-muted hover:bg-harley-gray-light hover:text-harley-text"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* ── SECTION 3: Checklist ─────────────────────────────── */}
-        <section className="mb-10">
-          <SectionHeading icon={<ClipboardList className="w-4.5 h-4.5" />} title="Checklist" />
+        {/* ── CHECKLIST (always open) ──────────────────────────── */}
+        <CollapsibleSection
+          icon={<ClipboardList className="w-4.5 h-4.5" />}
+          title="Checklist"
+          defaultOpen={true}
+        >
           <div className="space-y-3">
             {CHECKLIST_SECTIONS.map((section) => {
               const items = checklist.filter((item) => item.section === section);
@@ -407,35 +473,53 @@ export default function EventDetailPage() {
               );
             })}
           </div>
-        </section>
+        </CollapsibleSection>
 
-        {/* ── SECTION 4: Media + Documents (2-col) ─────────────── */}
-        <section className="mb-10">
-          <SectionHeading icon={<ImageIcon className="w-4.5 h-4.5" />} title="Files & Media" />
+        {/* ── FILES & MEDIA (collapsed on mobile) ─────────────── */}
+        <CollapsibleSection
+          icon={<ImageIcon className="w-4.5 h-4.5" />}
+          title="Files & Media"
+          count={(media?.length ?? 0) + (documents?.length ?? 0)}
+          defaultOpen={typeof window !== "undefined" && window.innerWidth >= 768}
+          mobileCollapsed
+        >
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <MediaGallery eventId={event.id} media={media} onUpdate={loadAll} />
             <DocumentManager eventId={event.id} documents={documents} onUpdate={loadAll} />
           </div>
-        </section>
+        </CollapsibleSection>
 
-        {/* ── SECTION 5: AI Assistant ──────────────────────────── */}
-        <section className="mb-10">
-          <SectionHeading icon={<Sparkles className="w-4.5 h-4.5" />} title="AI Assistant" />
+        {/* ── AI ASSISTANT (collapsed on mobile) ──────────────── */}
+        <CollapsibleSection
+          icon={<Sparkles className="w-4.5 h-4.5" />}
+          title="AI Assistant"
+          defaultOpen={typeof window !== "undefined" && window.innerWidth >= 768}
+          mobileCollapsed
+        >
           <AiAssistant event={event} />
-        </section>
+        </CollapsibleSection>
 
-        {/* ── SECTION 6: Comments ──────────────────────────────── */}
-        <section className="mb-10">
-          <SectionHeading icon={<MessageSquare className="w-4.5 h-4.5" />} title="Comments" count={comments.length} />
+        {/* ── COMMENTS (collapsed on mobile) ──────────────────── */}
+        <CollapsibleSection
+          icon={<MessageSquare className="w-4.5 h-4.5" />}
+          title="Comments"
+          count={comments.length}
+          defaultOpen={typeof window !== "undefined" && window.innerWidth >= 768}
+          mobileCollapsed
+        >
           <CommentsSection eventId={event.id} comments={comments} onUpdate={loadAll} />
-        </section>
+        </CollapsibleSection>
 
-        {/* ── SECTION 7: Recap ─────────────────────────────────── */}
+        {/* ── RECAP (collapsed on mobile) ─────────────────────── */}
         {(event.status === "completed" || event.status === "live_event") && (
-          <section className="mb-10">
-            <SectionHeading icon={<BarChart3 className="w-4.5 h-4.5" />} title="Event Recap" />
+          <CollapsibleSection
+            icon={<BarChart3 className="w-4.5 h-4.5" />}
+            title="Event Recap"
+            defaultOpen={typeof window !== "undefined" && window.innerWidth >= 768}
+            mobileCollapsed
+          >
             <EventRecap event={event} onUpdate={loadAll} />
-          </section>
+          </CollapsibleSection>
         )}
       </div>
 
@@ -454,30 +538,5 @@ export default function EventDetailPage() {
         />
       </Modal>
     </>
-  );
-}
-
-function SectionHeading({
-  icon,
-  title,
-  count,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  count?: number;
-}) {
-  return (
-    <div className="flex items-center gap-2.5 mb-4">
-      <span className="text-harley-text-muted">{icon}</span>
-      <h2 className="text-sm font-semibold text-harley-text uppercase tracking-wide">
-        {title}
-      </h2>
-      {count !== undefined && (
-        <span className="text-xs text-harley-text-muted bg-harley-gray-light/50 rounded-full px-2 py-0.5">
-          {count}
-        </span>
-      )}
-      <div className="flex-1 border-t border-harley-gray/40 ml-2" />
-    </div>
   );
 }

@@ -102,14 +102,14 @@ export function DocumentManager({
   };
 
   return (
-    <Card>
+    <Card className="!p-3.5 md:!p-5">
       <h3 className="font-semibold text-harley-text mb-4">Documents</h3>
 
-      <div className="flex flex-wrap items-center gap-3 mb-4">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 mb-4">
         <select
           value={selectedTag}
           onChange={(e) => setSelectedTag(e.target.value as DocumentTag)}
-          className="px-3 py-2 rounded-lg bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-sm focus:outline-none focus:border-harley-orange/70 focus:ring-1 focus:ring-harley-orange/20 transition-all duration-150"
+          className="px-3 py-2.5 md:py-2 rounded-lg bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-sm focus:outline-none focus:border-harley-orange/70 focus:ring-1 focus:ring-harley-orange/20 transition-all duration-150"
         >
           {DOCUMENT_TAGS.map((tag) => (
             <option key={tag.value} value={tag.value}>
@@ -129,6 +129,7 @@ export function DocumentManager({
           size="sm"
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
+          className="!py-2.5 md:!py-1.5"
         >
           {uploading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -162,24 +163,24 @@ export function DocumentManager({
                   </span>
                 </div>
               </div>
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center gap-0.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                 <button
                   onClick={() => handleView(doc)}
-                  className="p-1.5 text-harley-text-muted hover:text-harley-orange transition-colors"
+                  className="p-2 md:p-1.5 text-harley-text-muted hover:text-harley-orange transition-colors rounded-md"
                   title="View"
                 >
                   <Eye className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => handleDownload(doc)}
-                  className="p-1.5 text-harley-text-muted hover:text-harley-orange transition-colors"
+                  className="p-2 md:p-1.5 text-harley-text-muted hover:text-harley-orange transition-colors rounded-md"
                   title="Download"
                 >
                   <Download className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => handleDelete(doc)}
-                  className="p-1.5 text-harley-text-muted hover:text-harley-danger transition-colors"
+                  className="p-2 md:p-1.5 text-harley-text-muted hover:text-harley-danger transition-colors rounded-md"
                   title="Delete"
                 >
                   <Trash2 className="w-4 h-4" />

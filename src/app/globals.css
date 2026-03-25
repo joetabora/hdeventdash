@@ -74,6 +74,29 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(1);
 }
 
+/* Hide scrollbar but keep scrolling */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Prevent iOS zoom on form inputs */
+@media (max-width: 767px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Safe area insets for notched devices */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
 /* Checkbox pop animation */
 @keyframes check-pop {
   0% { transform: scale(1); }

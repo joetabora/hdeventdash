@@ -50,7 +50,7 @@ export function AiAssistant({ event }: AiAssistantProps) {
   };
 
   return (
-    <Card>
+    <Card className="!p-3.5 md:!p-5">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-harley-orange" />

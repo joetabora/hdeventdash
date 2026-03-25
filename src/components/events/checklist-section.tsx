@@ -79,18 +79,18 @@ export function ChecklistSectionComponent({
     <Card padding="none" hover className="overflow-hidden">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between px-5 py-4 hover:bg-harley-gray/30 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3.5 md:px-5 md:py-4 hover:bg-harley-gray/30 transition-colors"
       >
         <div className="flex items-center gap-3">
           <ChevronRight className={`w-4 h-4 text-harley-text-muted transition-transform duration-200 ${
             isExpanded ? "rotate-90" : "rotate-0"
           }`} />
-          <h3 className="font-semibold text-harley-text">{section}</h3>
+          <h3 className="font-semibold text-harley-text text-sm md:text-base">{section}</h3>
           <span className="text-xs text-harley-text-muted">
             {checkedCount}/{items.length}
           </span>
         </div>
-        <div className="w-24 h-2 bg-harley-gray rounded-full overflow-hidden">
+        <div className="w-20 md:w-24 h-2 bg-harley-gray rounded-full overflow-hidden">
           <div
             className="h-full bg-harley-orange rounded-full transition-all duration-300"
             style={{ width: `${progress}%` }}
@@ -99,7 +99,7 @@ export function ChecklistSectionComponent({
       </button>
 
       {isExpanded && (
-        <div className="px-5 pb-4 space-y-2 animate-fade-in-up">
+        <div className="px-3 pb-3 md:px-5 md:pb-4 space-y-1 md:space-y-2 animate-fade-in-up">
           {items.map((item) => (
             <ChecklistItemRow
               key={item.id}
@@ -112,7 +112,7 @@ export function ChecklistSectionComponent({
           ))}
 
           {addingItem ? (
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center gap-2 mt-2 pl-1">
               <input
                 type="text"
                 value={newItemLabel}
@@ -120,14 +120,15 @@ export function ChecklistSectionComponent({
                 onKeyDown={(e) => e.key === "Enter" && handleAddItem()}
                 placeholder="New checklist item..."
                 autoFocus
-                className="flex-1 px-3 py-1.5 rounded-lg bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-sm placeholder-harley-text-muted/60 focus:outline-none focus:border-harley-orange/70 focus:ring-1 focus:ring-harley-orange/20 transition-all duration-150"
+                className="flex-1 px-3 py-2.5 md:py-1.5 rounded-lg bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-sm placeholder-harley-text-muted/60 focus:outline-none focus:border-harley-orange/70 focus:ring-1 focus:ring-harley-orange/20 transition-all duration-150"
               />
-              <Button size="sm" onClick={handleAddItem}>
+              <Button size="sm" onClick={handleAddItem} className="!py-2.5 md:!py-1.5">
                 Add
               </Button>
               <Button
                 size="sm"
                 variant="ghost"
+                className="!py-2.5 md:!py-1.5"
                 onClick={() => {
                   setAddingItem(false);
                   setNewItemLabel("");
@@ -139,7 +140,7 @@ export function ChecklistSectionComponent({
           ) : (
             <button
               onClick={() => setAddingItem(true)}
-              className="flex items-center gap-2 text-sm text-harley-text-muted hover:text-harley-orange transition-colors mt-2"
+              className="flex items-center gap-2 text-sm text-harley-text-muted hover:text-harley-orange transition-colors mt-2 py-2 md:py-1 pl-1"
             >
               <Plus className="w-4 h-4" />
               Add item
@@ -179,10 +180,11 @@ function ChecklistItemRow({
 
   return (
     <div className="group">
-      <div className="flex items-center gap-3 py-1.5 rounded-lg px-1.5 -mx-1.5 hover:bg-harley-gray-light/20 transition-colors duration-150">
+      <div className="flex items-center gap-3 md:gap-3 py-2 md:py-1.5 rounded-lg px-1.5 -mx-1.5 hover:bg-harley-gray-light/20 transition-colors duration-150">
+        {/* Checkbox — larger touch target on mobile */}
         <button
           onClick={handleToggle}
-          className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-all duration-200 ${
+          className={`w-7 h-7 md:w-5 md:h-5 rounded-md md:rounded border-2 flex items-center justify-center shrink-0 transition-all duration-200 ${
             justChecked ? "animate-check-pop" : ""
           } ${
             item.is_checked
@@ -190,11 +192,12 @@ function ChecklistItemRow({
               : "border-harley-gray-lighter hover:border-harley-orange hover:shadow-sm hover:shadow-harley-orange/20"
           }`}
         >
-          <Check className={`w-3 h-3 text-white transition-all duration-200 ${
+          <Check className={`w-4 h-4 md:w-3 md:h-3 text-white transition-all duration-200 ${
             item.is_checked ? "opacity-100 scale-100" : "opacity-0 scale-50"
           }`} />
         </button>
 
+        {/* Label */}
         <span
           className={`flex-1 text-sm transition-all duration-200 ${
             item.is_checked
@@ -205,53 +208,62 @@ function ChecklistItemRow({
           {item.label}
         </span>
 
+        {/* Assignee badge */}
         {item.assignee && (
-          <span className="text-xs text-harley-text-muted flex items-center gap-1">
+          <span className="hidden sm:flex text-xs text-harley-text-muted items-center gap-1">
             <User className="w-3 h-3" />
             {item.assignee}
           </span>
         )}
 
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-150">
+        {/* Action buttons — always visible on mobile, hover on desktop */}
+        <div className="flex items-center gap-0.5 md:opacity-0 md:group-hover:opacity-100 transition-all duration-150">
           <button
             onClick={() => setShowDetails(!showDetails)}
-            className="p-1.5 rounded-md text-harley-text-muted hover:text-harley-orange hover:bg-harley-gray-light/40 transition-all duration-150"
+            className="p-2 md:p-1.5 rounded-md text-harley-text-muted hover:text-harley-orange hover:bg-harley-gray-light/40 transition-all duration-150"
             title="Details"
           >
-            <MessageSquare className="w-3.5 h-3.5" />
+            <MessageSquare className="w-4 h-4 md:w-3.5 md:h-3.5" />
           </button>
           <button
             onClick={onDelete}
-            className="p-1.5 rounded-md text-harley-text-muted hover:text-harley-danger hover:bg-harley-danger/10 transition-all duration-150"
+            className="p-2 md:p-1.5 rounded-md text-harley-text-muted hover:text-harley-danger hover:bg-harley-danger/10 transition-all duration-150"
             title="Delete"
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            <Trash2 className="w-4 h-4 md:w-3.5 md:h-3.5" />
           </button>
         </div>
       </div>
 
+      {/* Expanded details panel */}
       {showDetails && (
-        <div className="ml-8 pl-3 border-l-2 border-harley-gray space-y-2 py-2 animate-fade-in-up">
+        <div className="ml-4 md:ml-8 pl-3 border-l-2 border-harley-gray space-y-2.5 md:space-y-2 py-2 animate-fade-in-up">
+          {item.assignee && (
+            <span className="flex sm:hidden text-xs text-harley-text-muted items-center gap-1 pb-1">
+              <User className="w-3 h-3" />
+              {item.assignee}
+            </span>
+          )}
           <div className="flex items-center gap-2">
-            <User className="w-3.5 h-3.5 text-harley-text-muted shrink-0" />
+            <User className="w-4 h-4 md:w-3.5 md:h-3.5 text-harley-text-muted shrink-0" />
             <input
               type="text"
               value={assigneeInput}
               onChange={(e) => setAssigneeInput(e.target.value)}
               onBlur={() => onAssigneeChange(assigneeInput)}
               placeholder="Assign to..."
-              className="flex-1 px-2 py-1 rounded bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-xs placeholder-harley-text-muted/60 focus:outline-none focus:border-harley-orange/70 transition-all duration-150"
+              className="flex-1 px-3 py-2 md:px-2 md:py-1 rounded-lg md:rounded bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-sm md:text-xs placeholder-harley-text-muted/60 focus:outline-none focus:border-harley-orange/70 transition-all duration-150"
             />
           </div>
           <div className="flex items-start gap-2">
-            <MessageSquare className="w-3.5 h-3.5 text-harley-text-muted shrink-0 mt-1" />
+            <MessageSquare className="w-4 h-4 md:w-3.5 md:h-3.5 text-harley-text-muted shrink-0 mt-2 md:mt-1" />
             <input
               type="text"
               value={commentInput}
               onChange={(e) => setCommentInput(e.target.value)}
               onBlur={() => onCommentChange(commentInput)}
               placeholder="Add a note..."
-              className="flex-1 px-2 py-1 rounded bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-xs placeholder-harley-text-muted/60 focus:outline-none focus:border-harley-orange/70 transition-all duration-150"
+              className="flex-1 px-3 py-2 md:px-2 md:py-1 rounded-lg md:rounded bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-sm md:text-xs placeholder-harley-text-muted/60 focus:outline-none focus:border-harley-orange/70 transition-all duration-150"
             />
           </div>
         </div>

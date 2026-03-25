@@ -88,15 +88,15 @@ export function MediaGallery({ eventId, media, onUpdate }: MediaGalleryProps) {
   }
 
   return (
-    <Card>
+    <Card className="!p-3.5 md:!p-5">
       <h3 className="font-semibold text-harley-text mb-4">Media</h3>
 
       {/* Upload controls */}
-      <div className="flex flex-wrap items-center gap-3 mb-4">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 mb-4">
         <select
           value={selectedTag}
           onChange={(e) => setSelectedTag(e.target.value as MediaTag)}
-          className="px-3 py-2 rounded-lg bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-sm focus:outline-none focus:border-harley-orange/70 focus:ring-1 focus:ring-harley-orange/20 transition-all duration-150"
+          className="px-3 py-2.5 md:py-2 rounded-lg bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-sm focus:outline-none focus:border-harley-orange/70 focus:ring-1 focus:ring-harley-orange/20 transition-all duration-150"
         >
           {MEDIA_TAGS.map((tag) => (
             <option key={tag.value} value={tag.value}>
@@ -117,6 +117,7 @@ export function MediaGallery({ eventId, media, onUpdate }: MediaGalleryProps) {
           size="sm"
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
+          className="!py-2.5 md:!py-1.5"
         >
           {uploading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -129,7 +130,7 @@ export function MediaGallery({ eventId, media, onUpdate }: MediaGalleryProps) {
 
       {/* Filter tabs */}
       {media.length > 0 && (
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
           <button
             onClick={() => setFilterTag("all")}
             className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
@@ -168,7 +169,7 @@ export function MediaGallery({ eventId, media, onUpdate }: MediaGalleryProps) {
             : "No media with this tag"}
         </p>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 md:gap-3">
           {filteredMedia.map((item) => {
             const url = getMediaUrl(supabase, item.file_path);
             return (
@@ -200,7 +201,7 @@ export function MediaGallery({ eventId, media, onUpdate }: MediaGalleryProps) {
                 )}
 
                 {/* Overlay on hover */}
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
+                <div className="absolute inset-0 bg-black/60 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
                   <div className="flex justify-end">
                     <button
                       onClick={(e) => {
