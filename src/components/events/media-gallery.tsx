@@ -6,6 +6,7 @@ import { uploadMedia, deleteMedia, getMediaUrl } from "@/lib/events";
 import { EventMedia, MediaTag, MEDIA_TAGS } from "@/types/database";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import {
   Upload,
   Trash2,
@@ -87,7 +88,7 @@ export function MediaGallery({ eventId, media, onUpdate }: MediaGalleryProps) {
   }
 
   return (
-    <div className="bg-harley-dark rounded-xl border border-harley-gray p-5">
+    <Card>
       <h3 className="font-semibold text-harley-text mb-4">Media</h3>
 
       {/* Upload controls */}
@@ -259,6 +260,6 @@ export function MediaGallery({ eventId, media, onUpdate }: MediaGalleryProps) {
           </div>
         </div>
       )}
-    </div>
+    </Card>
   );
 }

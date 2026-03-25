@@ -16,6 +16,7 @@ import {
 } from "date-fns";
 import { Event } from "@/types/database";
 import { StatusBadge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
@@ -43,7 +44,7 @@ export function CalendarView({ events }: CalendarViewProps) {
   }, [events]);
 
   return (
-    <div className="bg-harley-dark rounded-xl border border-harley-gray">
+    <Card padding="none">
       <div className="flex items-center justify-between px-6 py-4 border-b border-harley-gray">
         <button
           onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
@@ -113,6 +114,6 @@ export function CalendarView({ events }: CalendarViewProps) {
           );
         })}
       </div>
-    </div>
+    </Card>
   );
 }

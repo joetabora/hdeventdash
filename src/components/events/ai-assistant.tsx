@@ -5,6 +5,7 @@ import { Event } from "@/types/database";
 import { generateMarketingPlan, MarketingPlan } from "@/lib/ai-generate";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import {
   Sparkles,
   Loader2,
@@ -49,7 +50,7 @@ export function AiAssistant({ event }: AiAssistantProps) {
   };
 
   return (
-    <div className="bg-harley-dark rounded-xl border border-harley-gray p-5">
+    <Card>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-harley-orange" />
@@ -167,7 +168,7 @@ export function AiAssistant({ event }: AiAssistantProps) {
           </div>
         </div>
       )}
-    </div>
+    </Card>
   );
 }
 

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Card } from "@/components/ui/card";
 import { Calendar, LayoutGrid, Zap } from "lucide-react";
 
 export default function Home() {
@@ -18,27 +19,27 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
-          <div className="bg-harley-dark rounded-xl p-5 border border-harley-gray">
+          <Card hover>
             <LayoutGrid className="w-6 h-6 text-harley-orange mb-3" />
             <h3 className="font-semibold text-harley-text mb-1">Kanban Board</h3>
             <p className="text-sm text-harley-text-muted">
               Drag and drop events through every stage
             </p>
-          </div>
-          <div className="bg-harley-dark rounded-xl p-5 border border-harley-gray">
+          </Card>
+          <Card hover>
             <Calendar className="w-6 h-6 text-harley-orange mb-3" />
             <h3 className="font-semibold text-harley-text mb-1">Calendar View</h3>
             <p className="text-sm text-harley-text-muted">
               Visualize your event timeline at a glance
             </p>
-          </div>
-          <div className="bg-harley-dark rounded-xl p-5 border border-harley-gray">
+          </Card>
+          <Card hover>
             <Zap className="w-6 h-6 text-harley-orange mb-3" />
             <h3 className="font-semibold text-harley-text mb-1">Live Mode</h3>
             <p className="text-sm text-harley-text-muted">
               Simplified view for day-of execution
             </p>
-          </div>
+          </Card>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">

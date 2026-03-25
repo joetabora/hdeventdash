@@ -1,5 +1,6 @@
 "use client";
 
+import { Card } from "@/components/ui/card";
 import { CalendarCheck, AlertTriangle, CheckCircle2, Star } from "lucide-react";
 
 interface MetricCardProps {
@@ -19,7 +20,7 @@ const accentStyles = {
 
 function MetricCard({ label, value, subtext, icon, accent = "orange" }: MetricCardProps) {
   return (
-    <div className="bg-harley-dark rounded-xl border border-harley-gray p-4">
+    <Card padding="sm" hover>
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs font-medium text-harley-text-muted uppercase tracking-wider">
@@ -34,7 +35,7 @@ function MetricCard({ label, value, subtext, icon, accent = "orange" }: MetricCa
           {icon}
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 

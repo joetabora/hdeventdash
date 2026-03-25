@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { addComment, deleteComment } from "@/lib/events";
 import { EventComment } from "@/types/database";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Trash2, Send } from "lucide-react";
 import { formatDistanceToNow, parseISO } from "date-fns";
 
@@ -59,7 +60,7 @@ export function CommentsSection({
   }
 
   return (
-    <div className="bg-harley-dark rounded-xl border border-harley-gray p-5">
+    <Card>
       <h3 className="font-semibold text-harley-text mb-4">Comments</h3>
 
       <div className="space-y-4 mb-4">
@@ -112,6 +113,6 @@ export function CommentsSection({
           <Send className="w-4 h-4" />
         </Button>
       </form>
-    </div>
+    </Card>
   );
 }

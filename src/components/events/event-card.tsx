@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Event } from "@/types/database";
 import { StatusBadge, Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { CalendarDays, MapPin, User, AlertTriangle } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { DaysUntilEvent } from "@/components/events/days-until";
@@ -16,10 +17,11 @@ interface EventCardProps {
 export function EventCard({ event, compact = false, atRisk = false }: EventCardProps) {
   return (
     <Link href={`/events/${event.id}`}>
-      <div
-        className={`bg-harley-dark rounded-lg border p-4 hover:border-harley-orange/50 transition-colors cursor-pointer group ${
-          atRisk ? "border-harley-danger/50" : "border-harley-gray"
-        }`}
+      <Card
+        padding="sm"
+        hover
+        interactive
+        className={`group ${atRisk ? "border-harley-danger/50" : ""}`}
       >
         <div className="flex items-start justify-between gap-2 mb-2">
           <h3 className="font-semibold text-harley-text group-hover:text-harley-orange transition-colors line-clamp-1">
@@ -63,7 +65,7 @@ export function EventCard({ event, compact = false, atRisk = false }: EventCardP
             )}
           </div>
         )}
-      </div>
+      </Card>
     </Link>
   );
 }

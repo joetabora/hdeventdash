@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Card } from "@/components/ui/card";
 import { Zap, Loader2 } from "lucide-react";
 
 export default function SignupPage() {
@@ -59,7 +60,7 @@ export default function SignupPage() {
           </Link>
         </div>
 
-        <div className="bg-harley-dark rounded-xl p-8 border border-harley-gray">
+        <Card padding="xl">
           <h2 className="text-xl font-semibold text-harley-text mb-6">
             Create your account
           </h2>
@@ -139,7 +140,7 @@ export default function SignupPage() {
               Sign in
             </Link>
           </p>
-        </div>
+        </Card>
       </div>
     </div>
   );

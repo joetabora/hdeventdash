@@ -14,6 +14,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 interface ChecklistSectionProps {
   section: ChecklistSectionType;
@@ -76,7 +77,7 @@ export function ChecklistSectionComponent({
   }
 
   return (
-    <div className="bg-harley-dark rounded-xl border border-harley-gray overflow-hidden">
+    <Card padding="none" hover className="overflow-hidden">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full flex items-center justify-between px-5 py-4 hover:bg-harley-gray/30 transition-colors"
@@ -149,7 +150,7 @@ export function ChecklistSectionComponent({
           )}
         </div>
       )}
-    </div>
+    </Card>
   );
 }
 

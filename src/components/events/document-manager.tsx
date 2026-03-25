@@ -14,6 +14,7 @@ import {
 } from "@/types/database";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import {
   Upload,
   FileText,
@@ -101,7 +102,7 @@ export function DocumentManager({
   };
 
   return (
-    <div className="bg-harley-dark rounded-xl border border-harley-gray p-5">
+    <Card>
       <h3 className="font-semibold text-harley-text mb-4">Documents</h3>
 
       <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -188,6 +189,6 @@ export function DocumentManager({
           ))}
         </div>
       )}
-    </div>
+    </Card>
   );
 }

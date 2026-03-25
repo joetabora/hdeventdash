@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Event } from "@/types/database";
 import { StatusBadge, Badge } from "@/components/ui/badge";
 import { format, parseISO } from "date-fns";
+import { Card } from "@/components/ui/card";
 import { MapPin, User, ExternalLink, AlertTriangle } from "lucide-react";
 
 interface ListViewProps {
@@ -21,7 +22,7 @@ export function ListView({ events, atRiskIds }: ListViewProps) {
   }
 
   return (
-    <div className="bg-harley-dark rounded-xl border border-harley-gray overflow-hidden">
+    <Card padding="none" className="overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
@@ -108,6 +109,6 @@ export function ListView({ events, atRiskIds }: ListViewProps) {
           </tbody>
         </table>
       </div>
-    </div>
+    </Card>
   );
 }

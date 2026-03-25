@@ -6,6 +6,7 @@ import { updateEvent } from "@/lib/events";
 import { Event } from "@/types/database";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 import { Archive, Save, Loader2 } from "lucide-react";
 
 interface EventRecapProps {
@@ -59,7 +60,7 @@ export function EventRecap({ event, onUpdate }: EventRecapProps) {
   }
 
   return (
-    <div className="bg-harley-dark rounded-xl border border-harley-gray p-5">
+    <Card>
       <h3 className="font-semibold text-harley-text mb-4">Event Recap</h3>
 
       <div className="space-y-4">
@@ -106,6 +107,6 @@ export function EventRecap({ event, onUpdate }: EventRecapProps) {
           )}
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

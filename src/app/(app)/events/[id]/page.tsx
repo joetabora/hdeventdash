@@ -24,6 +24,7 @@ import {
 } from "@/types/database";
 import { StatusBadge, Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Modal } from "@/components/ui/modal";
 import { EventForm } from "@/components/events/event-form";
 import { ChecklistSectionComponent } from "@/components/events/checklist-section";
@@ -246,7 +247,7 @@ export default function EventDetailPage() {
           )}
 
           {/* Header */}
-          <div className="bg-harley-dark rounded-xl border border-harley-gray p-6 mb-6">
+          <Card padding="lg" className="mb-6">
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
               <div className="space-y-3">
                 <div className="flex items-center gap-3 flex-wrap">
@@ -362,7 +363,7 @@ export default function EventDetailPage() {
                 </button>
               ))}
             </div>
-          </div>
+          </Card>
 
           {/* Checklist */}
           <div className="space-y-4 mb-6">

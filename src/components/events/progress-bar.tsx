@@ -1,6 +1,7 @@
 "use client";
 
 import { ChecklistItem } from "@/types/database";
+import { Card } from "@/components/ui/card";
 import { CheckCircle2 } from "lucide-react";
 
 interface ProgressBarProps {
@@ -14,7 +15,7 @@ export function ProgressBar({ checklist }: ProgressBarProps) {
   const isComplete = total > 0 && completed === total;
 
   return (
-    <div className="bg-harley-dark rounded-xl border border-harley-gray p-5 mb-6">
+    <Card className="mb-6">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2.5">
           {isComplete && (
@@ -47,6 +48,6 @@ export function ProgressBar({ checklist }: ProgressBarProps) {
           style={{ width: `${percentage}%` }}
         />
       </div>
-    </div>
+    </Card>
   );
 }

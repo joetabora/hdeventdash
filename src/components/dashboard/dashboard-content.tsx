@@ -16,6 +16,7 @@ import { CalendarView } from "@/components/dashboard/calendar-view";
 import { ListView } from "@/components/dashboard/list-view";
 import { Filters } from "@/components/dashboard/filters";
 import { DashboardMetrics } from "@/components/dashboard/metrics";
+import { Card } from "@/components/ui/card";
 import { LayoutGrid, Calendar, List, Loader2 } from "lucide-react";
 import { parseISO, isBefore, startOfDay } from "date-fns";
 
@@ -179,7 +180,7 @@ export function DashboardContent() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-bold text-harley-text">Events Dashboard</h1>
-        <div className="flex items-center bg-harley-dark rounded-lg border border-harley-gray p-1">
+        <Card padding="none" className="flex items-center p-1">
           {viewButtons.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -194,7 +195,7 @@ export function DashboardContent() {
               <span className="hidden sm:inline">{label}</span>
             </button>
           ))}
-        </div>
+        </Card>
       </div>
 
       <DashboardMetrics

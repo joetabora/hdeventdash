@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { createEvent } from "@/lib/events";
 import { EventForm } from "@/components/events/event-form";
+import { Card } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
@@ -51,12 +52,12 @@ export default function NewEventPage() {
         Back to Dashboard
       </Link>
 
-      <div className="bg-harley-dark rounded-xl border border-harley-gray p-6">
+      <Card padding="lg">
         <EventForm
           onSubmit={handleCreate}
           onCancel={() => router.push("/dashboard")}
         />
-      </div>
+      </Card>
     </div>
   );
 }
