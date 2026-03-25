@@ -1,26 +1,53 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-harley-orange: #F26522;
+  --color-harley-orange-light: #FF8C42;
+  --color-harley-orange-dark: #D4541A;
+  --color-harley-black: #1A1A1A;
+  --color-harley-dark: #222222;
+  --color-harley-gray: #2D2D2D;
+  --color-harley-gray-light: #3A3A3A;
+  --color-harley-gray-lighter: #4A4A4A;
+  --color-harley-text: #F5F5F5;
+  --color-harley-text-muted: #A0A0A0;
+  --color-harley-success: #22C55E;
+  --color-harley-warning: #EAB308;
+  --color-harley-danger: #EF4444;
+  --color-harley-info: #3B82F6;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+body {
+  background: var(--color-harley-black);
+  color: var(--color-harley-text);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+::selection {
+  background: var(--color-harley-orange);
+  color: white;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-harley-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-harley-gray-lighter);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-harley-orange);
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
 }

@@ -1,0 +1,111 @@
+"use client";
+
+import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { updateEvent } from "@/lib/events";
+import { Event } from "@/types/database";
+import { Button } from "@/components/ui/button";
+import { Input, Textarea } from "@/components/ui/input";
+import { Archive, Save, Loader2 } from "lucide-react";
+
+interface EventRecapProps {
+  event: Event;
+  onUpdate: () => void;
+}
+
+export function EventRecap({ event, onUpdate }: EventRecapProps) {
+  const [attendance, setAttendance] = useState<string>(
+    event.attendance?.toString() || ""
+  );
+  const [notes, setNotes] = useState(event.recap_notes || "");
+  const [salesEstimate, setSalesEstimate] = useState<string>(
+    event.sales_estimate?.toString() || ""
+  );
+  const [saving, setSaving] = useState(false);
+  const supabase = createClient();
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      await updateEvent(supabase, event.id, {
+        attendance: attendance ? parseInt(attendance) : null,
+        recap_notes: notes || null,
+        sales_estimate: salesEstimate ? parseFloat(salesEstimate) : null,
+      });
+      onUpdate();
+    } catch (err) {
+      console.error("Failed to save recap:", err);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleArchive() {
+    if (
+      !confirm(
+        "Archive this event? It will be hidden from the dashboard."
+      )
+    )
+      return;
+    try {
+      await updateEvent(supabase, event.id, {
+        is_archived: true,
+        status: "completed",
+      });
+      onUpdate();
+    } catch (err) {
+      console.error("Failed to archive:", err);
+    }
+  }
+
+  return (
+    <div className="bg-harley-dark rounded-xl border border-harley-gray p-5">
+      <h3 className="font-semibold text-harley-text mb-4">Event Recap</h3>
+
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Input
+            label="Attendance"
+            type="number"
+            value={attendance}
+            onChange={(e) => setAttendance(e.target.value)}
+            placeholder="Number of attendees"
+          />
+          <Input
+            label="Sales Estimate ($)"
+            type="number"
+            value={salesEstimate}
+            onChange={(e) => setSalesEstimate(e.target.value)}
+            placeholder="0.00"
+          />
+        </div>
+
+        <Textarea
+          label="Notes"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Key takeaways, lessons learned, follow-up items..."
+          rows={4}
+        />
+
+        <div className="flex items-center gap-3">
+          <Button onClick={handleSave} disabled={saving}>
+            {saving ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Save className="w-4 h-4" />
+            )}
+            Save Recap
+          </Button>
+
+          {event.status === "completed" && !event.is_archived && (
+            <Button variant="secondary" onClick={handleArchive}>
+              <Archive className="w-4 h-4" />
+              Archive Event
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
