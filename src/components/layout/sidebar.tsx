@@ -37,12 +37,12 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-64 bg-harley-dark border-r border-harley-gray flex flex-col transform transition-transform duration-200 lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 w-64 bg-harley-dark/80 backdrop-blur-xl border-r border-harley-gray/60 flex flex-col transform transition-transform duration-200 lg:translate-x-0 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         {/* Logo */}
-        <div className="h-16 flex items-center justify-between px-5 border-b border-harley-gray shrink-0">
+        <div className="h-16 flex items-center justify-between px-5 border-b border-harley-gray/60 shrink-0">
           <Link
             href="/dashboard"
             className="flex items-center gap-2.5"
@@ -105,7 +105,7 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
         </nav>
 
         {/* Footer */}
-        <div className="px-5 py-4 border-t border-harley-gray">
+        <div className="px-5 py-4 border-t border-harley-gray/60">
           <p className="text-[10px] text-harley-text-muted/50 text-center">
             Harley Event Dashboard v1.0
           </p>

@@ -109,7 +109,7 @@ export function DocumentManager({
         <select
           value={selectedTag}
           onChange={(e) => setSelectedTag(e.target.value as DocumentTag)}
-          className="px-3 py-2 rounded-lg bg-harley-gray border border-harley-gray-lighter text-harley-text text-sm focus:outline-none focus:border-harley-orange"
+          className="px-3 py-2 rounded-lg bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-sm focus:outline-none focus:border-harley-orange/70 focus:ring-1 focus:ring-harley-orange/20 transition-all duration-150"
         >
           {DOCUMENT_TAGS.map((tag) => (
             <option key={tag.value} value={tag.value}>

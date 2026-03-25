@@ -107,7 +107,7 @@ export function CommentsSection({
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="Add a comment..."
-          className="flex-1 px-4 py-2 rounded-lg bg-harley-gray border border-harley-gray-lighter text-harley-text text-sm placeholder-harley-text-muted focus:outline-none focus:border-harley-orange transition-colors"
+          className="flex-1 px-4 py-2 rounded-lg bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-sm placeholder-harley-text-muted/60 focus:outline-none focus:border-harley-orange/70 focus:ring-1 focus:ring-harley-orange/20 transition-all duration-150"
         />
         <Button type="submit" size="sm" disabled={submitting || !content.trim()}>
           <Send className="w-4 h-4" />

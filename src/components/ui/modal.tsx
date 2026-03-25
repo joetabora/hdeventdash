@@ -40,13 +40,13 @@ export function Modal({ isOpen, onClose, title, children, size = "md" }: ModalPr
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
       onClick={(e) => {
         if (e.target === overlayRef.current) onClose();
       }}
     >
       <div
-        className={`w-full ${sizeClasses[size]} bg-harley-dark rounded-xl border border-harley-gray shadow-2xl max-h-[90vh] flex flex-col`}
+        className={`w-full ${sizeClasses[size]} bg-harley-dark rounded-xl border border-harley-gray-lighter/30 shadow-[0_8px_40px_rgba(0,0,0,0.5)] max-h-[90vh] flex flex-col`}
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-harley-gray">
           <h2 className="text-lg font-semibold text-harley-text">{title}</h2>

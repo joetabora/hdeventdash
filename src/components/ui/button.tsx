@@ -10,13 +10,13 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<Variant, string> = {
   primary:
-    "bg-harley-orange text-white hover:bg-harley-orange-light focus:ring-harley-orange/50",
+    "bg-harley-orange text-white hover:bg-harley-orange-light active:bg-harley-orange-dark",
   secondary:
-    "bg-harley-gray text-harley-text hover:bg-harley-gray-light border border-harley-gray-lighter focus:ring-harley-gray-lighter/50",
+    "bg-harley-gray-light/60 text-harley-text hover:bg-harley-gray-light border border-harley-gray-lighter/60 active:bg-harley-gray-lighter/40",
   ghost:
-    "bg-transparent text-harley-text-muted hover:bg-harley-gray hover:text-harley-text focus:ring-harley-gray/50",
+    "bg-transparent text-harley-text-muted hover:bg-harley-gray-light/50 hover:text-harley-text active:bg-harley-gray-light",
   danger:
-    "bg-harley-danger text-white hover:bg-harley-danger/80 focus:ring-harley-danger/50",
+    "bg-harley-danger/90 text-white hover:bg-harley-danger active:bg-harley-danger/80",
 };
 
 const sizeStyles: Record<Size, string> = {
@@ -30,7 +30,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         ref={ref}
-        className={`inline-flex items-center justify-center gap-2 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
+        className={`inline-flex items-center justify-center gap-2 font-medium rounded-lg transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
         {...props}
       >
         {children}

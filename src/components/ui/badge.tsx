@@ -9,12 +9,12 @@ interface BadgeProps {
 }
 
 const variantStyles: Record<BadgeVariant, string> = {
-  default: "bg-harley-gray-lighter/40 text-harley-text-muted",
-  success: "bg-harley-success/20 text-harley-success",
-  warning: "bg-harley-warning/20 text-harley-warning",
-  danger: "bg-harley-danger/20 text-harley-danger",
-  info: "bg-harley-info/20 text-harley-info",
-  orange: "bg-harley-orange/20 text-harley-orange",
+  default: "bg-harley-gray-lighter/30 text-harley-text-muted",
+  success: "bg-harley-success/15 text-harley-success",
+  warning: "bg-harley-warning/15 text-harley-warning",
+  danger: "bg-harley-danger/15 text-harley-danger",
+  info: "bg-harley-info/15 text-harley-info",
+  orange: "bg-harley-orange/15 text-harley-orange",
 };
 
 export function Badge({ children, variant = "default", className = "" }: BadgeProps) {

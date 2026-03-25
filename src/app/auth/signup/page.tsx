@@ -81,7 +81,7 @@ export default function SignupPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full px-4 py-2.5 rounded-lg bg-harley-gray border border-harley-gray-lighter text-harley-text placeholder-harley-text-muted focus:outline-none focus:border-harley-orange transition-colors"
+                  className="w-full px-4 py-2.5 rounded-lg bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text placeholder-harley-text-muted/60 focus:outline-none focus:border-harley-orange/70 focus:ring-1 focus:ring-harley-orange/20 transition-all duration-150"
                   placeholder="you@example.com"
                 />
               </div>
@@ -95,7 +95,7 @@ export default function SignupPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full px-4 py-2.5 rounded-lg bg-harley-gray border border-harley-gray-lighter text-harley-text placeholder-harley-text-muted focus:outline-none focus:border-harley-orange transition-colors"
+                  className="w-full px-4 py-2.5 rounded-lg bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text placeholder-harley-text-muted/60 focus:outline-none focus:border-harley-orange/70 focus:ring-1 focus:ring-harley-orange/20 transition-all duration-150"
                   placeholder="••••••••"
                 />
               </div>
@@ -109,7 +109,7 @@ export default function SignupPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  className="w-full px-4 py-2.5 rounded-lg bg-harley-gray border border-harley-gray-lighter text-harley-text placeholder-harley-text-muted focus:outline-none focus:border-harley-orange transition-colors"
+                  className="w-full px-4 py-2.5 rounded-lg bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text placeholder-harley-text-muted/60 focus:outline-none focus:border-harley-orange/70 focus:ring-1 focus:ring-harley-orange/20 transition-all duration-150"
                   placeholder="••••••••"
                 />
               </div>

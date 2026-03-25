@@ -42,7 +42,7 @@ export function Filters({
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Search events..."
-          className="w-full pl-10 pr-4 py-2 rounded-lg bg-harley-gray border border-harley-gray-lighter text-harley-text placeholder-harley-text-muted focus:outline-none focus:border-harley-orange transition-colors text-sm"
+          className="w-full pl-10 pr-4 py-2 rounded-lg bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text placeholder-harley-text-muted/60 focus:outline-none focus:border-harley-orange/70 focus:ring-1 focus:ring-harley-orange/20 transition-all duration-150 text-sm"
         />
       </div>
 
@@ -52,7 +52,7 @@ export function Filters({
           <select
             value={locationFilter}
             onChange={(e) => onLocationFilterChange(e.target.value)}
-            className="px-3 py-2 rounded-lg bg-harley-gray border border-harley-gray-lighter text-harley-text text-sm focus:outline-none focus:border-harley-orange transition-colors"
+            className="px-3 py-2 rounded-lg bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-sm focus:outline-none focus:border-harley-orange/70 focus:ring-1 focus:ring-harley-orange/20 transition-all duration-150"
           >
             <option value="">All Locations</option>
             {locations.map((loc) => (
@@ -68,7 +68,7 @@ export function Filters({
         <select
           value={ownerFilter}
           onChange={(e) => onOwnerFilterChange(e.target.value)}
-          className="px-3 py-2 rounded-lg bg-harley-gray border border-harley-gray-lighter text-harley-text text-sm focus:outline-none focus:border-harley-orange transition-colors"
+          className="px-3 py-2 rounded-lg bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-sm focus:outline-none focus:border-harley-orange/70 focus:ring-1 focus:ring-harley-orange/20 transition-all duration-150"
         >
           <option value="">All Owners</option>
           {owners.map((owner) => (

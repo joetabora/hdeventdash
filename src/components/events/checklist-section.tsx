@@ -123,7 +123,7 @@ export function ChecklistSectionComponent({
                 onKeyDown={(e) => e.key === "Enter" && handleAddItem()}
                 placeholder="New checklist item..."
                 autoFocus
-                className="flex-1 px-3 py-1.5 rounded-lg bg-harley-gray border border-harley-gray-lighter text-harley-text text-sm placeholder-harley-text-muted focus:outline-none focus:border-harley-orange"
+                className="flex-1 px-3 py-1.5 rounded-lg bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-sm placeholder-harley-text-muted/60 focus:outline-none focus:border-harley-orange/70 focus:ring-1 focus:ring-harley-orange/20 transition-all duration-150"
               />
               <Button size="sm" onClick={handleAddItem}>
                 Add
@@ -230,7 +230,7 @@ function ChecklistItemRow({
               onChange={(e) => setAssigneeInput(e.target.value)}
               onBlur={() => onAssigneeChange(assigneeInput)}
               placeholder="Assign to..."
-              className="flex-1 px-2 py-1 rounded bg-harley-gray border border-harley-gray-lighter text-harley-text text-xs placeholder-harley-text-muted focus:outline-none focus:border-harley-orange"
+              className="flex-1 px-2 py-1 rounded bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-xs placeholder-harley-text-muted/60 focus:outline-none focus:border-harley-orange/70 transition-all duration-150"
             />
           </div>
           <div className="flex items-start gap-2">
@@ -241,7 +241,7 @@ function ChecklistItemRow({
               onChange={(e) => setCommentInput(e.target.value)}
               onBlur={() => onCommentChange(commentInput)}
               placeholder="Add a note..."
-              className="flex-1 px-2 py-1 rounded bg-harley-gray border border-harley-gray-lighter text-harley-text text-xs placeholder-harley-text-muted focus:outline-none focus:border-harley-orange"
+              className="flex-1 px-2 py-1 rounded bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-xs placeholder-harley-text-muted/60 focus:outline-none focus:border-harley-orange/70 transition-all duration-150"
             />
           </div>
         </div>

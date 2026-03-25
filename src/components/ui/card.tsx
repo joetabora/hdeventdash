@@ -24,11 +24,11 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
     return (
       <div
         ref={ref}
-        className={`bg-harley-dark rounded-xl border border-harley-gray shadow-sm ${
+        className={`bg-harley-dark rounded-xl border border-harley-gray/80 shadow-[0_1px_3px_rgba(0,0,0,0.3)] ${
           paddingStyles[padding]
         } ${
           hover
-            ? "hover:border-harley-orange/40 hover:shadow-md hover:shadow-harley-orange/5 transition-all duration-200"
+            ? "hover:border-harley-gray-lighter/60 hover:shadow-[0_4px_16px_rgba(0,0,0,0.4)] transition-all duration-200"
             : ""
         } ${interactive ? "cursor-pointer" : ""} ${className}`}
         {...props}
