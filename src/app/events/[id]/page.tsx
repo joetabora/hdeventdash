@@ -8,6 +8,7 @@ import {
   getChecklistItems,
   getEventDocuments,
   getEventComments,
+  getEventMedia,
   updateEvent,
   deleteEvent,
 } from "@/lib/events";
@@ -16,6 +17,7 @@ import {
   ChecklistItem,
   EventDocument,
   EventComment,
+  EventMedia,
   CHECKLIST_SECTIONS,
   EVENT_STATUSES,
   EventStatus,
@@ -28,6 +30,7 @@ import { EventForm } from "@/components/events/event-form";
 import { ChecklistSectionComponent } from "@/components/events/checklist-section";
 import { DocumentManager } from "@/components/events/document-manager";
 import { CommentsSection } from "@/components/events/comments-section";
+import { MediaGallery } from "@/components/events/media-gallery";
 import { EventRecap } from "@/components/events/event-recap";
 import { ProgressBar } from "@/components/events/progress-bar";
 import { DaysUntilEvent } from "@/components/events/days-until";
@@ -61,6 +64,7 @@ export default function EventDetailPage() {
   const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
   const [documents, setDocuments] = useState<EventDocument[]>([]);
   const [comments, setComments] = useState<EventComment[]>([]);
+  const [media, setMedia] = useState<EventMedia[]>([]);
   const [loading, setLoading] = useState(true);
   const [editModalOpen, setEditModalOpen] = useState(false);
 
@@ -68,16 +72,18 @@ export default function EventDetailPage() {
     const supabase = supabaseRef.current;
     if (!supabase) return;
     try {
-      const [ev, cl, docs, coms] = await Promise.all([
+      const [ev, cl, docs, coms, med] = await Promise.all([
         getEvent(supabase, id),
         getChecklistItems(supabase, id),
         getEventDocuments(supabase, id),
         getEventComments(supabase, id),
+        getEventMedia(supabase, id),
       ]);
       setEvent(ev);
       setChecklist(cl);
       setDocuments(docs);
       setComments(coms);
+      setMedia(med);
     } catch (err) {
       console.error("Failed to load event:", err);
     } finally {
@@ -397,6 +403,15 @@ export default function EventDetailPage() {
             <DocumentManager
               eventId={event.id}
               documents={documents}
+              onUpdate={loadAll}
+            />
+          </div>
+
+          {/* Media */}
+          <div className="mb-6">
+            <MediaGallery
+              eventId={event.id}
+              media={media}
               onUpdate={loadAll}
             />
           </div>

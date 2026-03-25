@@ -5,9 +5,11 @@ import {
   ChecklistItem,
   EventDocument,
   EventComment,
+  EventMedia,
   DEFAULT_CHECKLIST_ITEMS,
   ChecklistSection,
   DocumentTag,
+  MediaTag,
 } from "@/types/database";
 
 export async function getEvents(supabase: SupabaseClient) {
@@ -260,4 +262,62 @@ export async function deleteComment(supabase: SupabaseClient, id: string) {
     .delete()
     .eq("id", id);
   if (error) throw error;
+}
+
+// Media operations
+export async function getEventMedia(supabase: SupabaseClient, eventId: string) {
+  const { data, error } = await supabase
+    .from("event_media")
+    .select("*")
+    .eq("event_id", eventId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data as EventMedia[];
+}
+
+export async function uploadMedia(
+  supabase: SupabaseClient,
+  eventId: string,
+  file: File,
+  tag: MediaTag,
+  uploadedBy: string
+) {
+  const filePath = `${eventId}/media/${Date.now()}-${file.name}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("event-documents")
+    .upload(filePath, file);
+  if (uploadError) throw uploadError;
+
+  const { data, error } = await supabase
+    .from("event_media")
+    .insert({
+      event_id: eventId,
+      file_name: file.name,
+      file_path: filePath,
+      file_size: file.size,
+      file_type: file.type,
+      tag,
+      uploaded_by: uploadedBy,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return data as EventMedia;
+}
+
+export async function deleteMedia(supabase: SupabaseClient, media: EventMedia) {
+  await supabase.storage.from("event-documents").remove([media.file_path]);
+  const { error } = await supabase
+    .from("event_media")
+    .delete()
+    .eq("id", media.id);
+  if (error) throw error;
+}
+
+export function getMediaUrl(supabase: SupabaseClient, filePath: string) {
+  const { data } = supabase.storage
+    .from("event-documents")
+    .getPublicUrl(filePath);
+  return data.publicUrl;
 }

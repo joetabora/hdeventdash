@@ -83,6 +83,26 @@ export interface EventComment {
   created_at: string;
 }
 
+export type MediaTag = "social_media" | "recap" | "marketing_asset";
+
+export const MEDIA_TAGS: { value: MediaTag; label: string }[] = [
+  { value: "social_media", label: "Social Media" },
+  { value: "recap", label: "Recap" },
+  { value: "marketing_asset", label: "Marketing Asset" },
+];
+
+export interface EventMedia {
+  id: string;
+  event_id: string;
+  file_name: string;
+  file_path: string;
+  file_size: number;
+  file_type: string;
+  tag: MediaTag;
+  uploaded_by: string;
+  created_at: string;
+}
+
 export const CHECKLIST_SECTIONS = [
   "Booking & Logistics",
   "Marketing & Promotion",

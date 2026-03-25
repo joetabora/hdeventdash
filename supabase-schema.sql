@@ -61,6 +61,19 @@ create table public.event_comments (
   created_at timestamptz default now() not null
 );
 
+-- Event media
+create table public.event_media (
+  id uuid default uuid_generate_v4() primary key,
+  event_id uuid references public.events(id) on delete cascade not null,
+  file_name text not null,
+  file_path text not null,
+  file_size integer not null default 0,
+  file_type text not null default '',
+  tag text not null default 'social_media' check (tag in ('social_media', 'recap', 'marketing_asset')),
+  uploaded_by text not null default '',
+  created_at timestamptz default now() not null
+);
+
 -- Indexes
 create index idx_events_user_id on public.events(user_id);
 create index idx_events_status on public.events(status);
@@ -68,12 +81,14 @@ create index idx_events_date on public.events(date);
 create index idx_checklist_event_id on public.checklist_items(event_id);
 create index idx_documents_event_id on public.event_documents(event_id);
 create index idx_comments_event_id on public.event_comments(event_id);
+create index idx_media_event_id on public.event_media(event_id);
 
 -- Row Level Security
 alter table public.events enable row level security;
 alter table public.checklist_items enable row level security;
 alter table public.event_documents enable row level security;
 alter table public.event_comments enable row level security;
+alter table public.event_media enable row level security;
 
 -- Policies: authenticated users can CRUD their own events
 create policy "Users can view all events" on public.events
@@ -109,6 +124,16 @@ create policy "Users can insert documents" on public.event_documents
   for insert to authenticated with check (true);
 
 create policy "Users can delete documents" on public.event_documents
+  for delete to authenticated using (true);
+
+-- Media
+create policy "Users can view media" on public.event_media
+  for select to authenticated using (true);
+
+create policy "Users can insert media" on public.event_media
+  for insert to authenticated with check (true);
+
+create policy "Users can delete media" on public.event_media
   for delete to authenticated using (true);
 
 -- Comments
