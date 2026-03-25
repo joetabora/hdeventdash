@@ -31,6 +31,7 @@ import { ChecklistSectionComponent } from "@/components/events/checklist-section
 import { DocumentManager } from "@/components/events/document-manager";
 import { CommentsSection } from "@/components/events/comments-section";
 import { MediaGallery } from "@/components/events/media-gallery";
+import { AiAssistant } from "@/components/events/ai-assistant";
 import { EventRecap } from "@/components/events/event-recap";
 import { ProgressBar } from "@/components/events/progress-bar";
 import { DaysUntilEvent } from "@/components/events/days-until";
@@ -414,6 +415,11 @@ export default function EventDetailPage() {
               media={media}
               onUpdate={loadAll}
             />
+          </div>
+
+          {/* AI Assistant */}
+          <div className="mb-6">
+            <AiAssistant event={event} />
           </div>
 
           {/* Comments */}
