@@ -19,6 +19,34 @@ export async function getEvents(supabase: SupabaseClient) {
   return data as Event[];
 }
 
+export type ChecklistStats = Record<
+  string,
+  { total: number; completed: number }
+>;
+
+export async function getChecklistStatsForEvents(
+  supabase: SupabaseClient,
+  eventIds: string[]
+): Promise<ChecklistStats> {
+  if (eventIds.length === 0) return {};
+
+  const { data, error } = await supabase
+    .from("checklist_items")
+    .select("event_id, is_checked")
+    .in("event_id", eventIds);
+  if (error) throw error;
+
+  const stats: ChecklistStats = {};
+  for (const item of data) {
+    if (!stats[item.event_id]) {
+      stats[item.event_id] = { total: 0, completed: 0 };
+    }
+    stats[item.event_id].total++;
+    if (item.is_checked) stats[item.event_id].completed++;
+  }
+  return stats;
+}
+
 export async function getEvent(supabase: SupabaseClient, id: string) {
   const { data, error } = await supabase
     .from("events")

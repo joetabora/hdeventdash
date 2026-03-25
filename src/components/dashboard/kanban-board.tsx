@@ -18,9 +18,10 @@ import { EventCard } from "@/components/events/event-card";
 interface KanbanBoardProps {
   events: Event[];
   onStatusChange: (eventId: string, newStatus: EventStatus) => Promise<void>;
+  atRiskIds: Set<string>;
 }
 
-export function KanbanBoard({ events, onStatusChange }: KanbanBoardProps) {
+export function KanbanBoard({ events, onStatusChange, atRiskIds }: KanbanBoardProps) {
   const [activeEvent, setActiveEvent] = useState<Event | null>(null);
 
   const sensors = useSensors(
@@ -63,13 +64,20 @@ export function KanbanBoard({ events, onStatusChange }: KanbanBoardProps) {
               title={label}
               count={columnEvents.length}
               events={columnEvents}
+              atRiskIds={atRiskIds}
             />
           );
         })}
       </div>
 
       <DragOverlay>
-        {activeEvent ? <EventCard event={activeEvent} compact /> : null}
+        {activeEvent ? (
+          <EventCard
+            event={activeEvent}
+            compact
+            atRisk={atRiskIds.has(activeEvent.id)}
+          />
+        ) : null}
       </DragOverlay>
     </DndContext>
   );

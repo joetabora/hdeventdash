@@ -10,9 +10,10 @@ interface KanbanColumnProps {
   title: string;
   count: number;
   events: Event[];
+  atRiskIds: Set<string>;
 }
 
-export function KanbanColumn({ id, title, count, events }: KanbanColumnProps) {
+export function KanbanColumn({ id, title, count, events, atRiskIds }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id });
 
   return (
@@ -32,7 +33,11 @@ export function KanbanColumn({ id, title, count, events }: KanbanColumnProps) {
       </div>
       <div className="p-3 space-y-3 min-h-[200px]">
         {events.map((event) => (
-          <DraggableEventCard key={event.id} event={event} />
+          <DraggableEventCard
+            key={event.id}
+            event={event}
+            atRisk={atRiskIds.has(event.id)}
+          />
         ))}
         {events.length === 0 && (
           <p className="text-xs text-harley-text-muted text-center py-8">
@@ -44,7 +49,7 @@ export function KanbanColumn({ id, title, count, events }: KanbanColumnProps) {
   );
 }
 
-function DraggableEventCard({ event }: { event: Event }) {
+function DraggableEventCard({ event, atRisk }: { event: Event; atRisk: boolean }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({ id: event.id });
 
@@ -62,7 +67,7 @@ function DraggableEventCard({ event }: { event: Event }) {
       {...attributes}
       className={`${isDragging ? "opacity-40" : ""}`}
     >
-      <EventCard event={event} />
+      <EventCard event={event} atRisk={atRisk} />
     </div>
   );
 }

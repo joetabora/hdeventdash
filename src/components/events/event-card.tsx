@@ -2,29 +2,42 @@
 
 import Link from "next/link";
 import { Event } from "@/types/database";
-import { StatusBadge } from "@/components/ui/badge";
-import { CalendarDays, MapPin, User } from "lucide-react";
+import { StatusBadge, Badge } from "@/components/ui/badge";
+import { CalendarDays, MapPin, User, AlertTriangle } from "lucide-react";
 import { format, parseISO } from "date-fns";
 
 interface EventCardProps {
   event: Event;
   compact?: boolean;
+  atRisk?: boolean;
 }
 
-export function EventCard({ event, compact = false }: EventCardProps) {
+export function EventCard({ event, compact = false, atRisk = false }: EventCardProps) {
   return (
     <Link href={`/events/${event.id}`}>
-      <div className="bg-harley-dark rounded-lg border border-harley-gray p-4 hover:border-harley-orange/50 transition-colors cursor-pointer group">
+      <div
+        className={`bg-harley-dark rounded-lg border p-4 hover:border-harley-orange/50 transition-colors cursor-pointer group ${
+          atRisk ? "border-harley-danger/50" : "border-harley-gray"
+        }`}
+      >
         <div className="flex items-start justify-between gap-2 mb-2">
           <h3 className="font-semibold text-harley-text group-hover:text-harley-orange transition-colors line-clamp-1">
             {event.name}
           </h3>
-          {event.is_live_mode && (
-            <span className="shrink-0 w-2 h-2 rounded-full bg-harley-success animate-pulse" />
-          )}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {atRisk && (
+              <AlertTriangle className="w-4 h-4 text-harley-danger" />
+            )}
+            {event.is_live_mode && (
+              <span className="w-2 h-2 rounded-full bg-harley-success animate-pulse" />
+            )}
+          </div>
         </div>
 
-        <StatusBadge status={event.status} />
+        <div className="flex items-center gap-2 flex-wrap">
+          <StatusBadge status={event.status} />
+          {atRisk && <Badge variant="danger">At Risk</Badge>}
+        </div>
 
         {!compact && (
           <div className="mt-3 space-y-1.5">

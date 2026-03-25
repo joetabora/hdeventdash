@@ -30,6 +30,7 @@ import { DocumentManager } from "@/components/events/document-manager";
 import { CommentsSection } from "@/components/events/comments-section";
 import { EventRecap } from "@/components/events/event-recap";
 import { ProgressBar } from "@/components/events/progress-bar";
+import { isEventAtRisk } from "@/lib/at-risk";
 import {
   ArrowLeft,
   Loader2,
@@ -43,6 +44,7 @@ import {
   User,
   CheckCircle2,
   AlertCircle,
+  AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
@@ -89,6 +91,12 @@ export default function EventDetailPage() {
   const allChecklistComplete = useMemo(() => {
     return checklist.length > 0 && checklist.every((item) => item.is_checked);
   }, [checklist]);
+
+  const atRisk = useMemo(() => {
+    if (!event) return false;
+    const completed = checklist.filter((i) => i.is_checked).length;
+    return isEventAtRisk(event.date, event.status, checklist.length, completed);
+  }, [event, checklist]);
 
   const isLiveMode = event?.is_live_mode ?? false;
 
@@ -228,6 +236,20 @@ export default function EventDetailPage() {
           </Link>
 
           <ProgressBar checklist={checklist} />
+
+          {atRisk && (
+            <div className="mb-6 p-4 rounded-xl bg-harley-danger/10 border border-harley-danger/30 flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5 text-harley-danger shrink-0" />
+              <div>
+                <span className="text-sm font-semibold text-harley-danger">
+                  At Risk
+                </span>
+                <span className="text-sm text-harley-danger/80 ml-2">
+                  This event is within 5 days and the checklist is not complete.
+                </span>
+              </div>
+            </div>
+          )}
 
           {/* Header */}
           <div className="bg-harley-dark rounded-xl border border-harley-gray p-6 mb-6">

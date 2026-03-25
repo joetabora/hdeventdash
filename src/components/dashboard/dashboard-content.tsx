@@ -3,8 +3,14 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { getEvents, updateEvent } from "@/lib/events";
+import {
+  getEvents,
+  updateEvent,
+  getChecklistStatsForEvents,
+  ChecklistStats,
+} from "@/lib/events";
 import { Event, EventStatus } from "@/types/database";
+import { isEventAtRisk } from "@/lib/at-risk";
 import { KanbanBoard } from "@/components/dashboard/kanban-board";
 import { CalendarView } from "@/components/dashboard/calendar-view";
 import { ListView } from "@/components/dashboard/list-view";
@@ -24,6 +30,7 @@ export function DashboardContent() {
   const currentView: ViewType = viewParam || "kanban";
 
   const [events, setEvents] = useState<Event[]>([]);
+  const [checklistStats, setChecklistStats] = useState<ChecklistStats>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
@@ -34,7 +41,14 @@ export function DashboardContent() {
     if (!supabase) return;
     try {
       const data = await getEvents(supabase);
-      setEvents(data.filter((e) => !e.is_archived));
+      const active = data.filter((e) => !e.is_archived);
+      setEvents(active);
+
+      const stats = await getChecklistStatsForEvents(
+        supabase,
+        active.map((e) => e.id)
+      );
+      setChecklistStats(stats);
     } catch (err) {
       console.error("Failed to load events:", err);
     } finally {
@@ -45,6 +59,20 @@ export function DashboardContent() {
   useEffect(() => {
     loadEvents();
   }, [loadEvents]);
+
+  const atRiskIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const event of events) {
+      const stats = checklistStats[event.id];
+      if (
+        stats &&
+        isEventAtRisk(event.date, event.status, stats.total, stats.completed)
+      ) {
+        ids.add(event.id);
+      }
+    }
+    return ids;
+  }, [events, checklistStats]);
 
   const filteredEvents = useMemo(() => {
     return events.filter((event) => {
@@ -130,12 +158,15 @@ export function DashboardContent() {
         <KanbanBoard
           events={filteredEvents}
           onStatusChange={handleStatusChange}
+          atRiskIds={atRiskIds}
         />
       )}
       {currentView === "calendar" && (
         <CalendarView events={filteredEvents} />
       )}
-      {currentView === "list" && <ListView events={filteredEvents} />}
+      {currentView === "list" && (
+        <ListView events={filteredEvents} atRiskIds={atRiskIds} />
+      )}
     </div>
   );
 }
