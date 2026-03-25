@@ -28,26 +28,32 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  const isAuthPage =
-    request.nextUrl.pathname.startsWith("/auth/login") ||
-    request.nextUrl.pathname.startsWith("/auth/signup");
-  const isCallback = request.nextUrl.pathname.startsWith("/auth/callback");
-  const isPublicPage = request.nextUrl.pathname === "/";
+    const isAuthPage =
+      request.nextUrl.pathname.startsWith("/auth/login") ||
+      request.nextUrl.pathname.startsWith("/auth/signup");
+    const isCallback = request.nextUrl.pathname.startsWith("/auth/callback");
+    const isPublicPage = request.nextUrl.pathname === "/";
 
-  if (!user && !isAuthPage && !isCallback && !isPublicPage) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/auth/login";
-    return NextResponse.redirect(url);
-  }
+    if (!user && !isAuthPage && !isCallback && !isPublicPage) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/auth/login";
+      return NextResponse.redirect(url);
+    }
 
-  if (user && isAuthPage) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
-    return NextResponse.redirect(url);
+    if (user && isAuthPage) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/dashboard";
+      return NextResponse.redirect(url);
+    }
+  } catch {
+    // If Supabase is unreachable, allow the request through
+    // rather than hanging the entire deployment
+    return NextResponse.next({ request });
   }
 
   return supabaseResponse;
