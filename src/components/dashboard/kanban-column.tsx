@@ -19,19 +19,26 @@ export function KanbanColumn({ id, title, count, events, atRiskIds }: KanbanColu
   return (
     <div
       ref={setNodeRef}
-      className={`flex-shrink-0 w-72 bg-harley-black rounded-xl border transition-colors ${
-        isOver ? "border-harley-orange" : "border-harley-gray"
+      className={`flex flex-col rounded-xl border transition-all duration-200 min-h-[calc(100vh-16rem)] ${
+        isOver
+          ? "border-harley-orange/60 bg-harley-orange/[0.03] shadow-[inset_0_0_20px_rgba(242,101,34,0.04)]"
+          : "border-harley-gray/60 bg-harley-black/60"
       }`}
     >
-      <div className="px-4 py-3 border-b border-harley-gray">
+      {/* Sticky header */}
+      <div className="sticky top-0 z-10 px-3.5 py-3 border-b border-harley-gray/60 bg-harley-black/90 backdrop-blur-sm rounded-t-xl">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-harley-text">{title}</h3>
-          <span className="text-xs text-harley-text-muted bg-harley-gray rounded-full px-2 py-0.5">
+          <h3 className="text-xs font-semibold text-harley-text uppercase tracking-wide truncate">
+            {title}
+          </h3>
+          <span className="text-[10px] font-bold text-harley-text-muted bg-harley-gray-light/50 rounded-full min-w-[22px] h-[22px] flex items-center justify-center px-1.5">
             {count}
           </span>
         </div>
       </div>
-      <div className="p-3 space-y-3 min-h-[200px]">
+
+      {/* Scrollable card area */}
+      <div className="flex-1 p-2.5 space-y-2.5 overflow-y-auto">
         {events.map((event) => (
           <DraggableEventCard
             key={event.id}
@@ -40,9 +47,11 @@ export function KanbanColumn({ id, title, count, events, atRiskIds }: KanbanColu
           />
         ))}
         {events.length === 0 && (
-          <p className="text-xs text-harley-text-muted text-center py-8">
-            Drop events here
-          </p>
+          <div className={`flex items-center justify-center py-12 rounded-lg border border-dashed transition-colors ${
+            isOver ? "border-harley-orange/40 text-harley-orange/60" : "border-harley-gray/40 text-harley-text-muted/40"
+          }`}>
+            <p className="text-xs font-medium">Drop here</p>
+          </div>
         )}
       </div>
     </div>
@@ -56,6 +65,7 @@ function DraggableEventCard({ event, atRisk }: { event: Event; atRisk: boolean }
   const style = transform
     ? {
         transform: `translate(${transform.x}px, ${transform.y}px)`,
+        transition: "box-shadow 200ms ease",
       }
     : undefined;
 
@@ -65,7 +75,9 @@ function DraggableEventCard({ event, atRisk }: { event: Event; atRisk: boolean }
       style={style}
       {...listeners}
       {...attributes}
-      className={`${isDragging ? "opacity-40" : ""}`}
+      className={`transition-opacity duration-150 ${
+        isDragging ? "opacity-30 scale-[0.98]" : "opacity-100"
+      }`}
     >
       <EventCard event={event} atRisk={atRisk} />
     </div>

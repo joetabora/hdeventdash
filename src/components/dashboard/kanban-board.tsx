@@ -21,11 +21,16 @@ interface KanbanBoardProps {
   atRiskIds: Set<string>;
 }
 
+const dropAnimationConfig = {
+  duration: 200,
+  easing: "cubic-bezier(0.25, 0.1, 0.25, 1)",
+};
+
 export function KanbanBoard({ events, onStatusChange, atRiskIds }: KanbanBoardProps) {
   const [activeEvent, setActiveEvent] = useState<Event | null>(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
   );
 
   function handleDragStart(event: DragStartEvent) {
@@ -54,7 +59,7 @@ export function KanbanBoard({ events, onStatusChange, atRiskIds }: KanbanBoardPr
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex gap-4 overflow-x-auto pb-4 min-h-[calc(100vh-12rem)]">
+      <div className="grid grid-cols-6 gap-3 min-w-[1080px] overflow-x-auto pb-2">
         {EVENT_STATUSES.map(({ value, label }) => {
           const columnEvents = events.filter((e) => e.status === value);
           return (
@@ -70,13 +75,15 @@ export function KanbanBoard({ events, onStatusChange, atRiskIds }: KanbanBoardPr
         })}
       </div>
 
-      <DragOverlay>
+      <DragOverlay dropAnimation={dropAnimationConfig}>
         {activeEvent ? (
-          <EventCard
-            event={activeEvent}
-            compact
-            atRisk={atRiskIds.has(activeEvent.id)}
-          />
+          <div className="rotate-[2deg] scale-[1.03] opacity-95">
+            <EventCard
+              event={activeEvent}
+              compact
+              atRisk={atRiskIds.has(activeEvent.id)}
+            />
+          </div>
         ) : null}
       </DragOverlay>
     </DndContext>

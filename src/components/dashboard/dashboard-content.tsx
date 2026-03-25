@@ -217,11 +217,13 @@ export function DashboardContent() {
       />
 
       {currentView === "kanban" && (
-        <KanbanBoard
-          events={filteredEvents}
-          onStatusChange={handleStatusChange}
-          atRiskIds={atRiskIds}
-        />
+        <div className="overflow-x-auto -mx-2 px-2">
+          <KanbanBoard
+            events={filteredEvents}
+            onStatusChange={handleStatusChange}
+            atRiskIds={atRiskIds}
+          />
+        </div>
       )}
       {currentView === "calendar" && (
         <CalendarView events={filteredEvents} />
