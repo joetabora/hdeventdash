@@ -10,7 +10,6 @@ import {
   Trash2,
   User,
   MessageSquare,
-  ChevronDown,
   ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -83,11 +82,9 @@ export function ChecklistSectionComponent({
         className="w-full flex items-center justify-between px-5 py-4 hover:bg-harley-gray/30 transition-colors"
       >
         <div className="flex items-center gap-3">
-          {isExpanded ? (
-            <ChevronDown className="w-4 h-4 text-harley-text-muted" />
-          ) : (
-            <ChevronRight className="w-4 h-4 text-harley-text-muted" />
-          )}
+          <ChevronRight className={`w-4 h-4 text-harley-text-muted transition-transform duration-200 ${
+            isExpanded ? "rotate-90" : "rotate-0"
+          }`} />
           <h3 className="font-semibold text-harley-text">{section}</h3>
           <span className="text-xs text-harley-text-muted">
             {checkedCount}/{items.length}
@@ -102,7 +99,7 @@ export function ChecklistSectionComponent({
       </button>
 
       {isExpanded && (
-        <div className="px-5 pb-4 space-y-2">
+        <div className="px-5 pb-4 space-y-2 animate-fade-in-up">
           {items.map((item) => (
             <ChecklistItemRow
               key={item.id}
@@ -168,27 +165,40 @@ function ChecklistItemRow({
   onCommentChange: (val: string) => void;
 }) {
   const [showDetails, setShowDetails] = useState(false);
+  const [justChecked, setJustChecked] = useState(false);
   const [assigneeInput, setAssigneeInput] = useState(item.assignee || "");
   const [commentInput, setCommentInput] = useState(item.comment || "");
 
+  function handleToggle() {
+    if (!item.is_checked) {
+      setJustChecked(true);
+      setTimeout(() => setJustChecked(false), 300);
+    }
+    onToggle();
+  }
+
   return (
     <div className="group">
-      <div className="flex items-center gap-3 py-1.5">
+      <div className="flex items-center gap-3 py-1.5 rounded-lg px-1.5 -mx-1.5 hover:bg-harley-gray-light/20 transition-colors duration-150">
         <button
-          onClick={onToggle}
-          className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
+          onClick={handleToggle}
+          className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-all duration-200 ${
+            justChecked ? "animate-check-pop" : ""
+          } ${
             item.is_checked
-              ? "bg-harley-orange border-harley-orange"
-              : "border-harley-gray-lighter hover:border-harley-orange"
+              ? "bg-harley-orange border-harley-orange shadow-sm shadow-harley-orange/30"
+              : "border-harley-gray-lighter hover:border-harley-orange hover:shadow-sm hover:shadow-harley-orange/20"
           }`}
         >
-          {item.is_checked && <Check className="w-3 h-3 text-white" />}
+          <Check className={`w-3 h-3 text-white transition-all duration-200 ${
+            item.is_checked ? "opacity-100 scale-100" : "opacity-0 scale-50"
+          }`} />
         </button>
 
         <span
-          className={`flex-1 text-sm ${
+          className={`flex-1 text-sm transition-all duration-200 ${
             item.is_checked
-              ? "line-through text-harley-text-muted"
+              ? "line-through text-harley-text-muted/60"
               : "text-harley-text"
           }`}
         >
@@ -202,17 +212,17 @@ function ChecklistItemRow({
           </span>
         )}
 
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-150">
           <button
             onClick={() => setShowDetails(!showDetails)}
-            className="p-1 text-harley-text-muted hover:text-harley-orange transition-colors"
+            className="p-1.5 rounded-md text-harley-text-muted hover:text-harley-orange hover:bg-harley-gray-light/40 transition-all duration-150"
             title="Details"
           >
             <MessageSquare className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={onDelete}
-            className="p-1 text-harley-text-muted hover:text-harley-danger transition-colors"
+            className="p-1.5 rounded-md text-harley-text-muted hover:text-harley-danger hover:bg-harley-danger/10 transition-all duration-150"
             title="Delete"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -221,7 +231,7 @@ function ChecklistItemRow({
       </div>
 
       {showDetails && (
-        <div className="ml-8 pl-3 border-l-2 border-harley-gray space-y-2 py-2">
+        <div className="ml-8 pl-3 border-l-2 border-harley-gray space-y-2 py-2 animate-fade-in-up">
           <div className="flex items-center gap-2">
             <User className="w-3.5 h-3.5 text-harley-text-muted shrink-0" />
             <input

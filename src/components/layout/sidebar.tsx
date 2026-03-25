@@ -92,13 +92,13 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
                 key={item.href}
                 href={item.href}
                 onClick={onClose}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${
                   isActive
                     ? "bg-harley-orange/15 text-harley-orange"
-                    : "text-harley-text-muted hover:bg-harley-gray hover:text-harley-text"
+                    : "text-harley-text-muted hover:bg-harley-gray-light/30 hover:text-harley-text hover:translate-x-0.5"
                 }`}
               >
-                <item.icon className="w-4 h-4" />
+                <item.icon className={`w-4 h-4 transition-transform duration-150 ${isActive ? "" : "group-hover:scale-110"}`} />
                 {item.label}
               </Link>
             );

@@ -20,7 +20,7 @@ const accentStyles = {
 
 function MetricCard({ label, value, subtext, icon, accent = "orange" }: MetricCardProps) {
   return (
-    <Card padding="sm" hover>
+    <Card padding="sm" hover className="group">
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs font-medium text-harley-text-muted uppercase tracking-wider">
@@ -31,7 +31,7 @@ function MetricCard({ label, value, subtext, icon, accent = "orange" }: MetricCa
             <p className="text-xs text-harley-text-muted mt-0.5">{subtext}</p>
           )}
         </div>
-        <div className={`p-2.5 rounded-lg ${accentStyles[accent]}`}>
+        <div className={`p-2.5 rounded-lg transition-transform duration-200 group-hover:scale-110 ${accentStyles[accent]}`}>
           {icon}
         </div>
       </div>

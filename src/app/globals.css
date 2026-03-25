@@ -73,3 +73,30 @@ body {
 input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(1);
 }
+
+/* Checkbox pop animation */
+@keyframes check-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+.animate-check-pop {
+  animation: check-pop 250ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Fade-in for dynamically appearing content */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 200ms ease-out;
+}

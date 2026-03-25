@@ -24,7 +24,7 @@ export function EventCard({ event, compact = false, atRisk = false }: EventCardP
         className={`group ${atRisk ? "border-harley-danger/50" : ""}`}
       >
         <div className="flex items-start justify-between gap-2 mb-2">
-          <h3 className="font-semibold text-harley-text group-hover:text-harley-orange transition-colors line-clamp-1">
+          <h3 className="font-semibold text-harley-text group-hover:text-harley-orange transition-colors duration-200 line-clamp-1">
             {event.name}
           </h3>
           <div className="flex items-center gap-1.5 shrink-0">
