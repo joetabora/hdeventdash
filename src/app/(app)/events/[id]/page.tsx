@@ -33,6 +33,7 @@ import { CommentsSection } from "@/components/events/comments-section";
 import { MediaGallery } from "@/components/events/media-gallery";
 import { AiAssistant } from "@/components/events/ai-assistant";
 import { EventRecap } from "@/components/events/event-recap";
+import { EventMobileActionBar } from "@/components/events/event-mobile-action-bar";
 import { ProgressBar } from "@/components/events/progress-bar";
 import { DaysUntilEvent } from "@/components/events/days-until";
 import { isEventAtRisk } from "@/lib/at-risk";
@@ -230,7 +231,8 @@ export default function EventDetailPage() {
   // Live Mode — checklist-first, large type, minimal chrome (sidebar hidden via .event-live-shell)
   if (isLiveMode) {
     return (
-      <div className="w-full max-w-2xl mx-auto pb-8 safe-bottom space-y-5 sm:space-y-6">
+      <>
+      <div className="w-full max-w-2xl mx-auto pb-28 md:pb-8 safe-bottom space-y-5 sm:space-y-6">
         {/* Key actions — sticky for thumb reach on mobile */}
         <div className="sticky top-0 z-10 -mx-1 px-1 py-3 sm:py-4 bg-harley-black/95 backdrop-blur-md border-b border-harley-gray/50 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           <Link
@@ -326,6 +328,12 @@ export default function EventDetailPage() {
           })}
         </div>
       </div>
+      <EventMobileActionBar
+        eventId={event.id}
+        checklist={checklist}
+        onUpdate={loadAll}
+      />
+      </>
     );
   }
 
@@ -335,7 +343,7 @@ export default function EventDetailPage() {
 
   return (
     <>
-      <div className="max-w-5xl">
+      <div className="max-w-5xl pb-28 md:pb-0">
         {/* Back link */}
         <Link
           href="/dashboard"
@@ -602,6 +610,12 @@ export default function EventDetailPage() {
           submitLabel="Save Changes"
         />
       </Modal>
+
+      <EventMobileActionBar
+        eventId={event.id}
+        checklist={checklist}
+        onUpdate={loadAll}
+      />
     </>
   );
 }
