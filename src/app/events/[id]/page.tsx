@@ -30,6 +30,7 @@ import { DocumentManager } from "@/components/events/document-manager";
 import { CommentsSection } from "@/components/events/comments-section";
 import { EventRecap } from "@/components/events/event-recap";
 import { ProgressBar } from "@/components/events/progress-bar";
+import { DaysUntilEvent } from "@/components/events/days-until";
 import { isEventAtRisk } from "@/lib/at-risk";
 import {
   ArrowLeft,
@@ -273,6 +274,7 @@ export default function EventDetailPage() {
                     <CalendarDays className="w-4 h-4" />
                     {format(parseISO(event.date), "MMMM d, yyyy")}
                   </span>
+                  <DaysUntilEvent date={event.date} size="md" />
                   {event.location && (
                     <span className="flex items-center gap-1.5">
                       <MapPin className="w-4 h-4" />

@@ -5,6 +5,7 @@ import { Event } from "@/types/database";
 import { StatusBadge, Badge } from "@/components/ui/badge";
 import { CalendarDays, MapPin, User, AlertTriangle } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import { DaysUntilEvent } from "@/components/events/days-until";
 
 interface EventCardProps {
   event: Event;
@@ -41,9 +42,12 @@ export function EventCard({ event, compact = false, atRisk = false }: EventCardP
 
         {!compact && (
           <div className="mt-3 space-y-1.5">
-            <div className="flex items-center gap-2 text-xs text-harley-text-muted">
-              <CalendarDays className="w-3.5 h-3.5" />
-              <span>{format(parseISO(event.date), "MMM d, yyyy")}</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs text-harley-text-muted">
+                <CalendarDays className="w-3.5 h-3.5" />
+                <span>{format(parseISO(event.date), "MMM d, yyyy")}</span>
+              </div>
+              <DaysUntilEvent date={event.date} />
             </div>
             {event.location && (
               <div className="flex items-center gap-2 text-xs text-harley-text-muted">
