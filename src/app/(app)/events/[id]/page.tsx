@@ -50,6 +50,12 @@ import {
   CheckCircle2,
   AlertCircle,
   AlertTriangle,
+  ClipboardList,
+  Image as ImageIcon,
+  FileText,
+  MessageSquare,
+  BarChart3,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
@@ -165,7 +171,7 @@ export default function EventDetailPage() {
     );
   }
 
-  // Live Mode - simplified view
+  // Live Mode
   if (isLiveMode) {
     return (
       <div className="max-w-3xl mx-auto">
@@ -177,11 +183,7 @@ export default function EventDetailPage() {
             </h1>
             <Badge variant="success">LIVE</Badge>
           </div>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={handleToggleLiveMode}
-          >
+          <Button variant="secondary" size="sm" onClick={handleToggleLiveMode}>
             <ZapOff className="w-4 h-4" />
             Exit Live Mode
           </Button>
@@ -200,9 +202,7 @@ export default function EventDetailPage() {
 
         <div className="space-y-4">
           {CHECKLIST_SECTIONS.map((section) => {
-            const items = checklist.filter(
-              (item) => item.section === section
-            );
+            const items = checklist.filter((item) => item.section === section);
             return (
               <ChecklistSectionComponent
                 key={section}
@@ -218,106 +218,52 @@ export default function EventDetailPage() {
     );
   }
 
+  const completedCount = checklist.filter((i) => i.is_checked).length;
+  const totalCount = checklist.length;
+  const percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
   // Full detail view
   return (
     <>
-      <div className="max-w-4xl">
+      <div className="max-w-5xl">
+        {/* Back link */}
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-2 text-sm text-harley-text-muted hover:text-harley-orange mb-6 transition-colors"
+          className="inline-flex items-center gap-2 text-sm text-harley-text-muted hover:text-harley-orange mb-5 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Dashboard
         </Link>
 
-          <ProgressBar checklist={checklist} />
-
-          {atRisk && (
-            <div className="mb-6 p-4 rounded-xl bg-harley-danger/10 border border-harley-danger/30 flex items-center gap-3">
-              <AlertTriangle className="w-5 h-5 text-harley-danger shrink-0" />
-              <div>
-                <span className="text-sm font-semibold text-harley-danger">
-                  At Risk
-                </span>
-                <span className="text-sm text-harley-danger/80 ml-2">
-                  This event is within 5 days and the checklist is not complete.
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Header */}
-          <Card padding="lg" className="mb-6">
-            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-              <div className="space-y-3">
-                <div className="flex items-center gap-3 flex-wrap">
-                  <h1 className="text-2xl font-bold text-harley-text">
-                    {event.name}
-                  </h1>
-                  <StatusBadge status={event.status} />
-                  {allChecklistComplete &&
-                    event.status !== "ready_for_execution" &&
-                    event.status !== "live_event" &&
-                    event.status !== "completed" && (
-                      <Badge variant="orange">Ready for Execution</Badge>
-                    )}
-                </div>
-
-                <div className="flex flex-wrap items-center gap-4 text-sm text-harley-text-muted">
-                  <span className="flex items-center gap-1.5">
-                    <CalendarDays className="w-4 h-4" />
-                    {format(parseISO(event.date), "MMMM d, yyyy")}
-                  </span>
-                  <DaysUntilEvent date={event.date} size="md" />
-                  {event.location && (
-                    <span className="flex items-center gap-1.5">
-                      <MapPin className="w-4 h-4" />
-                      {event.location}
-                    </span>
+        {/* ── SECTION 1: Sticky Header ─────────────────────────── */}
+        <div className="sticky top-16 z-10 -mx-2 px-2 pb-4 pt-1 bg-harley-black/80 backdrop-blur-xl">
+          <Card padding="none">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 px-5 py-4">
+              {/* Left: Title + badges */}
+              <div className="flex items-center gap-3 flex-wrap min-w-0">
+                <h1 className="text-xl font-bold text-harley-text truncate">
+                  {event.name}
+                </h1>
+                <StatusBadge status={event.status} />
+                {atRisk && <Badge variant="danger">At Risk</Badge>}
+                {allChecklistComplete &&
+                  event.status !== "ready_for_execution" &&
+                  event.status !== "live_event" &&
+                  event.status !== "completed" && (
+                    <Badge variant="orange">Ready</Badge>
                   )}
-                  {event.owner && (
-                    <span className="flex items-center gap-1.5">
-                      <User className="w-4 h-4" />
-                      {event.owner}
-                    </span>
-                  )}
-                </div>
-
-                {event.description && (
-                  <p className="text-sm text-harley-text-muted max-w-xl">
-                    {event.description}
-                  </p>
-                )}
-
-                {event.onedrive_link && (
-                  <a
-                    href={event.onedrive_link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-sm text-harley-orange hover:text-harley-orange-light"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    OneDrive Folder
-                  </a>
-                )}
+                {event.is_live_mode && <Badge variant="success">LIVE</Badge>}
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={handleToggleLiveMode}
-                >
+              {/* Right: Actions */}
+              <div className="flex items-center gap-2 shrink-0">
+                <Button variant="secondary" size="sm" onClick={handleToggleLiveMode}>
                   <Zap className="w-4 h-4" />
-                  Live Mode
+                  <span className="hidden sm:inline">Live Mode</span>
                 </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setEditModalOpen(true)}
-                >
+                <Button variant="secondary" size="sm" onClick={() => setEditModalOpen(true)}>
                   <Edit className="w-4 h-4" />
-                  Edit
+                  <span className="hidden sm:inline">Edit</span>
                 </Button>
                 <Button variant="danger" size="sm" onClick={handleDelete}>
                   <Trash2 className="w-4 h-4" />
@@ -325,55 +271,131 @@ export default function EventDetailPage() {
               </div>
             </div>
 
-            {/* Status change + readiness alert */}
-            {allChecklistComplete &&
-              event.status !== "ready_for_execution" &&
-              event.status !== "live_event" &&
-              event.status !== "completed" && (
-                <div className="mt-4 p-3 rounded-lg bg-harley-orange/10 border border-harley-orange/30 flex items-center justify-between flex-wrap gap-3">
-                  <div className="flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 text-harley-orange" />
-                    <span className="text-sm text-harley-orange">
-                      All checklist items are complete. Update status to
-                      &quot;Ready for Execution&quot;?
-                    </span>
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={() => handleStatusChange("ready_for_execution")}
-                  >
-                    Update Status
-                  </Button>
+            {/* Inline progress strip */}
+            <div className="px-5 pb-3">
+              <div className="flex items-center gap-4">
+                <div className="flex-1 h-2 bg-harley-gray rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ease-out ${
+                      percentage === 100
+                        ? "bg-gradient-to-r from-harley-success to-emerald-400"
+                        : "bg-gradient-to-r from-harley-orange-dark to-harley-orange"
+                    }`}
+                    style={{ width: `${percentage}%` }}
+                  />
                 </div>
-              )}
-
-            {/* Quick status buttons */}
-            <div className="mt-4 flex flex-wrap gap-2">
-              {EVENT_STATUSES.map(({ value, label }) => (
-                <button
-                  key={value}
-                  onClick={() => handleStatusChange(value)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                    event.status === value
-                      ? "bg-harley-orange text-white"
-                      : "bg-harley-gray text-harley-text-muted hover:bg-harley-gray-light"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
+                <span className={`text-xs font-bold shrink-0 ${
+                  percentage === 100 ? "text-harley-success" : "text-harley-orange"
+                }`}>
+                  {percentage}%
+                </span>
+              </div>
             </div>
           </Card>
+        </div>
 
-          {/* Checklist */}
-          <div className="space-y-4 mb-6">
-            <h2 className="text-lg font-semibold text-harley-text">
-              Checklist
-            </h2>
+        {/* ── SECTION 2: Event Info + Status ───────────────────── */}
+        <div className="space-y-4 mb-10">
+          {/* At-risk alert */}
+          {atRisk && (
+            <div className="p-4 rounded-xl bg-harley-danger/8 border border-harley-danger/25 flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5 text-harley-danger shrink-0" />
+              <div>
+                <span className="text-sm font-semibold text-harley-danger">At Risk — </span>
+                <span className="text-sm text-harley-danger/80">
+                  Event is within 5 days and checklist is not complete.
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Readiness suggestion */}
+          {allChecklistComplete &&
+            event.status !== "ready_for_execution" &&
+            event.status !== "live_event" &&
+            event.status !== "completed" && (
+              <div className="p-4 rounded-xl bg-harley-orange/8 border border-harley-orange/25 flex items-center justify-between flex-wrap gap-3">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-harley-orange" />
+                  <span className="text-sm text-harley-orange">
+                    All checklist items complete. Update status to &quot;Ready for Execution&quot;?
+                  </span>
+                </div>
+                <Button size="sm" onClick={() => handleStatusChange("ready_for_execution")}>
+                  Update Status
+                </Button>
+              </div>
+            )}
+
+          {/* Info row */}
+          <Card>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-harley-text-muted">
+                <span className="flex items-center gap-1.5">
+                  <CalendarDays className="w-4 h-4" />
+                  {format(parseISO(event.date), "MMMM d, yyyy")}
+                </span>
+                <DaysUntilEvent date={event.date} size="md" />
+                {event.location && (
+                  <span className="flex items-center gap-1.5">
+                    <MapPin className="w-4 h-4" />
+                    {event.location}
+                  </span>
+                )}
+                {event.owner && (
+                  <span className="flex items-center gap-1.5">
+                    <User className="w-4 h-4" />
+                    {event.owner}
+                  </span>
+                )}
+                {event.onedrive_link && (
+                  <a
+                    href={event.onedrive_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-harley-orange hover:text-harley-orange-light transition-colors"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    OneDrive
+                  </a>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-harley-text-muted">
+                <ClipboardList className="w-3.5 h-3.5" />
+                {completedCount}/{totalCount} tasks
+              </div>
+            </div>
+            {event.description && (
+              <p className="mt-3 pt-3 border-t border-harley-gray/50 text-sm text-harley-text-muted leading-relaxed">
+                {event.description}
+              </p>
+            )}
+          </Card>
+
+          {/* Status pills */}
+          <div className="flex flex-wrap gap-1.5">
+            {EVENT_STATUSES.map(({ value, label }) => (
+              <button
+                key={value}
+                onClick={() => handleStatusChange(value)}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-150 ${
+                  event.status === value
+                    ? "bg-harley-orange text-white shadow-sm shadow-harley-orange/20"
+                    : "bg-harley-gray-light/40 text-harley-text-muted hover:bg-harley-gray-light hover:text-harley-text"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── SECTION 3: Checklist ─────────────────────────────── */}
+        <section className="mb-10">
+          <SectionHeading icon={<ClipboardList className="w-4.5 h-4.5" />} title="Checklist" />
+          <div className="space-y-3">
             {CHECKLIST_SECTIONS.map((section) => {
-              const items = checklist.filter(
-                (item) => item.section === section
-              );
+              const items = checklist.filter((item) => item.section === section);
               return (
                 <ChecklistSectionComponent
                   key={section}
@@ -385,45 +407,36 @@ export default function EventDetailPage() {
               );
             })}
           </div>
+        </section>
 
-          {/* Documents */}
-          <div className="mb-6">
-            <DocumentManager
-              eventId={event.id}
-              documents={documents}
-              onUpdate={loadAll}
-            />
+        {/* ── SECTION 4: Media + Documents (2-col) ─────────────── */}
+        <section className="mb-10">
+          <SectionHeading icon={<ImageIcon className="w-4.5 h-4.5" />} title="Files & Media" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <MediaGallery eventId={event.id} media={media} onUpdate={loadAll} />
+            <DocumentManager eventId={event.id} documents={documents} onUpdate={loadAll} />
           </div>
+        </section>
 
-          {/* Media */}
-          <div className="mb-6">
-            <MediaGallery
-              eventId={event.id}
-              media={media}
-              onUpdate={loadAll}
-            />
-          </div>
+        {/* ── SECTION 5: AI Assistant ──────────────────────────── */}
+        <section className="mb-10">
+          <SectionHeading icon={<Sparkles className="w-4.5 h-4.5" />} title="AI Assistant" />
+          <AiAssistant event={event} />
+        </section>
 
-          {/* AI Assistant */}
-          <div className="mb-6">
-            <AiAssistant event={event} />
-          </div>
+        {/* ── SECTION 6: Comments ──────────────────────────────── */}
+        <section className="mb-10">
+          <SectionHeading icon={<MessageSquare className="w-4.5 h-4.5" />} title="Comments" count={comments.length} />
+          <CommentsSection eventId={event.id} comments={comments} onUpdate={loadAll} />
+        </section>
 
-          {/* Comments */}
-          <div className="mb-6">
-            <CommentsSection
-              eventId={event.id}
-              comments={comments}
-              onUpdate={loadAll}
-            />
-          </div>
-
-          {/* Recap */}
-          {(event.status === "completed" || event.status === "live_event") && (
-            <div className="mb-6">
-              <EventRecap event={event} onUpdate={loadAll} />
-            </div>
-          )}
+        {/* ── SECTION 7: Recap ─────────────────────────────────── */}
+        {(event.status === "completed" || event.status === "live_event") && (
+          <section className="mb-10">
+            <SectionHeading icon={<BarChart3 className="w-4.5 h-4.5" />} title="Event Recap" />
+            <EventRecap event={event} onUpdate={loadAll} />
+          </section>
+        )}
       </div>
 
       {/* Edit Modal */}
@@ -441,5 +454,30 @@ export default function EventDetailPage() {
         />
       </Modal>
     </>
+  );
+}
+
+function SectionHeading({
+  icon,
+  title,
+  count,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  count?: number;
+}) {
+  return (
+    <div className="flex items-center gap-2.5 mb-4">
+      <span className="text-harley-text-muted">{icon}</span>
+      <h2 className="text-sm font-semibold text-harley-text uppercase tracking-wide">
+        {title}
+      </h2>
+      {count !== undefined && (
+        <span className="text-xs text-harley-text-muted bg-harley-gray-light/50 rounded-full px-2 py-0.5">
+          {count}
+        </span>
+      )}
+      <div className="flex-1 border-t border-harley-gray/40 ml-2" />
+    </div>
   );
 }
