@@ -4,7 +4,7 @@ A full-stack event management dashboard built with **Next.js**, **Tailwind CSS**
 
 ## Features
 
-- **Authentication** — Sign up, sign in, and session management via Supabase Auth
+- **Authentication** — Sign in and session management via Supabase Auth
 - **Dashboard Views** — Kanban board (drag-and-drop), Calendar, and List views
 - **Event Management** — Create, edit, and delete events with full detail pages
 - **Checklist System** — Grouped checklist sections (Booking, Marketing, Alignment, Sales) with assignees and notes
@@ -16,6 +16,7 @@ A full-stack event management dashboard built with **Next.js**, **Tailwind CSS**
 - **Filtering** — Search events, filter by location and owner
 - **Archive** — Archive completed events to keep the dashboard clean
 - **Responsive** — Works on desktop, tablet, and mobile
+- **Push notifications (optional)** — Firebase Cloud Messaging for 3-day / 1-day event reminders and at-risk alerts
 
 ## Tech Stack
 
@@ -25,6 +26,7 @@ A full-stack event management dashboard built with **Next.js**, **Tailwind CSS**
 - [dnd-kit](https://dndkit.com/) (Drag and drop)
 - [Lucide React](https://lucide.dev/) (Icons)
 - [date-fns](https://date-fns.org/) (Date formatting)
+- [Firebase](https://firebase.google.com/) (optional: FCM web push)
 
 ## Getting Started
 
@@ -40,7 +42,8 @@ npm install
 
 1. Create a new project at [supabase.com](https://supabase.com/)
 2. Go to **SQL Editor** and run the contents of `supabase-schema.sql`
-3. Copy your project URL and anon key from **Settings > API**
+3. For push notifications, also run `supabase-migration-push-notifications.sql`
+4. Copy your project URL and anon key from **Settings > API**
 
 ### 3. Configure environment variables
 
@@ -63,11 +66,47 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+## Push notifications (Firebase Cloud Messaging)
+
+Lightweight setup: **free Spark** Firebase plan + **one scheduled HTTP call** per day (Vercel Cron if available on your plan, or a free external cron hitting your API).
+
+### 1. Firebase
+
+1. Create a Firebase project and add a **Web** app.
+2. Enable **Cloud Messaging** (Project settings → Cloud Messaging).
+3. Under **Web Push certificates**, generate a key pair — set `NEXT_PUBLIC_FIREBASE_VAPID_KEY`.
+4. Copy the web app config into `NEXT_PUBLIC_FIREBASE_*` env vars.
+5. **Project settings → Service accounts → Generate new private key** — base64-encode the JSON and set `FIREBASE_SERVICE_ACCOUNT_BASE64` (recommended for Vercel).
+
+### 2. Supabase
+
+Run `supabase-migration-push-notifications.sql` (tables `push_tokens`, `notification_sent`).  
+Add **Settings → API → service_role** key as `SUPABASE_SERVICE_ROLE_KEY` **only** on the server (e.g. Vercel env). Never expose it in the browser.
+
+### 3. Cron endpoint
+
+`GET` or `POST` `/api/cron/push-notifications` with:
+
+- Header `Authorization: Bearer <CRON_SECRET>`, or  
+- Query `?secret=<CRON_SECRET>` (for simple external cron tools).
+
+Set `CRON_SECRET` in your environment. `vercel.json` includes a **daily** schedule (adjust as needed). If your Vercel plan does not include Cron, use [cron-job.org](https://cron-job.org) (or similar) to call the same URL once per day.
+
+### 4. Behaviour
+
+Notifications go to the **event creator** (`events.user_id`) if they enabled alerts and stored an FCM token.
+
+| Trigger | When |
+|--------|------|
+| 3 days away | Calendar day is exactly 3 days before the event |
+| 1 day away | Day before the event |
+| At risk | Same rules as the dashboard (within 5 days, checklist not 100%, not completed/live) — at most **once per UTC day** per event |
+
 ## Deployment on Vercel
 
 1. Push to GitHub
 2. Import the repo into [Vercel](https://vercel.com/)
-3. Add environment variables (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`)
+3. Add environment variables (Supabase, optional Firebase + `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`, `FIREBASE_SERVICE_ACCOUNT_BASE64`, `NEXT_PUBLIC_APP_URL`, etc.)
 4. Deploy
 
 ## Project Structure

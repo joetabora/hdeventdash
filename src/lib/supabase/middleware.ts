@@ -29,6 +29,12 @@ export async function updateSession(request: NextRequest) {
   });
 
   try {
+    const path = request.nextUrl.pathname;
+    // Cron + FCM service worker must stay public (no session / no cookies)
+    if (path.startsWith("/api/cron/") || path === "/firebase-messaging-sw.js") {
+      return NextResponse.next({ request });
+    }
+
     const {
       data: { user },
     } = await supabase.auth.getUser();

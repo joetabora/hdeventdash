@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Sidebar } from "./sidebar";
 import { TopHeader } from "./top-header";
+import { PushNotificationPrompt } from "@/components/push/push-notification-prompt";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -14,6 +15,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* Main area offset by sidebar width on desktop */}
       <div id="app-shell-main" className="lg:pl-64 flex flex-col min-h-screen">
         <TopHeader onMenuToggle={() => setMobileOpen((v) => !v)} />
+        <PushNotificationPrompt />
 
         <main className="flex-1 overflow-y-auto">
           <div
