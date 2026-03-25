@@ -41,6 +41,8 @@ export function TopHeader({ onMenuToggle }: TopHeaderProps) {
     <header className="sticky top-0 z-20 h-16 bg-harley-dark/70 backdrop-blur-xl border-b border-harley-gray/50 flex items-center justify-between px-4 lg:px-8">
       <div className="flex items-center gap-3">
         <button
+          type="button"
+          data-menu-toggle
           onClick={onMenuToggle}
           className="lg:hidden p-2 -ml-2 rounded-lg text-harley-text-muted hover:bg-harley-gray hover:text-harley-text transition-colors"
         >

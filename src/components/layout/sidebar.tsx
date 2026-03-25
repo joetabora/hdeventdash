@@ -49,6 +49,7 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
+          data-sidebar-overlay
           className="lg:hidden fixed inset-0 z-30 bg-black/50 backdrop-blur-sm"
           onClick={onClose}
         />
@@ -56,6 +57,7 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
 
       {/* Sidebar */}
       <aside
+        data-app-sidebar
         className={`fixed inset-y-0 left-0 z-40 w-64 bg-harley-dark/80 backdrop-blur-xl border-r border-harley-gray/60 flex flex-col transform transition-transform duration-200 lg:translate-x-0 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}

@@ -23,7 +23,7 @@ import {
   EventStatus,
 } from "@/types/database";
 import { StatusBadge, Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonStyles } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Modal } from "@/components/ui/modal";
 import { EventForm } from "@/components/events/event-form";
@@ -148,6 +148,16 @@ export default function EventDetailPage() {
     loadAll();
   }, [loadAll]);
 
+  useEffect(() => {
+    const root = document.documentElement;
+    if (event?.is_live_mode) {
+      root.classList.add("event-live-shell");
+    } else {
+      root.classList.remove("event-live-shell");
+    }
+    return () => root.classList.remove("event-live-shell");
+  }, [event?.is_live_mode]);
+
   const allChecklistComplete = useMemo(() => {
     return checklist.length > 0 && checklist.every((item) => item.is_checked);
   }, [checklist]);
@@ -217,36 +227,90 @@ export default function EventDetailPage() {
     );
   }
 
-  // Live Mode
+  // Live Mode — checklist-first, large type, minimal chrome (sidebar hidden via .event-live-shell)
   if (isLiveMode) {
     return (
-      <div className="max-w-3xl mx-auto">
-        <div className="flex items-center justify-between mb-6 gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <span className="w-3 h-3 rounded-full bg-harley-success animate-pulse shrink-0" />
-            <h1 className="text-xl md:text-2xl font-bold text-harley-text truncate">
-              {event.name}
-            </h1>
-            <Badge variant="success">LIVE</Badge>
+      <div className="w-full max-w-2xl mx-auto pb-8 safe-bottom space-y-5 sm:space-y-6">
+        {/* Key actions — sticky for thumb reach on mobile */}
+        <div className="sticky top-0 z-10 -mx-1 px-1 py-3 sm:py-4 bg-harley-black/95 backdrop-blur-md border-b border-harley-gray/50 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+          <Link
+            href="/dashboard"
+            className={`${buttonStyles.secondary("md")} justify-center min-h-12 sm:min-h-11 w-full sm:w-auto order-2 sm:order-1`}
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Dashboard
+          </Link>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto order-1 sm:order-2">
+            {event.status !== "live_event" && event.status !== "completed" && (
+              <Button
+                size="lg"
+                className="w-full sm:w-auto min-h-12 text-base"
+                onClick={() => handleStatusChange("live_event")}
+              >
+                <Zap className="w-5 h-5" />
+                Mark as Live Event
+              </Button>
+            )}
+            <Button
+              variant="secondary"
+              size="lg"
+              className="w-full sm:w-auto min-h-12 text-base"
+              onClick={handleToggleLiveMode}
+            >
+              <ZapOff className="w-5 h-5" />
+              Exit Live Mode
+            </Button>
           </div>
-          <Button variant="secondary" size="sm" onClick={handleToggleLiveMode}>
-            <ZapOff className="w-4 h-4" />
-            <span className="hidden sm:inline">Exit Live Mode</span>
-          </Button>
         </div>
 
-        <ProgressBar checklist={checklist} />
+        {/* Title + key context */}
+        <div className="text-center space-y-3 sm:space-y-4 px-1">
+          <div className="flex items-center justify-center gap-2 flex-wrap">
+            <span className="w-3.5 h-3.5 rounded-full bg-harley-success animate-pulse" />
+            <Badge variant="success" className="text-xs sm:text-sm px-3 py-1">
+              LIVE MODE
+            </Badge>
+            <StatusBadge status={event.status} />
+          </div>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-harley-text leading-tight px-1">
+            {event.name}
+          </h1>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-6 text-harley-text-muted">
+            <span className="inline-flex items-center gap-2 text-base sm:text-lg">
+              <CalendarDays className="w-5 h-5 shrink-0" />
+              {format(parseISO(event.date), "EEEE, MMMM d")}
+            </span>
+            <DaysUntilEvent date={event.date} size="lg" />
+          </div>
+          {event.location && (
+            <p className="inline-flex items-center justify-center gap-2 text-base text-harley-text-muted">
+              <MapPin className="w-5 h-5 shrink-0 text-harley-orange" />
+              {event.location}
+            </p>
+          )}
+        </div>
+
+        <ProgressBar variant="live" checklist={checklist} />
+
+        {atRisk && (
+          <div className="p-4 rounded-xl bg-harley-danger/10 border border-harley-danger/30 flex items-start gap-3">
+            <AlertTriangle className="w-6 h-6 text-harley-danger shrink-0 mt-0.5" />
+            <p className="text-base sm:text-lg text-harley-danger font-medium leading-snug">
+              At risk: event soon and checklist not complete. Prioritize open tasks.
+            </p>
+          </div>
+        )}
 
         {allChecklistComplete && (
-          <div className="mb-6 p-4 rounded-xl bg-harley-success/10 border border-harley-success/30 flex items-center gap-3">
-            <CheckCircle2 className="w-5 h-5 text-harley-success shrink-0" />
-            <span className="text-sm text-harley-success font-medium">
-              All checklist items complete!
+          <div className="p-4 sm:p-5 rounded-xl bg-harley-success/10 border border-harley-success/35 flex items-center gap-4">
+            <CheckCircle2 className="w-8 h-8 text-harley-success shrink-0" />
+            <span className="text-base sm:text-lg text-harley-success font-semibold">
+              All checklist items complete — great work!
             </span>
           </div>
         )}
 
-        <div className="space-y-3 md:space-y-4">
+        <div className="space-y-4 sm:space-y-5 pt-1">
           {CHECKLIST_SECTIONS.map((section) => {
             const items = checklist.filter((item) => item.section === section);
             return (
@@ -256,6 +320,7 @@ export default function EventDetailPage() {
                 items={items}
                 eventId={event.id}
                 onUpdate={loadAll}
+                liveMode
               />
             );
           })}

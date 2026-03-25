@@ -97,6 +97,43 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   }
 }
 
+/* Event Live Mode — full-width focus, hide nav chrome */
+html.event-live-shell [data-sidebar-overlay],
+html.event-live-shell aside[data-app-sidebar] {
+  display: none !important;
+}
+
+html.event-live-shell #app-shell-main {
+  padding-left: 0 !important;
+}
+
+html.event-live-shell #app-shell-scroll-inner {
+  max-width: none;
+  padding-left: max(0.75rem, env(safe-area-inset-left));
+  padding-right: max(0.75rem, env(safe-area-inset-right));
+  padding-top: 0.75rem;
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+@media (min-width: 640px) {
+  html.event-live-shell #app-shell-scroll-inner {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 1rem;
+  }
+}
+
+html.event-live-shell header [data-menu-toggle] {
+  display: none !important;
+}
+
+html.event-live-shell header h1 {
+  font-size: 0.8125rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-harley-text-muted);
+}
+
 /* Checkbox pop animation */
 @keyframes check-pop {
   0% { transform: scale(1); }
