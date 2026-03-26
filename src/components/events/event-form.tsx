@@ -14,6 +14,8 @@ import { Loader2 } from "lucide-react";
 
 interface EventFormProps {
   event?: Partial<Event>;
+  /** Managers/admins only — staff cannot edit budget fields (DB-enforced). */
+  canEditBudget?: boolean;
   onSubmit: (data: {
     name: string;
     date: string;
@@ -23,13 +25,23 @@ interface EventFormProps {
     description: string;
     onedrive_link: string;
     event_type: EventType | null;
+    planned_budget: number | null;
+    actual_budget: number | null;
   }) => Promise<void>;
   onCancel?: () => void;
   submitLabel?: string;
 }
 
+function numOrNull(v: string): number | null {
+  const t = v.trim();
+  if (t === "") return null;
+  const n = Number(t);
+  return Number.isFinite(n) ? n : null;
+}
+
 export function EventForm({
   event,
+  canEditBudget = false,
   onSubmit,
   onCancel,
   submitLabel = "Create Event",
@@ -43,6 +55,12 @@ export function EventForm({
   const [onedriveLink, setOnedriveLink] = useState(event?.onedrive_link || "");
   const [eventType, setEventType] = useState<EventType | "">(
     (event?.event_type as EventType | undefined) ?? ""
+  );
+  const [plannedBudget, setPlannedBudget] = useState(
+    event?.planned_budget != null ? String(event.planned_budget) : ""
+  );
+  const [actualBudget, setActualBudget] = useState(
+    event?.actual_budget != null ? String(event.actual_budget) : ""
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -65,6 +83,12 @@ export function EventForm({
         description: description.trim(),
         onedrive_link: onedriveLink.trim() || "",
         event_type: eventType === "" ? null : eventType,
+        planned_budget: canEditBudget
+          ? numOrNull(plannedBudget)
+          : (event?.planned_budget ?? null),
+        actual_budget: canEditBudget
+          ? numOrNull(actualBudget)
+          : (event?.actual_budget ?? null),
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -125,6 +149,32 @@ export function EventForm({
           ...EVENT_TYPES,
         ]}
       />
+
+      {canEditBudget && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg border border-harley-orange/25 bg-harley-orange/5">
+          <p className="md:col-span-2 text-xs text-harley-text-muted">
+            Budget (managers only)
+          </p>
+          <Input
+            label="Planned budget ($)"
+            type="number"
+            min={0}
+            step={0.01}
+            value={plannedBudget}
+            onChange={(e) => setPlannedBudget(e.target.value)}
+            placeholder="0"
+          />
+          <Input
+            label="Actual budget ($, optional)"
+            type="number"
+            min={0}
+            step={0.01}
+            value={actualBudget}
+            onChange={(e) => setActualBudget(e.target.value)}
+            placeholder="After event"
+          />
+        </div>
+      )}
 
       <Textarea
         label="Description"

@@ -39,6 +39,8 @@ export default function NewEventPage() {
     description: string;
     onedrive_link: string;
     event_type: EventType | null;
+    planned_budget: number | null;
+    actual_budget: number | null;
   }) {
     if (!userId || !supabaseRef.current)
       throw new Error("Not authenticated");
@@ -48,6 +50,8 @@ export default function NewEventPage() {
       user_id: userId,
       onedrive_link: data.onedrive_link || undefined,
       event_type: data.event_type,
+      planned_budget: data.planned_budget,
+      actual_budget: data.actual_budget,
     });
     router.push(`/events/${event.id}`);
   }
@@ -72,6 +76,7 @@ export default function NewEventPage() {
 
       <Card padding="lg">
         <EventForm
+          canEditBudget
           onSubmit={handleCreate}
           onCancel={() => router.push("/dashboard")}
         />

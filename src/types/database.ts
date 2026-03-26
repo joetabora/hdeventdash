@@ -84,6 +84,21 @@ export interface Event {
   roi_event_cost?: number | null;
   /** Analytics segment (optional until migration) */
   event_type?: EventType | null;
+  /** Planned / actual spend (optional until budgets migration) */
+  planned_budget?: number | null;
+  actual_budget?: number | null;
+}
+
+/** Org cap for a calendar month and location (matches event.location). */
+export interface MonthlyBudget {
+  id: string;
+  organization_id: string;
+  /** First day of month, e.g. 2025-03-01 */
+  month: string;
+  location: string;
+  budget_amount: number;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ChecklistItem {

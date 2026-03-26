@@ -66,10 +66,19 @@ import {
   ChevronDown,
   DollarSign,
   Store,
+  Wallet,
 } from "lucide-react";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { useAppRole } from "@/contexts/app-role-context";
+
+function formatEventMoney(n: number | null | undefined): string {
+  if (n == null || n === undefined || Number.isNaN(Number(n))) return "—";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(Number(n));
+}
 
 function CollapsibleSection({
   icon,
@@ -210,6 +219,8 @@ export default function EventDetailPage() {
     description: string;
     onedrive_link: string;
     event_type: EventType | null;
+    planned_budget: number | null;
+    actual_budget: number | null;
   }) {
     if (!event || !supabaseRef.current) return;
     await updateEvent(supabaseRef.current, event.id, {
@@ -217,6 +228,8 @@ export default function EventDetailPage() {
       status: data.status as EventStatus,
       onedrive_link: data.onedrive_link || null,
       event_type: data.event_type,
+      planned_budget: data.planned_budget,
+      actual_budget: data.actual_budget,
     });
     setEditModalOpen(false);
     loadAll();
@@ -525,6 +538,25 @@ export default function EventDetailPage() {
                 {event.description}
               </p>
             )}
+            {(event.planned_budget != null ||
+              event.actual_budget != null ||
+              canManageEvents) && (
+              <div className="mt-3 pt-3 border-t border-harley-gray/50 text-sm">
+                <div className="flex items-center gap-2 text-harley-text-muted mb-2">
+                  <Wallet className="w-4 h-4 text-harley-orange shrink-0" />
+                  <span className="font-medium text-harley-text">Budget</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-harley-text-muted">
+                  <span>Planned: {formatEventMoney(event.planned_budget)}</span>
+                  <span>Actual: {formatEventMoney(event.actual_budget)}</span>
+                </div>
+                {canManageEvents && (
+                  <p className="text-xs text-harley-text-muted/80 mt-2">
+                    Edit planned and actual amounts when you open Edit event.
+                  </p>
+                )}
+              </div>
+            )}
           </Card>
 
           {/* Status pills — collapsed on mobile behind a toggle */}
@@ -684,6 +716,7 @@ export default function EventDetailPage() {
         >
           <EventForm
             event={event}
+            canEditBudget={canManageEvents}
             onSubmit={handleEditSubmit}
             onCancel={() => setEditModalOpen(false)}
             submitLabel="Save Changes"

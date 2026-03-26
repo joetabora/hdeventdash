@@ -18,6 +18,7 @@ A full-stack event management dashboard built with **Next.js**, **Tailwind CSS**
 - **Responsive** — Works on desktop, tablet, and mobile
 - **Push notifications (optional)** — Firebase Cloud Messaging for 3-day / 1-day event reminders and at-risk alerts
 - **Vendors** — Organization vendor directory, attach vendors to events with roles and participation status, history per vendor
+- **Monthly budgets** — Per-month, per-location caps; compare to sum of event planned budgets on the dashboard (green / yellow / red); managers set caps and event budgets
 
 ## Tech Stack
 
@@ -45,6 +46,7 @@ npm install
 2. Go to **SQL Editor** and run the contents of `supabase-schema.sql`
 3. For push notifications, also run `supabase-migration-push-notifications.sql`
 4. For vendors (directory + event links + history), run `supabase-migration-vendors.sql` after org + RBAC migrations (`supabase-migration-organizations.sql`, `supabase-migration-rbac.sql`)
+5. For monthly budgets and event planned/actual amounts, run `supabase-migration-budgets.sql` after ROI and event-type migrations (it replaces `events_enforce_staff_update` and must include `event_type` and ROI columns in that function)
 4. Copy your project URL and anon key from **Settings > API**
 
 ### 3. Configure environment variables

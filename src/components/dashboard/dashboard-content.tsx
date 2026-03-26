@@ -16,14 +16,22 @@ import { CalendarView } from "@/components/dashboard/calendar-view";
 import { ListView } from "@/components/dashboard/list-view";
 import { Filters } from "@/components/dashboard/filters";
 import { DashboardMetrics } from "@/components/dashboard/metrics";
+import { BudgetSummaryCard } from "@/components/dashboard/budget-summary-card";
 import { RoiTrendsCard } from "@/components/dashboard/roi-trends-card";
 import { AnalyticsDashboard } from "@/components/dashboard/analytics-dashboard";
 import { Card } from "@/components/ui/card";
 import { LayoutGrid, Calendar, List, BarChart3, Loader2 } from "lucide-react";
 import { parseISO, isBefore, startOfDay } from "date-fns";
 import { useAppRole } from "@/contexts/app-role-context";
+import { getMonthlyBudgetsForMonth, budgetMonthToDbDate } from "@/lib/budgets";
+import { MonthlyBudget } from "@/types/database";
 
 type ViewType = "kanban" | "calendar" | "list" | "analytics";
+
+function currentYearMonth(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
 
 export function DashboardContent() {
   const searchParams = useSearchParams();
@@ -46,6 +54,8 @@ export function DashboardContent() {
   const [search, setSearch] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
   const [ownerFilter, setOwnerFilter] = useState("");
+  const [budgetMonth, setBudgetMonth] = useState(currentYearMonth);
+  const [monthlyBudgets, setMonthlyBudgets] = useState<MonthlyBudget[]>([]);
   const { canManageEvents } = useAppRole();
 
   const loadEvents = useCallback(async () => {
@@ -71,6 +81,24 @@ export function DashboardContent() {
   useEffect(() => {
     loadEvents();
   }, [loadEvents]);
+
+  const loadMonthlyBudgets = useCallback(async () => {
+    const supabase = supabaseRef.current;
+    if (!supabase) return;
+    try {
+      const rows = await getMonthlyBudgetsForMonth(
+        supabase,
+        budgetMonthToDbDate(budgetMonth)
+      );
+      setMonthlyBudgets(rows);
+    } catch {
+      setMonthlyBudgets([]);
+    }
+  }, [budgetMonth]);
+
+  useEffect(() => {
+    loadMonthlyBudgets();
+  }, [loadMonthlyBudgets]);
 
   const atRiskIds = useMemo(() => {
     const ids = new Set<string>();
@@ -220,6 +248,16 @@ export function DashboardContent() {
           totalEvents={metrics.totalEvents}
         />
       )}
+
+      <BudgetSummaryCard
+        events={events}
+        monthlyBudgets={monthlyBudgets}
+        budgetMonth={budgetMonth}
+        onBudgetMonthChange={setBudgetMonth}
+        locationFilter={locationFilter}
+        canManageBudgets={canManageEvents}
+        onBudgetsUpdated={loadMonthlyBudgets}
+      />
 
       <Filters
         events={events}

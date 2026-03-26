@@ -73,6 +73,8 @@ export async function createEvent(
     onedrive_link?: string;
     user_id: string;
     event_type?: EventType | null;
+    planned_budget?: number | null;
+    actual_budget?: number | null;
   }
 ) {
   const { data, error } = await supabase
