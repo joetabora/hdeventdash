@@ -26,12 +26,21 @@ export function RoiTrendsCard({ events }: RoiTrendsCardProps) {
 
     const totalTracked = rows.reduce((s, e) => s + totalRoiRevenue(e), 0);
 
-    let running = 0;
-    const runningTotals = rows.map((e) => {
-      running += totalRoiRevenue(e);
-      return { event: e, running };
-    });
-    const maxRunning = Math.max(running, 1);
+    const runningTotals = rows.reduce<{ event: Event; running: number }[]>(
+      (acc, e) => {
+        const prev = acc.length ? acc[acc.length - 1].running : 0;
+        const running = prev + totalRoiRevenue(e);
+        acc.push({ event: e, running });
+        return acc;
+      },
+      []
+    );
+    const maxRunning = Math.max(
+      runningTotals.length
+        ? runningTotals[runningTotals.length - 1].running
+        : 0,
+      1
+    );
 
     return { rows, maxRev, totalTracked, runningTotals, maxRunning };
   }, [events]);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { createEvent } from "@/lib/events";
 import { EventForm } from "@/components/events/event-form";
@@ -18,14 +18,7 @@ export function NewEventClient({
   initialAllEvents: Event[];
 }) {
   const router = useRouter();
-  const supabaseRef = useRef(
-    typeof window !== "undefined" ? createClient() : null
-  );
-  const [allEvents, setAllEvents] = useState<Event[]>(initialAllEvents);
-
-  useLayoutEffect(() => {
-    setAllEvents(initialAllEvents);
-  }, [initialAllEvents]);
+  const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
 
   const handleCreate = useCallback(
     async (data: {
@@ -40,8 +33,8 @@ export function NewEventClient({
       planned_budget: number | null;
       actual_budget: number | null;
     }) => {
-      const supabase = supabaseRef.current;
-      if (!supabase) throw new Error("Not authenticated");
+      const supabase =
+        supabaseRef.current ?? (supabaseRef.current = createClient());
       const event = await createEvent(supabase, {
         ...data,
         status: data.status as "idea",
@@ -69,7 +62,7 @@ export function NewEventClient({
       <Card padding="lg">
         <EventForm
           canEditBudget
-          allEvents={allEvents}
+          allEvents={initialAllEvents}
           onSubmit={handleCreate}
           onCancel={() => router.push("/dashboard")}
         />

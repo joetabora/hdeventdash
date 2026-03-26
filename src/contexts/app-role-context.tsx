@@ -47,7 +47,9 @@ export function AppRoleProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    refresh();
+    // Bootstrap role from Supabase on mount (async setState inside refresh).
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional client-only auth hydration
+    void refresh();
   }, [refresh]);
 
   const value = useMemo<AppRoleContextValue>(

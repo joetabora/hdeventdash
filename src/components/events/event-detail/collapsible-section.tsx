@@ -1,13 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useLayoutEffect, useRef } from "react";
 import { ChevronDown } from "lucide-react";
+
+const MD_MIN = "(min-width: 768px)";
 
 export function CollapsibleSection({
   icon,
   title,
   count,
+  /** Used when `autoOpenOnDesktop` is false. */
   defaultOpen = true,
+  /**
+   * When true: closed on SSR/first paint, then opens on ≥768px before paint (layout effect).
+   * Reacts to viewport crossing the breakpoint. No `window` in render.
+   */
+  autoOpenOnDesktop = false,
   mobileCollapsed = false,
   children,
 }: {
@@ -15,16 +23,36 @@ export function CollapsibleSection({
   title: string;
   count?: number;
   defaultOpen?: boolean;
+  autoOpenOnDesktop?: boolean;
   mobileCollapsed?: boolean;
   children: React.ReactNode;
 }) {
-  const [open, setOpen] = useState(defaultOpen);
+  const [open, setOpen] = useState(
+    autoOpenOnDesktop ? false : defaultOpen
+  );
+  const userToggled = useRef(false);
+
+  useLayoutEffect(() => {
+    if (!autoOpenOnDesktop) return;
+    const mq = window.matchMedia(MD_MIN);
+    const apply = () => {
+      if (!userToggled.current) {
+        setOpen(mq.matches);
+      }
+    };
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, [autoOpenOnDesktop]);
 
   return (
     <section className="mb-8 md:mb-10">
       <button
         type="button"
-        onClick={() => setOpen(!open)}
+        onClick={() => {
+          userToggled.current = true;
+          setOpen((o) => !o);
+        }}
         className="flex items-center gap-2.5 mb-4 w-full group"
       >
         <span className="text-harley-text-muted">{icon}</span>

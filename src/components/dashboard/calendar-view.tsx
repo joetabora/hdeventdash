@@ -12,10 +12,8 @@ import {
   isSameDay,
   addMonths,
   subMonths,
-  parseISO,
 } from "date-fns";
 import { Event } from "@/types/database";
-import { StatusBadge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
@@ -47,6 +45,7 @@ export function CalendarView({ events }: CalendarViewProps) {
     <Card padding="none">
       <div className="flex items-center justify-between px-6 py-4 border-b border-harley-gray">
         <button
+          type="button"
           onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
           className="p-2 hover:bg-harley-gray rounded-lg transition-colors"
         >
@@ -56,6 +55,7 @@ export function CalendarView({ events }: CalendarViewProps) {
           {format(currentMonth, "MMMM yyyy")}
         </h2>
         <button
+          type="button"
           onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
           className="p-2 hover:bg-harley-gray rounded-lg transition-colors"
         >

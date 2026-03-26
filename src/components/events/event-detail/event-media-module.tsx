@@ -26,7 +26,7 @@ export function EventMediaModule({
       icon={<ImageIcon className="w-4.5 h-4.5" />}
       title="Files & Media"
       count={(media?.length ?? 0) + (documents?.length ?? 0)}
-      defaultOpen={typeof window !== "undefined" && window.innerWidth >= 768}
+      autoOpenOnDesktop
       mobileCollapsed
     >
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

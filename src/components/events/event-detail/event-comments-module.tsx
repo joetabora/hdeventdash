@@ -21,7 +21,7 @@ export function EventCommentsModule({
       icon={<MessageSquare className="w-4.5 h-4.5" />}
       title="Comments"
       count={comments.length}
-      defaultOpen={typeof window !== "undefined" && window.innerWidth >= 768}
+      autoOpenOnDesktop
       mobileCollapsed
     >
       <CommentsSection

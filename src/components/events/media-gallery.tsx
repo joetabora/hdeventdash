@@ -185,6 +185,8 @@ export function MediaGallery({
                 className="group relative rounded-lg overflow-hidden border border-harley-gray bg-harley-gray/30 aspect-square"
               >
                 {isImage(item.file_type) ? (
+                  // Supabase signed/public URLs; next/image needs remotePatterns for each host.
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={url}
                     alt={item.file_name}
@@ -260,6 +262,7 @@ export function MediaGallery({
             onClick={(e) => e.stopPropagation()}
           >
             {isImage(previewType) ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={previewUrl}
                 alt="Preview"

@@ -23,7 +23,7 @@ export function EventVendorsModule({
       icon={<Store className="w-4.5 h-4.5" />}
       title="Vendors"
       count={eventVendors.length}
-      defaultOpen={typeof window !== "undefined" && window.innerWidth >= 768}
+      autoOpenOnDesktop
       mobileCollapsed
     >
       <EventVendorsSection

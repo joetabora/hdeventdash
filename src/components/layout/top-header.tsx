@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState, Suspense } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Menu, ChevronDown, LogOut, User } from "lucide-react";
+import { Menu, ChevronDown, LogOut } from "lucide-react";
 
 interface TopHeaderProps {
   onMenuToggle: () => void;
@@ -16,6 +16,7 @@ const pageTitles: Record<string, string> = {
 };
 
 function TopHeaderInner({ onMenuToggle }: TopHeaderProps) {
+  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState<string | null>(null);
@@ -38,7 +39,7 @@ function TopHeaderInner({ onMenuToggle }: TopHeaderProps) {
   async function handleSignOut() {
     const supabase = createClient();
     await supabase.auth.signOut();
-    window.location.href = "/auth/login";
+    router.replace("/auth/login");
   }
 
   return (
@@ -57,6 +58,7 @@ function TopHeaderInner({ onMenuToggle }: TopHeaderProps) {
 
       <div className="relative">
         <button
+          type="button"
           onClick={() => setMenuOpen(!menuOpen)}
           className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-harley-gray transition-colors"
         >
@@ -85,6 +87,7 @@ function TopHeaderInner({ onMenuToggle }: TopHeaderProps) {
                 </p>
               </div>
               <button
+                type="button"
                 onClick={handleSignOut}
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-harley-text-muted hover:bg-harley-gray hover:text-harley-text transition-colors"
               >

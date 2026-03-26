@@ -518,7 +518,7 @@ export function EventDetailClient({
         <CollapsibleSection
           icon={<Sparkles className="w-4.5 h-4.5" />}
           title="AI Assistant"
-          defaultOpen={typeof window !== "undefined" && window.innerWidth >= 768}
+          autoOpenOnDesktop
           mobileCollapsed
         >
           <AiAssistant event={event} />
@@ -534,7 +534,7 @@ export function EventDetailClient({
         <CollapsibleSection
           icon={<DollarSign className="w-4.5 h-4.5" />}
           title="ROI & outcomes"
-          defaultOpen={typeof window !== "undefined" && window.innerWidth >= 768}
+          autoOpenOnDesktop
           mobileCollapsed
         >
           <EventRoiSection
@@ -548,7 +548,7 @@ export function EventDetailClient({
           <CollapsibleSection
             icon={<BarChart3 className="w-4.5 h-4.5" />}
             title="Event Recap"
-            defaultOpen={typeof window !== "undefined" && window.innerWidth >= 768}
+            autoOpenOnDesktop
             mobileCollapsed
           >
             <EventRecap
