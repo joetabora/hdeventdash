@@ -13,12 +13,16 @@ interface CommentsSectionProps {
   eventId: string;
   comments: EventComment[];
   onUpdate: () => void;
+  canPost?: boolean;
+  canDelete?: boolean;
 }
 
 export function CommentsSection({
   eventId,
   comments,
   onUpdate,
+  canPost = true,
+  canDelete = true,
 }: CommentsSectionProps) {
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -87,12 +91,14 @@ export function CommentsSection({
                   </span>
                 </div>
               </div>
-              <button
-                onClick={() => handleDelete(comment.id)}
-                className="md:opacity-0 md:group-hover:opacity-100 p-1.5 text-harley-text-muted hover:text-harley-danger transition-all shrink-0 rounded-md"
-              >
-                <Trash2 className="w-4 h-4 md:w-3.5 md:h-3.5" />
-              </button>
+              {canDelete && (
+                <button
+                  onClick={() => handleDelete(comment.id)}
+                  className="md:opacity-0 md:group-hover:opacity-100 p-1.5 text-harley-text-muted hover:text-harley-danger transition-all shrink-0 rounded-md"
+                >
+                  <Trash2 className="w-4 h-4 md:w-3.5 md:h-3.5" />
+                </button>
+              )}
             </div>
             <p className="text-sm text-harley-text ml-9 mt-1">
               {comment.content}
@@ -101,18 +107,24 @@ export function CommentsSection({
         ))}
       </div>
 
-      <form onSubmit={handleSubmit} className="flex items-center gap-2">
-        <input
-          type="text"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="Add a comment..."
-          className="flex-1 px-3 md:px-4 py-2.5 md:py-2 rounded-lg bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-sm placeholder-harley-text-muted/60 focus:outline-none focus:border-harley-orange/70 focus:ring-1 focus:ring-harley-orange/20 transition-all duration-150"
-        />
-        <Button type="submit" size="sm" disabled={submitting || !content.trim()} className="!p-2.5 md:!px-3 md:!py-1.5">
-          <Send className="w-4 h-4" />
-        </Button>
-      </form>
+      {canPost ? (
+        <form onSubmit={handleSubmit} className="flex items-center gap-2">
+          <input
+            type="text"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="Add a comment..."
+            className="flex-1 px-3 md:px-4 py-2.5 md:py-2 rounded-lg bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-sm placeholder-harley-text-muted/60 focus:outline-none focus:border-harley-orange/70 focus:ring-1 focus:ring-harley-orange/20 transition-all duration-150"
+          />
+          <Button type="submit" size="sm" disabled={submitting || !content.trim()} className="!p-2.5 md:!px-3 md:!py-1.5">
+            <Send className="w-4 h-4" />
+          </Button>
+        </form>
+      ) : (
+        <p className="text-xs text-harley-text-muted">
+          Only managers and admins can post comments.
+        </p>
+      )}
     </Card>
   );
 }

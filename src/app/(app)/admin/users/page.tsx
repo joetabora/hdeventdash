@@ -3,11 +3,8 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { getAllUserRoles, setUserRole, deleteUserRole, isAdmin } from "@/lib/roles";
-import {
-  addMemberToCurrentOrganization,
-  getCurrentOrganization,
-} from "@/lib/organization";
-import { Organization, UserRole } from "@/types/database";
+import { addMemberToCurrentOrganization } from "@/lib/organization";
+import { UserRole } from "@/types/database";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +16,7 @@ import {
   Trash2,
   Users,
   AlertTriangle,
-  Building2,
+  Briefcase,
 } from "lucide-react";
 
 interface ManagedUser {
@@ -46,8 +43,6 @@ export default function UserManagementPage() {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
   const [createSuccess, setCreateSuccess] = useState("");
-  const [currentOrganization, setCurrentOrganization] =
-    useState<Organization | null>(null);
 
   const loadUsers = useCallback(async () => {
     const supabase = supabaseRef.current;
@@ -61,18 +56,10 @@ export default function UserManagementPage() {
       const adminCheck = await isAdmin(supabase, user.id);
       if (!adminCheck) {
         setAuthorized(false);
-        setCurrentOrganization(null);
         setLoading(false);
         return;
       }
       setAuthorized(true);
-
-      try {
-        setCurrentOrganization(await getCurrentOrganization(supabase));
-      } catch (orgErr) {
-        console.error("Failed to load organization:", orgErr);
-        setCurrentOrganization(null);
-      }
 
       const roles = await getAllUserRoles(supabase);
 
@@ -262,61 +249,12 @@ export default function UserManagementPage() {
         </Button>
       </div>
 
-      {currentOrganization ? (
-        <Card className="border-harley-orange/20 bg-harley-orange/5">
-          <div className="flex items-start gap-3">
-            <Building2 className="w-5 h-5 text-harley-orange shrink-0 mt-0.5" />
-            <div className="min-w-0 space-y-1">
-              <p className="text-xs font-medium uppercase tracking-wider text-harley-text-muted">
-                Your organization
-              </p>
-              <p className="text-lg font-semibold text-harley-text">
-                {currentOrganization.name}
-              </p>
-              <p className="text-xs text-harley-text-muted font-mono break-all">
-                ID: {currentOrganization.id}
-              </p>
-              <p className="text-sm text-harley-text-muted pt-1">
-                Everyone on this page belongs to this organization. Events,
-                files, and roles are isolated from other organizations.
-              </p>
-            </div>
-          </div>
-        </Card>
-      ) : (
-        <div className="flex items-start gap-3 rounded-lg border border-harley-danger/40 bg-harley-danger/10 px-4 py-3 text-sm text-harley-text">
-          <AlertTriangle className="w-5 h-5 text-harley-danger shrink-0 mt-0.5" />
-          <div>
-            <p className="font-medium text-harley-danger">
-              No organization linked to your account
-            </p>
-            <p className="text-harley-text-muted mt-1">
-              Run the organizations migration in Supabase and ensure your user
-              has a row in{" "}
-              <code className="text-xs bg-harley-gray-light/40 px-1 rounded">
-                organization_members
-              </code>
-              . Until then, creating users or assigning roles may fail.
-            </p>
-          </div>
-        </div>
-      )}
-
       {/* Create user form */}
       {showCreate && (
         <Card className="animate-fade-in-up">
-          <h3 className="font-semibold text-harley-text mb-1">
+          <h3 className="font-semibold text-harley-text mb-4">
             Create New User
           </h3>
-          {currentOrganization && (
-            <p className="text-sm text-harley-text-muted mb-4">
-              They will be invited to{" "}
-              <span className="font-medium text-harley-text">
-                {currentOrganization.name}
-              </span>{" "}
-              with the permission level you choose below.
-            </p>
-          )}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
             <div>
               <label className="block text-xs text-harley-text-muted mb-1.5">
@@ -344,25 +282,17 @@ export default function UserManagementPage() {
             </div>
             <div>
               <label className="block text-xs text-harley-text-muted mb-1.5">
-                Permission in this organization
+                Role
               </label>
               <select
                 value={newRole}
                 onChange={(e) => setNewRole(e.target.value as UserRole)}
                 className="w-full px-3 py-2 rounded-lg bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-sm focus:outline-none focus:border-harley-orange/70 focus:ring-1 focus:ring-harley-orange/20 transition-all duration-150"
               >
-                <option value="staff">
-                  Staff — use events and files (this org only)
-                </option>
-                <option value="admin">
-                  Admin — manage users and roles for this org
-                </option>
+                <option value="staff">Staff</option>
+                <option value="manager">Manager</option>
+                <option value="admin">Admin</option>
               </select>
-              <p className="text-[11px] text-harley-text-muted/80 mt-1.5 leading-snug">
-                Organization is fixed to yours; you are not choosing a separate
-                &quot;tenant&quot; here. To host another company, use another
-                Supabase project or add org-switching later.
-              </p>
             </div>
           </div>
 
@@ -410,7 +340,7 @@ export default function UserManagementPage() {
                   User
                 </th>
                 <th className="text-left px-5 py-3 text-xs font-medium text-harley-text-muted uppercase tracking-wider">
-                  Permission
+                  Role
                 </th>
                 <th className="text-right px-5 py-3 text-xs font-medium text-harley-text-muted uppercase tracking-wider">
                   Actions
@@ -464,12 +394,18 @@ export default function UserManagementPage() {
                         className="px-2.5 py-1 rounded-md bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-xs focus:outline-none focus:border-harley-orange/70 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <option value="staff">Staff</option>
+                        <option value="manager">Manager</option>
                         <option value="admin">Admin</option>
                       </select>
                       {user.role === "admin" ? (
                         <Badge variant="orange" className="ml-2">
                           <ShieldCheck className="w-3 h-3 mr-1" />
                           Admin
+                        </Badge>
+                      ) : user.role === "manager" ? (
+                        <Badge variant="info" className="ml-2">
+                          <Briefcase className="w-3 h-3 mr-1" />
+                          Manager
                         </Badge>
                       ) : (
                         <Badge variant="default" className="ml-2">
@@ -497,13 +433,9 @@ export default function UserManagementPage() {
         </div>
       </Card>
 
-      <p className="text-xs text-harley-text-muted/50 text-center max-w-2xl mx-auto">
-        Users are created in Supabase Auth, added to your organization, and
-        assigned Admin or Staff in{" "}
-        <code className="text-[10px] bg-harley-gray-light/30 px-1 rounded">
-          user_roles
-        </code>{" "}
-        for this organization only.
+      <p className="text-xs text-harley-text-muted/50 text-center">
+        Users are created via Supabase Auth. Roles are stored in the user_roles
+        table.
       </p>
     </div>
   );

@@ -11,10 +11,18 @@ interface KanbanColumnProps {
   count: number;
   events: Event[];
   atRiskIds: Set<string>;
+  readOnly?: boolean;
 }
 
-export function KanbanColumn({ id, title, count, events, atRiskIds }: KanbanColumnProps) {
-  const { setNodeRef, isOver } = useDroppable({ id });
+export function KanbanColumn({
+  id,
+  title,
+  count,
+  events,
+  atRiskIds,
+  readOnly = false,
+}: KanbanColumnProps) {
+  const { setNodeRef, isOver } = useDroppable({ id, disabled: readOnly });
 
   return (
     <div
@@ -44,13 +52,16 @@ export function KanbanColumn({ id, title, count, events, atRiskIds }: KanbanColu
             key={event.id}
             event={event}
             atRisk={atRiskIds.has(event.id)}
+            disabled={readOnly}
           />
         ))}
         {events.length === 0 && (
           <div className={`flex items-center justify-center py-12 rounded-lg border border-dashed transition-colors ${
             isOver ? "border-harley-orange/40 text-harley-orange/60" : "border-harley-gray/40 text-harley-text-muted/40"
           }`}>
-            <p className="text-xs font-medium">Drop here</p>
+            <p className="text-xs font-medium">
+              {readOnly ? "No events" : "Drop here"}
+            </p>
           </div>
         )}
       </div>
@@ -58,9 +69,17 @@ export function KanbanColumn({ id, title, count, events, atRiskIds }: KanbanColu
   );
 }
 
-function DraggableEventCard({ event, atRisk }: { event: Event; atRisk: boolean }) {
+function DraggableEventCard({
+  event,
+  atRisk,
+  disabled,
+}: {
+  event: Event;
+  atRisk: boolean;
+  disabled?: boolean;
+}) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
-    useDraggable({ id: event.id });
+    useDraggable({ id: event.id, disabled: !!disabled });
 
   const style = transform
     ? {

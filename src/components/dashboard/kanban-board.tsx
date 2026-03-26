@@ -19,6 +19,8 @@ interface KanbanBoardProps {
   events: Event[];
   onStatusChange: (eventId: string, newStatus: EventStatus) => Promise<void>;
   atRiskIds: Set<string>;
+  /** When true, cards cannot be dragged (e.g. staff role). */
+  readOnly?: boolean;
 }
 
 const dropAnimationConfig = {
@@ -26,7 +28,12 @@ const dropAnimationConfig = {
   easing: "cubic-bezier(0.25, 0.1, 0.25, 1)",
 };
 
-export function KanbanBoard({ events, onStatusChange, atRiskIds }: KanbanBoardProps) {
+export function KanbanBoard({
+  events,
+  onStatusChange,
+  atRiskIds,
+  readOnly = false,
+}: KanbanBoardProps) {
   const [activeEvent, setActiveEvent] = useState<Event | null>(null);
 
   const sensors = useSensors(
@@ -34,12 +41,14 @@ export function KanbanBoard({ events, onStatusChange, atRiskIds }: KanbanBoardPr
   );
 
   function handleDragStart(event: DragStartEvent) {
+    if (readOnly) return;
     const draggedEvent = events.find((e) => e.id === event.active.id);
     if (draggedEvent) setActiveEvent(draggedEvent);
   }
 
   async function handleDragEnd(event: DragEndEvent) {
     setActiveEvent(null);
+    if (readOnly) return;
     const { active, over } = event;
     if (!over) return;
 
@@ -70,6 +79,7 @@ export function KanbanBoard({ events, onStatusChange, atRiskIds }: KanbanBoardPr
               count={columnEvents.length}
               events={columnEvents}
               atRiskIds={atRiskIds}
+              readOnly={readOnly}
             />
           );
         })}

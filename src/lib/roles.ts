@@ -28,6 +28,16 @@ export async function isAdmin(
   return role === "admin";
 }
 
+/** Admin or manager: create/edit events, files, comments, checklist structure. */
+export function canManageEventsRole(role: UserRole | null): boolean {
+  return role === "admin" || role === "manager";
+}
+
+/** Staff and unknown: checklist progress only (in app + RLS). */
+export function isStaffOnlyRole(role: UserRole | null): boolean {
+  return role === "staff" || role === null;
+}
+
 export async function getAllUserRoles(
   supabase: SupabaseClient
 ): Promise<UserRoleRecord[]> {

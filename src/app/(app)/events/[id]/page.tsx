@@ -61,6 +61,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
+import { useAppRole } from "@/contexts/app-role-context";
 
 function CollapsibleSection({
   icon,
@@ -109,6 +110,7 @@ function CollapsibleSection({
 export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const { canManageEvents, isAdmin } = useAppRole();
   const supabaseRef = useRef(
     typeof window !== "undefined" ? createClient() : null
   );
@@ -243,7 +245,9 @@ export default function EventDetailPage() {
             Dashboard
           </Link>
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto order-1 sm:order-2">
-            {event.status !== "live_event" && event.status !== "completed" && (
+            {canManageEvents &&
+              event.status !== "live_event" &&
+              event.status !== "completed" && (
               <Button
                 size="lg"
                 className="w-full sm:w-auto min-h-12 text-base"
@@ -323,6 +327,7 @@ export default function EventDetailPage() {
                 eventId={event.id}
                 onUpdate={loadAll}
                 liveMode
+                allowStructureEdit={canManageEvents}
               />
             );
           })}
@@ -332,6 +337,7 @@ export default function EventDetailPage() {
         eventId={event.id}
         checklist={checklist}
         onUpdate={loadAll}
+        canManageExtras={canManageEvents}
       />
       </>
     );
@@ -383,13 +389,17 @@ export default function EventDetailPage() {
                     <Zap className="w-4 h-4" />
                     <span className="hidden md:inline">Live Mode</span>
                   </Button>
-                  <Button variant="secondary" size="sm" onClick={() => setEditModalOpen(true)} className="!px-2.5 md:!px-3">
-                    <Edit className="w-4 h-4" />
-                    <span className="hidden md:inline">Edit</span>
-                  </Button>
-                  <Button variant="danger" size="sm" onClick={handleDelete} className="!px-2.5 md:!px-3">
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  {canManageEvents && (
+                    <Button variant="secondary" size="sm" onClick={() => setEditModalOpen(true)} className="!px-2.5 md:!px-3">
+                      <Edit className="w-4 h-4" />
+                      <span className="hidden md:inline">Edit</span>
+                    </Button>
+                  )}
+                  {isAdmin && (
+                    <Button variant="danger" size="sm" onClick={handleDelete} className="!px-2.5 md:!px-3">
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
               </div>
 
@@ -453,9 +463,11 @@ export default function EventDetailPage() {
                     All checklist items complete. Update status to &quot;Ready for Execution&quot;?
                   </span>
                 </div>
-                <Button size="sm" onClick={() => handleStatusChange("ready_for_execution")} className="w-full sm:w-auto">
-                  Update Status
-                </Button>
+                {canManageEvents && (
+                  <Button size="sm" onClick={() => handleStatusChange("ready_for_execution")} className="w-full sm:w-auto">
+                    Update Status
+                  </Button>
+                )}
               </div>
             )}
 
@@ -500,30 +512,32 @@ export default function EventDetailPage() {
           </Card>
 
           {/* Status pills — collapsed on mobile behind a toggle */}
-          <div>
-            <button
-              onClick={() => setShowStatusPills(!showStatusPills)}
-              className="md:hidden flex items-center gap-2 text-xs text-harley-text-muted mb-2 py-1"
-            >
-              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showStatusPills ? "" : "-rotate-90"}`} />
-              Change Status
-            </button>
-            <div className={`flex flex-wrap gap-1.5 ${showStatusPills ? "" : "hidden md:flex"}`}>
-              {EVENT_STATUSES.map(({ value, label }) => (
-                <button
-                  key={value}
-                  onClick={() => handleStatusChange(value)}
-                  className={`px-3 py-1.5 md:py-1 rounded-full text-xs font-medium transition-all duration-150 ${
-                    event.status === value
-                      ? "bg-harley-orange text-white shadow-sm shadow-harley-orange/20"
-                      : "bg-harley-gray-light/40 text-harley-text-muted hover:bg-harley-gray-light hover:text-harley-text"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
+          {canManageEvents && (
+            <div>
+              <button
+                onClick={() => setShowStatusPills(!showStatusPills)}
+                className="md:hidden flex items-center gap-2 text-xs text-harley-text-muted mb-2 py-1"
+              >
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showStatusPills ? "" : "-rotate-90"}`} />
+                Change Status
+              </button>
+              <div className={`flex flex-wrap gap-1.5 ${showStatusPills ? "" : "hidden md:flex"}`}>
+                {EVENT_STATUSES.map(({ value, label }) => (
+                  <button
+                    key={value}
+                    onClick={() => handleStatusChange(value)}
+                    className={`px-3 py-1.5 md:py-1 rounded-full text-xs font-medium transition-all duration-150 ${
+                      event.status === value
+                        ? "bg-harley-orange text-white shadow-sm shadow-harley-orange/20"
+                        : "bg-harley-gray-light/40 text-harley-text-muted hover:bg-harley-gray-light hover:text-harley-text"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* ── CHECKLIST (always open) ──────────────────────────── */}
@@ -542,6 +556,7 @@ export default function EventDetailPage() {
                   items={items}
                   eventId={event.id}
                   onUpdate={loadAll}
+                  allowStructureEdit={canManageEvents}
                 />
               );
             })}
@@ -557,8 +572,18 @@ export default function EventDetailPage() {
           mobileCollapsed
         >
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <MediaGallery eventId={event.id} media={media} onUpdate={loadAll} />
-            <DocumentManager eventId={event.id} documents={documents} onUpdate={loadAll} />
+            <MediaGallery
+              eventId={event.id}
+              media={media}
+              onUpdate={loadAll}
+              canMutate={canManageEvents}
+            />
+            <DocumentManager
+              eventId={event.id}
+              documents={documents}
+              onUpdate={loadAll}
+              canMutate={canManageEvents}
+            />
           </div>
         </CollapsibleSection>
 
@@ -580,7 +605,13 @@ export default function EventDetailPage() {
           defaultOpen={typeof window !== "undefined" && window.innerWidth >= 768}
           mobileCollapsed
         >
-          <CommentsSection eventId={event.id} comments={comments} onUpdate={loadAll} />
+          <CommentsSection
+            eventId={event.id}
+            comments={comments}
+            onUpdate={loadAll}
+            canPost={canManageEvents}
+            canDelete={canManageEvents}
+          />
         </CollapsibleSection>
 
         {/* ── RECAP (collapsed on mobile) ─────────────────────── */}
@@ -591,30 +622,33 @@ export default function EventDetailPage() {
             defaultOpen={typeof window !== "undefined" && window.innerWidth >= 768}
             mobileCollapsed
           >
-            <EventRecap event={event} onUpdate={loadAll} />
+            <EventRecap event={event} onUpdate={loadAll} canEdit={canManageEvents} />
           </CollapsibleSection>
         )}
       </div>
 
       {/* Edit Modal */}
-      <Modal
-        isOpen={editModalOpen}
-        onClose={() => setEditModalOpen(false)}
-        title="Edit Event"
-        size="lg"
-      >
-        <EventForm
-          event={event}
-          onSubmit={handleEditSubmit}
-          onCancel={() => setEditModalOpen(false)}
-          submitLabel="Save Changes"
-        />
-      </Modal>
+      {canManageEvents && (
+        <Modal
+          isOpen={editModalOpen}
+          onClose={() => setEditModalOpen(false)}
+          title="Edit Event"
+          size="lg"
+        >
+          <EventForm
+            event={event}
+            onSubmit={handleEditSubmit}
+            onCancel={() => setEditModalOpen(false)}
+            submitLabel="Save Changes"
+          />
+        </Modal>
+      )}
 
       <EventMobileActionBar
         eventId={event.id}
         checklist={checklist}
         onUpdate={loadAll}
+        canManageExtras={canManageEvents}
       />
     </>
   );

@@ -28,12 +28,15 @@ interface DocumentManagerProps {
   eventId: string;
   documents: EventDocument[];
   onUpdate: () => void;
+  /** Staff: view/download only */
+  canMutate?: boolean;
 }
 
 export function DocumentManager({
   eventId,
   documents,
   onUpdate,
+  canMutate = true,
 }: DocumentManagerProps) {
   const [uploading, setUploading] = useState(false);
   const [selectedTag, setSelectedTag] = useState<DocumentTag>("other");
@@ -105,40 +108,42 @@ export function DocumentManager({
     <Card className="!p-3.5 md:!p-5">
       <h3 className="font-semibold text-harley-text mb-4">Documents</h3>
 
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 mb-4">
-        <select
-          value={selectedTag}
-          onChange={(e) => setSelectedTag(e.target.value as DocumentTag)}
-          className="px-3 py-2.5 md:py-2 rounded-lg bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-sm focus:outline-none focus:border-harley-orange/70 focus:ring-1 focus:ring-harley-orange/20 transition-all duration-150"
-        >
-          {DOCUMENT_TAGS.map((tag) => (
-            <option key={tag.value} value={tag.value}>
-              {tag.label}
-            </option>
-          ))}
-        </select>
+      {canMutate && (
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 mb-4">
+          <select
+            value={selectedTag}
+            onChange={(e) => setSelectedTag(e.target.value as DocumentTag)}
+            className="px-3 py-2.5 md:py-2 rounded-lg bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-sm focus:outline-none focus:border-harley-orange/70 focus:ring-1 focus:ring-harley-orange/20 transition-all duration-150"
+          >
+            {DOCUMENT_TAGS.map((tag) => (
+              <option key={tag.value} value={tag.value}>
+                {tag.label}
+              </option>
+            ))}
+          </select>
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          onChange={handleUpload}
-          className="hidden"
-          multiple
-        />
-        <Button
-          size="sm"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploading}
-          className="!py-2.5 md:!py-1.5"
-        >
-          {uploading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Upload className="w-4 h-4" />
-          )}
-          Upload File
-        </Button>
-      </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            onChange={handleUpload}
+            className="hidden"
+            multiple
+          />
+          <Button
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="!py-2.5 md:!py-1.5"
+          >
+            {uploading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Upload className="w-4 h-4" />
+            )}
+            Upload File
+          </Button>
+        </div>
+      )}
 
       {documents.length === 0 ? (
         <p className="text-sm text-harley-text-muted py-4 text-center">
@@ -178,13 +183,15 @@ export function DocumentManager({
                 >
                   <Download className="w-4 h-4" />
                 </button>
-                <button
-                  onClick={() => handleDelete(doc)}
-                  className="p-2 md:p-1.5 text-harley-text-muted hover:text-harley-danger transition-colors rounded-md"
-                  title="Delete"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {canMutate && (
+                  <button
+                    onClick={() => handleDelete(doc)}
+                    className="p-2 md:p-1.5 text-harley-text-muted hover:text-harley-danger transition-colors rounded-md"
+                    title="Delete"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </div>
           ))}

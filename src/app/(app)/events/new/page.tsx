@@ -5,12 +5,14 @@ import { createClient } from "@/lib/supabase/client";
 import { createEvent } from "@/lib/events";
 import { EventForm } from "@/components/events/event-form";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
+import { useAppRole } from "@/contexts/app-role-context";
 
 export default function NewEventPage() {
   const router = useRouter();
+  const { canManageEvents, loading: roleLoading } = useAppRole();
   const supabaseRef = useRef(
     typeof window !== "undefined" ? createClient() : null
   );
@@ -21,6 +23,11 @@ export default function NewEventPage() {
       setUserId(data.user?.id ?? null);
     });
   }, []);
+
+  useEffect(() => {
+    if (roleLoading) return;
+    if (!canManageEvents) router.replace("/dashboard");
+  }, [roleLoading, canManageEvents, router]);
 
   async function handleCreate(data: {
     name: string;
@@ -40,6 +47,14 @@ export default function NewEventPage() {
       onedrive_link: data.onedrive_link || undefined,
     });
     router.push(`/events/${event.id}`);
+  }
+
+  if (roleLoading || !canManageEvents) {
+    return (
+      <div className="flex items-center justify-center min-h-[40vh]">
+        <Loader2 className="w-8 h-8 text-harley-orange animate-spin" />
+      </div>
+    );
   }
 
   return (

@@ -12,9 +12,10 @@ import { Archive, Save, Loader2 } from "lucide-react";
 interface EventRecapProps {
   event: Event;
   onUpdate: () => void;
+  canEdit?: boolean;
 }
 
-export function EventRecap({ event, onUpdate }: EventRecapProps) {
+export function EventRecap({ event, onUpdate, canEdit = true }: EventRecapProps) {
   const [attendance, setAttendance] = useState<string>(
     event.attendance?.toString() || ""
   );
@@ -71,6 +72,7 @@ export function EventRecap({ event, onUpdate }: EventRecapProps) {
             value={attendance}
             onChange={(e) => setAttendance(e.target.value)}
             placeholder="Number of attendees"
+            disabled={!canEdit}
           />
           <Input
             label="Sales Estimate ($)"
@@ -78,6 +80,7 @@ export function EventRecap({ event, onUpdate }: EventRecapProps) {
             value={salesEstimate}
             onChange={(e) => setSalesEstimate(e.target.value)}
             placeholder="0.00"
+            disabled={!canEdit}
           />
         </div>
 
@@ -87,25 +90,32 @@ export function EventRecap({ event, onUpdate }: EventRecapProps) {
           onChange={(e) => setNotes(e.target.value)}
           placeholder="Key takeaways, lessons learned, follow-up items..."
           rows={4}
+          disabled={!canEdit}
         />
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
-            {saving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
-            Save Recap
-          </Button>
-
-          {event.status === "completed" && !event.is_archived && (
-            <Button variant="secondary" onClick={handleArchive} className="w-full sm:w-auto">
-              <Archive className="w-4 h-4" />
-              Archive Event
+        {canEdit ? (
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
+              {saving ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              Save Recap
             </Button>
-          )}
-        </div>
+
+            {event.status === "completed" && !event.is_archived && (
+              <Button variant="secondary" onClick={handleArchive} className="w-full sm:w-auto">
+                <Archive className="w-4 h-4" />
+                Archive Event
+              </Button>
+            )}
+          </div>
+        ) : (
+          <p className="text-xs text-harley-text-muted">
+            Recap editing is limited to managers and admins.
+          </p>
+        )}
       </div>
     </Card>
   );

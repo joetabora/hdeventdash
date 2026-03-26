@@ -4,7 +4,7 @@
 CREATE TABLE IF NOT EXISTS public.user_roles (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  role TEXT NOT NULL DEFAULT 'staff' CHECK (role IN ('admin', 'staff')),
+  role TEXT NOT NULL DEFAULT 'staff' CHECK (role IN ('admin', 'manager', 'staff')),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(user_id)
 );

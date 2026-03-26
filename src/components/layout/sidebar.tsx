@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
-import { isAdmin } from "@/lib/roles";
+import { useAppRole } from "@/contexts/app-role-context";
 import { buttonStyles } from "@/components/ui/button";
 import {
   Zap,
@@ -33,16 +32,7 @@ interface SidebarProps {
 
 export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const [showAdmin, setShowAdmin] = useState(false);
-
-  useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) {
-        isAdmin(supabase, data.user.id).then(setShowAdmin);
-      }
-    });
-  }, []);
+  const { isAdmin, canManageEvents } = useAppRole();
 
   return (
     <>
@@ -83,16 +73,18 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
         </div>
 
         {/* New Event */}
-        <div className="px-4 pt-5 pb-2">
-          <Link
-            href="/events/new"
-            onClick={onClose}
-            className={`${buttonStyles.primary("md")} w-full`}
-          >
-            <PlusCircle className="w-4 h-4" />
-            New Event
-          </Link>
-        </div>
+        {canManageEvents && (
+          <div className="px-4 pt-5 pb-2">
+            <Link
+              href="/events/new"
+              onClick={onClose}
+              className={`${buttonStyles.primary("md")} w-full`}
+            >
+              <PlusCircle className="w-4 h-4" />
+              New Event
+            </Link>
+          </div>
+        )}
 
         {/* Navigation */}
         <nav className="flex-1 px-4 pt-2 space-y-1 overflow-y-auto">
@@ -123,7 +115,7 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
               </Link>
             );
           })}
-          {showAdmin && (
+          {isAdmin && (
             <>
               <p className="px-3 pt-5 pb-2 text-[10px] font-semibold text-harley-text-muted uppercase tracking-widest">
                 Admin

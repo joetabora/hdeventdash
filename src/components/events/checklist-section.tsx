@@ -22,6 +22,8 @@ interface ChecklistSectionProps {
   onUpdate: () => void;
   /** Event Live Mode: larger touch targets, no add/delete/details */
   liveMode?: boolean;
+  /** When false (staff): add/remove rows and per-row delete hidden; progress fields still editable. */
+  allowStructureEdit?: boolean;
 }
 
 export function ChecklistSectionComponent({
@@ -30,6 +32,7 @@ export function ChecklistSectionComponent({
   eventId,
   onUpdate,
   liveMode = false,
+  allowStructureEdit = true,
 }: ChecklistSectionProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [newItemLabel, setNewItemLabel] = useState("");
@@ -137,6 +140,7 @@ export function ChecklistSectionComponent({
               key={item.id}
               item={item}
               liveMode={liveMode}
+              allowDelete={allowStructureEdit}
               onToggle={() => handleToggle(item)}
               onDelete={() => handleDelete(item.id)}
               onAssigneeChange={(val) => handleAssigneeChange(item, val)}
@@ -144,7 +148,7 @@ export function ChecklistSectionComponent({
             />
           ))}
 
-          {!liveMode &&
+          {!liveMode && allowStructureEdit &&
             (addingItem ? (
               <div className="flex items-center gap-2 mt-2 pl-1">
                 <input
@@ -190,6 +194,7 @@ export function ChecklistSectionComponent({
 function ChecklistItemRow({
   item,
   liveMode,
+  allowDelete,
   onToggle,
   onDelete,
   onAssigneeChange,
@@ -197,6 +202,7 @@ function ChecklistItemRow({
 }: {
   item: ChecklistItem;
   liveMode: boolean;
+  allowDelete: boolean;
   onToggle: () => void;
   onDelete: () => void;
   onAssigneeChange: (val: string) => void;
@@ -305,14 +311,16 @@ function ChecklistItemRow({
           >
             <MessageSquare className="w-4 h-4 md:w-3.5 md:h-3.5" />
           </button>
-          <button
-            type="button"
-            onClick={onDelete}
-            className="p-2 md:p-1.5 rounded-md text-harley-text-muted hover:text-harley-danger hover:bg-harley-danger/10 transition-all duration-150"
-            title="Delete"
-          >
-            <Trash2 className="w-4 h-4 md:w-3.5 md:h-3.5" />
-          </button>
+          {allowDelete && (
+            <button
+              type="button"
+              onClick={onDelete}
+              className="p-2 md:p-1.5 rounded-md text-harley-text-muted hover:text-harley-danger hover:bg-harley-danger/10 transition-all duration-150"
+              title="Delete"
+            >
+              <Trash2 className="w-4 h-4 md:w-3.5 md:h-3.5" />
+            </button>
+          )}
         </div>
       </div>
 

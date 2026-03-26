@@ -19,6 +19,7 @@ import { DashboardMetrics } from "@/components/dashboard/metrics";
 import { Card } from "@/components/ui/card";
 import { LayoutGrid, Calendar, List, Loader2 } from "lucide-react";
 import { parseISO, isBefore, startOfDay } from "date-fns";
+import { useAppRole } from "@/contexts/app-role-context";
 
 type ViewType = "kanban" | "calendar" | "list";
 
@@ -38,6 +39,7 @@ export function DashboardContent() {
   const [search, setSearch] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
   const [ownerFilter, setOwnerFilter] = useState("");
+  const { canManageEvents } = useAppRole();
 
   const loadEvents = useCallback(async () => {
     const supabase = supabaseRef.current;
@@ -142,6 +144,7 @@ export function DashboardContent() {
   }, [events, search, locationFilter, ownerFilter]);
 
   async function handleStatusChange(eventId: string, newStatus: EventStatus) {
+    if (!canManageEvents) return;
     const supabase = supabaseRef.current;
     if (!supabase) return;
     setEvents((prev) =>
@@ -222,6 +225,7 @@ export function DashboardContent() {
             events={filteredEvents}
             onStatusChange={handleStatusChange}
             atRiskIds={atRiskIds}
+            readOnly={!canManageEvents}
           />
         </div>
       )}

@@ -21,12 +21,15 @@ interface EventMobileActionBarProps {
   eventId: string;
   checklist: ChecklistItem[];
   onUpdate: () => void;
+  /** Staff: checklist quick-complete only (no media upload / comment). */
+  canManageExtras?: boolean;
 }
 
 export function EventMobileActionBar({
   eventId,
   checklist,
   onUpdate,
+  canManageExtras = true,
 }: EventMobileActionBarProps) {
   const supabase = createClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -108,13 +111,17 @@ export function EventMobileActionBar({
         }}
       >
         <nav
-          className="flex items-stretch justify-around gap-1 px-2 pt-2 max-w-lg mx-auto"
+          className={`flex items-stretch gap-1 px-2 pt-2 max-w-lg mx-auto ${
+            canManageExtras ? "justify-around" : "justify-center"
+          }`}
           aria-label="Quick actions"
         >
           <button
             type="button"
             onClick={() => setTaskModalOpen(true)}
-            className="flex flex-1 flex-col items-center justify-center gap-1 rounded-xl py-2.5 min-h-[3.5rem] text-harley-text-muted hover:text-harley-orange hover:bg-harley-gray-light/30 active:bg-harley-gray-light/50 transition-colors"
+            className={`flex flex-col items-center justify-center gap-1 rounded-xl py-2.5 min-h-[3.5rem] text-harley-text-muted hover:text-harley-orange hover:bg-harley-gray-light/30 active:bg-harley-gray-light/50 transition-colors ${
+              canManageExtras ? "flex-1" : "w-full max-w-xs"
+            }`}
           >
             <CheckCircle2 className="w-6 h-6" aria-hidden />
             <span className="text-[11px] font-medium leading-tight text-center">
@@ -122,42 +129,48 @@ export function EventMobileActionBar({
             </span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-            className="flex flex-1 flex-col items-center justify-center gap-1 rounded-xl py-2.5 min-h-[3.5rem] text-harley-text-muted hover:text-harley-orange hover:bg-harley-gray-light/30 active:bg-harley-gray-light/50 transition-colors disabled:opacity-50"
-          >
-            {uploading ? (
-              <Loader2 className="w-6 h-6 animate-spin text-harley-orange" />
-            ) : (
-              <ImagePlus className="w-6 h-6" aria-hidden />
-            )}
-            <span className="text-[11px] font-medium leading-tight text-center">
-              Upload media
-            </span>
-          </button>
+          {canManageExtras && (
+            <>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="flex flex-1 flex-col items-center justify-center gap-1 rounded-xl py-2.5 min-h-[3.5rem] text-harley-text-muted hover:text-harley-orange hover:bg-harley-gray-light/30 active:bg-harley-gray-light/50 transition-colors disabled:opacity-50"
+              >
+                {uploading ? (
+                  <Loader2 className="w-6 h-6 animate-spin text-harley-orange" />
+                ) : (
+                  <ImagePlus className="w-6 h-6" aria-hidden />
+                )}
+                <span className="text-[11px] font-medium leading-tight text-center">
+                  Upload media
+                </span>
+              </button>
 
-          <button
-            type="button"
-            onClick={() => setCommentModalOpen(true)}
-            className="flex flex-1 flex-col items-center justify-center gap-1 rounded-xl py-2.5 min-h-[3.5rem] text-harley-text-muted hover:text-harley-orange hover:bg-harley-gray-light/30 active:bg-harley-gray-light/50 transition-colors"
-          >
-            <MessageSquarePlus className="w-6 h-6" aria-hidden />
-            <span className="text-[11px] font-medium leading-tight text-center">
-              Add comment
-            </span>
-          </button>
+              <button
+                type="button"
+                onClick={() => setCommentModalOpen(true)}
+                className="flex flex-1 flex-col items-center justify-center gap-1 rounded-xl py-2.5 min-h-[3.5rem] text-harley-text-muted hover:text-harley-orange hover:bg-harley-gray-light/30 active:bg-harley-gray-light/50 transition-colors"
+              >
+                <MessageSquarePlus className="w-6 h-6" aria-hidden />
+                <span className="text-[11px] font-medium leading-tight text-center">
+                  Add comment
+                </span>
+              </button>
+            </>
+          )}
         </nav>
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*,video/*"
-          multiple
-          className="hidden"
-          onChange={handleUpload}
-        />
+        {canManageExtras && (
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,video/*"
+            multiple
+            className="hidden"
+            onChange={handleUpload}
+          />
+        )}
       </div>
 
       <Modal

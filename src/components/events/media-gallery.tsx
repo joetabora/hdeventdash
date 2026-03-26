@@ -20,6 +20,7 @@ interface MediaGalleryProps {
   eventId: string;
   media: EventMedia[];
   onUpdate: () => void;
+  canMutate?: boolean;
 }
 
 const tagVariant: Record<MediaTag, "info" | "orange" | "success"> = {
@@ -28,7 +29,12 @@ const tagVariant: Record<MediaTag, "info" | "orange" | "success"> = {
   marketing_asset: "success",
 };
 
-export function MediaGallery({ eventId, media, onUpdate }: MediaGalleryProps) {
+export function MediaGallery({
+  eventId,
+  media,
+  onUpdate,
+  canMutate = true,
+}: MediaGalleryProps) {
   const [uploading, setUploading] = useState(false);
   const [selectedTag, setSelectedTag] = useState<MediaTag>("social_media");
   const [filterTag, setFilterTag] = useState<MediaTag | "all">("all");
@@ -91,42 +97,43 @@ export function MediaGallery({ eventId, media, onUpdate }: MediaGalleryProps) {
     <Card className="!p-3.5 md:!p-5">
       <h3 className="font-semibold text-harley-text mb-4">Media</h3>
 
-      {/* Upload controls */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 mb-4">
-        <select
-          value={selectedTag}
-          onChange={(e) => setSelectedTag(e.target.value as MediaTag)}
-          className="px-3 py-2.5 md:py-2 rounded-lg bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-sm focus:outline-none focus:border-harley-orange/70 focus:ring-1 focus:ring-harley-orange/20 transition-all duration-150"
-        >
-          {MEDIA_TAGS.map((tag) => (
-            <option key={tag.value} value={tag.value}>
-              {tag.label}
-            </option>
-          ))}
-        </select>
+      {canMutate && (
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 mb-4">
+          <select
+            value={selectedTag}
+            onChange={(e) => setSelectedTag(e.target.value as MediaTag)}
+            className="px-3 py-2.5 md:py-2 rounded-lg bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-sm focus:outline-none focus:border-harley-orange/70 focus:ring-1 focus:ring-harley-orange/20 transition-all duration-150"
+          >
+            {MEDIA_TAGS.map((tag) => (
+              <option key={tag.value} value={tag.value}>
+                {tag.label}
+              </option>
+            ))}
+          </select>
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          onChange={handleUpload}
-          accept="image/*,video/*"
-          className="hidden"
-          multiple
-        />
-        <Button
-          size="sm"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploading}
-          className="!py-2.5 md:!py-1.5"
-        >
-          {uploading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Upload className="w-4 h-4" />
-          )}
-          Upload Media
-        </Button>
-      </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            onChange={handleUpload}
+            accept="image/*,video/*"
+            className="hidden"
+            multiple
+          />
+          <Button
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="!py-2.5 md:!py-1.5"
+          >
+            {uploading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Upload className="w-4 h-4" />
+            )}
+            Upload Media
+          </Button>
+        </div>
+      )}
 
       {/* Filter tabs */}
       {media.length > 0 && (
@@ -200,18 +207,26 @@ export function MediaGallery({ eventId, media, onUpdate }: MediaGalleryProps) {
                   </div>
                 )}
 
-                {/* Overlay on hover */}
-                <div className="absolute inset-0 bg-black/60 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
+                {/* Overlay on hover (managers+: delete) */}
+                <div
+                  className={`absolute inset-0 bg-black/60 flex flex-col justify-between p-2 transition-opacity ${
+                    canMutate
+                      ? "md:opacity-0 md:group-hover:opacity-100"
+                      : "opacity-0 pointer-events-none"
+                  }`}
+                >
                   <div className="flex justify-end">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(item);
-                      }}
-                      className="p-1.5 rounded-lg bg-harley-danger/80 text-white hover:bg-harley-danger transition-colors"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    {canMutate && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(item);
+                        }}
+                        className="p-1.5 rounded-lg bg-harley-danger/80 text-white hover:bg-harley-danger transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
                   <div>
                     <Badge variant={tagVariant[item.tag]}>
