@@ -10,6 +10,7 @@ import {
   LayoutGrid,
   Calendar,
   List,
+  BarChart3,
   PlusCircle,
   X,
   ShieldCheck,
@@ -19,6 +20,7 @@ const navItems = [
   { href: "/dashboard", label: "Kanban", icon: LayoutGrid },
   { href: "/dashboard?view=calendar", label: "Calendar", icon: Calendar },
   { href: "/dashboard?view=list", label: "List", icon: List },
+  { href: "/dashboard?view=analytics", label: "Analytics", icon: BarChart3 },
 ];
 
 const adminItems = [

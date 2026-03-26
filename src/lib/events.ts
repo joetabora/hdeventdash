@@ -2,6 +2,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import {
   Event,
   EventStatus,
+  EventType,
   ChecklistItem,
   EventDocument,
   EventComment,
@@ -71,6 +72,7 @@ export async function createEvent(
     description: string;
     onedrive_link?: string;
     user_id: string;
+    event_type?: EventType | null;
   }
 ) {
   const { data, error } = await supabase

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Menu, ChevronDown, LogOut, User } from "lucide-react";
 
@@ -15,8 +15,9 @@ const pageTitles: Record<string, string> = {
   "/admin/users": "User Management",
 };
 
-export function TopHeader({ onMenuToggle }: TopHeaderProps) {
+function TopHeaderInner({ onMenuToggle }: TopHeaderProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -27,9 +28,12 @@ export function TopHeader({ onMenuToggle }: TopHeaderProps) {
     });
   }, []);
 
+  const dashboardView = pathname === "/dashboard" ? searchParams.get("view") : null;
   const title =
-    pageTitles[pathname] ||
-    (pathname.startsWith("/events/") ? "Event Details" : "Dashboard");
+    dashboardView === "analytics"
+      ? "Analytics"
+      : pageTitles[pathname] ||
+        (pathname.startsWith("/events/") ? "Event Details" : "Dashboard");
 
   async function handleSignOut() {
     const supabase = createClient();
@@ -92,5 +96,19 @@ export function TopHeader({ onMenuToggle }: TopHeaderProps) {
         )}
       </div>
     </header>
+  );
+}
+
+export function TopHeader(props: TopHeaderProps) {
+  return (
+    <Suspense
+      fallback={
+        <header className="sticky top-0 z-20 h-16 bg-harley-dark/70 backdrop-blur-xl border-b border-harley-gray/50 flex items-center justify-between px-4 lg:px-8">
+          <h1 className="text-lg font-semibold text-harley-text">Dashboard</h1>
+        </header>
+      }
+    >
+      <TopHeaderInner {...props} />
+    </Suspense>
   );
 }

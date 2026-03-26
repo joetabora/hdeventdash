@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Event, EventStatus, EVENT_STATUSES } from "@/types/database";
+import {
+  Event,
+  EventStatus,
+  EventType,
+  EVENT_STATUSES,
+  EVENT_TYPES,
+} from "@/types/database";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea, Select } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
@@ -16,6 +22,7 @@ interface EventFormProps {
     status: EventStatus;
     description: string;
     onedrive_link: string;
+    event_type: EventType | null;
   }) => Promise<void>;
   onCancel?: () => void;
   submitLabel?: string;
@@ -34,6 +41,9 @@ export function EventForm({
   const [status, setStatus] = useState<EventStatus>(event?.status || "idea");
   const [description, setDescription] = useState(event?.description || "");
   const [onedriveLink, setOnedriveLink] = useState(event?.onedrive_link || "");
+  const [eventType, setEventType] = useState<EventType | "">(
+    (event?.event_type as EventType | undefined) ?? ""
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -54,6 +64,7 @@ export function EventForm({
         status,
         description: description.trim(),
         onedrive_link: onedriveLink.trim() || "",
+        event_type: eventType === "" ? null : eventType,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -102,6 +113,18 @@ export function EventForm({
           options={EVENT_STATUSES}
         />
       </div>
+
+      <Select
+        label="Event type (for analytics)"
+        value={eventType}
+        onChange={(e) =>
+          setEventType((e.target.value || "") as EventType | "")
+        }
+        options={[
+          { value: "", label: "Not set" },
+          ...EVENT_TYPES,
+        ]}
+      />
 
       <Textarea
         label="Description"

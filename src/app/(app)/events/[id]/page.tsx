@@ -21,6 +21,7 @@ import {
   CHECKLIST_SECTIONS,
   EVENT_STATUSES,
   EventStatus,
+  EventType,
 } from "@/types/database";
 import { StatusBadge, Badge } from "@/components/ui/badge";
 import { Button, buttonStyles } from "@/components/ui/button";
@@ -197,12 +198,14 @@ export default function EventDetailPage() {
     status: string;
     description: string;
     onedrive_link: string;
+    event_type: EventType | null;
   }) {
     if (!event || !supabaseRef.current) return;
     await updateEvent(supabaseRef.current, event.id, {
       ...data,
       status: data.status as EventStatus,
       onedrive_link: data.onedrive_link || null,
+      event_type: data.event_type,
     });
     setEditModalOpen(false);
     loadAll();

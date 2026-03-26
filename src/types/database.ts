@@ -38,6 +38,25 @@ export const EVENT_STATUSES: { value: EventStatus; label: string }[] = [
   { value: "completed", label: "Completed" },
 ];
 
+export type EventType =
+  | "ride"
+  | "open_house"
+  | "demo_day"
+  | "community"
+  | "sales_promo"
+  | "fundraiser"
+  | "other";
+
+export const EVENT_TYPES: { value: EventType; label: string }[] = [
+  { value: "ride", label: "Group ride" },
+  { value: "open_house", label: "Open house" },
+  { value: "demo_day", label: "Demo / test ride day" },
+  { value: "community", label: "Community / charity" },
+  { value: "sales_promo", label: "Sales / promo event" },
+  { value: "fundraiser", label: "Fundraiser" },
+  { value: "other", label: "Other" },
+];
+
 export interface Event {
   id: string;
   organization_id: string;
@@ -63,6 +82,8 @@ export interface Event {
   roi_motorclothes_revenue?: number | null;
   roi_bike_sales_revenue?: number | null;
   roi_event_cost?: number | null;
+  /** Analytics segment (optional until migration) */
+  event_type?: EventType | null;
 }
 
 export interface ChecklistItem {

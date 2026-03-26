@@ -9,6 +9,7 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
 import { useAppRole } from "@/contexts/app-role-context";
+import type { EventType } from "@/types/database";
 
 export default function NewEventPage() {
   const router = useRouter();
@@ -37,6 +38,7 @@ export default function NewEventPage() {
     status: string;
     description: string;
     onedrive_link: string;
+    event_type: EventType | null;
   }) {
     if (!userId || !supabaseRef.current)
       throw new Error("Not authenticated");
@@ -45,6 +47,7 @@ export default function NewEventPage() {
       status: data.status as "idea",
       user_id: userId,
       onedrive_link: data.onedrive_link || undefined,
+      event_type: data.event_type,
     });
     router.push(`/events/${event.id}`);
   }

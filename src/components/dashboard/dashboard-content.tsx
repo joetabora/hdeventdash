@@ -17,12 +17,13 @@ import { ListView } from "@/components/dashboard/list-view";
 import { Filters } from "@/components/dashboard/filters";
 import { DashboardMetrics } from "@/components/dashboard/metrics";
 import { RoiTrendsCard } from "@/components/dashboard/roi-trends-card";
+import { AnalyticsDashboard } from "@/components/dashboard/analytics-dashboard";
 import { Card } from "@/components/ui/card";
-import { LayoutGrid, Calendar, List, Loader2 } from "lucide-react";
+import { LayoutGrid, Calendar, List, BarChart3, Loader2 } from "lucide-react";
 import { parseISO, isBefore, startOfDay } from "date-fns";
 import { useAppRole } from "@/contexts/app-role-context";
 
-type ViewType = "kanban" | "calendar" | "list";
+type ViewType = "kanban" | "calendar" | "list" | "analytics";
 
 export function DashboardContent() {
   const searchParams = useSearchParams();
@@ -31,8 +32,13 @@ export function DashboardContent() {
     typeof window !== "undefined" ? createClient() : null
   );
 
-  const viewParam = searchParams.get("view") as ViewType | null;
-  const currentView: ViewType = viewParam || "kanban";
+  const rawView = searchParams.get("view");
+  const currentView: ViewType =
+    rawView === "calendar" ||
+    rawView === "list" ||
+    rawView === "analytics"
+      ? rawView
+      : "kanban";
 
   const [events, setEvents] = useState<Event[]>([]);
   const [checklistStats, setChecklistStats] = useState<ChecklistStats>({});
@@ -170,6 +176,7 @@ export function DashboardContent() {
     { id: "kanban", label: "Kanban", icon: LayoutGrid },
     { id: "calendar", label: "Calendar", icon: Calendar },
     { id: "list", label: "List", icon: List },
+    { id: "analytics", label: "Analytics", icon: BarChart3 },
   ];
 
   if (loading) {
@@ -183,7 +190,9 @@ export function DashboardContent() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-harley-text">Events Dashboard</h1>
+        <h1 className="text-2xl font-bold text-harley-text">
+          {currentView === "analytics" ? "Analytics" : "Events Dashboard"}
+        </h1>
         <Card padding="none" className="flex items-center p-1">
           {viewButtons.map(({ id, label, icon: Icon }) => (
             <button
@@ -202,13 +211,15 @@ export function DashboardContent() {
         </Card>
       </div>
 
-      <DashboardMetrics
-        upcomingCount={metrics.upcomingCount}
-        atRiskCount={metrics.atRiskCount}
-        avgCompletion={metrics.avgCompletion}
-        avgScore={metrics.avgScore}
-        totalEvents={metrics.totalEvents}
-      />
+      {currentView !== "analytics" && (
+        <DashboardMetrics
+          upcomingCount={metrics.upcomingCount}
+          atRiskCount={metrics.atRiskCount}
+          avgCompletion={metrics.avgCompletion}
+          avgScore={metrics.avgScore}
+          totalEvents={metrics.totalEvents}
+        />
+      )}
 
       <Filters
         events={events}
@@ -220,7 +231,16 @@ export function DashboardContent() {
         onOwnerFilterChange={setOwnerFilter}
       />
 
-      <RoiTrendsCard events={filteredEvents} />
+      {currentView !== "analytics" && (
+        <RoiTrendsCard events={filteredEvents} />
+      )}
+
+      {currentView === "analytics" && (
+        <AnalyticsDashboard
+          events={filteredEvents}
+          checklistStats={checklistStats}
+        />
+      )}
 
       {currentView === "kanban" && (
         <div className="overflow-x-auto -mx-2 px-2">
