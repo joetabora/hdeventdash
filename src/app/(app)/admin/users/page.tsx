@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { getAllUserRoles, setUserRole, deleteUserRole, isAdmin } from "@/lib/roles";
+import { addMemberToCurrentOrganization } from "@/lib/organization";
 import { UserRole, UserRoleRecord } from "@/types/database";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -61,12 +62,21 @@ export default function UserManagementPage() {
 
       const roles = await getAllUserRoles(supabase);
 
+      const { data: memberRows, error: membersError } = await supabase
+        .from("organization_members")
+        .select("user_id");
+      if (membersError) throw membersError;
+      const memberIds = new Set(
+        (memberRows ?? []).map((m: { user_id: string }) => m.user_id)
+      );
+
       const { data: authUsers } = await supabase.auth.admin.listUsers();
 
       const merged: ManagedUser[] = [];
 
       if (authUsers?.users) {
         for (const au of authUsers.users) {
+          if (!memberIds.has(au.id)) continue;
           const roleRecord = roles.find((r) => r.user_id === au.id);
           merged.push({
             id: au.id,
@@ -76,12 +86,13 @@ export default function UserManagementPage() {
           });
         }
       } else {
-        for (const r of roles) {
+        for (const userId of memberIds) {
+          const roleRecord = roles.find((r) => r.user_id === userId);
           merged.push({
-            id: r.user_id,
-            email: r.user_id,
-            role: r.role,
-            created_at: r.created_at,
+            id: userId,
+            email: userId,
+            role: (roleRecord?.role as UserRole) || "staff",
+            created_at: roleRecord?.created_at ?? "",
           });
         }
       }
@@ -91,14 +102,23 @@ export default function UserManagementPage() {
       console.error("Failed to load users:", err);
       const supabase = supabaseRef.current;
       if (!supabase) return;
+      const { data: memberRows } = await supabase
+        .from("organization_members")
+        .select("user_id");
+      const memberIdList = (memberRows ?? []).map(
+        (m: { user_id: string }) => m.user_id
+      );
       const roles = await getAllUserRoles(supabase);
       setUsers(
-        roles.map((r) => ({
-          id: r.user_id,
-          email: r.user_id.slice(0, 8) + "...",
-          role: r.role,
-          created_at: r.created_at,
-        }))
+        memberIdList.map((userId) => {
+          const r = roles.find((x) => x.user_id === userId);
+          return {
+            id: userId,
+            email: userId.slice(0, 8) + "...",
+            role: (r?.role as UserRole) ?? "staff",
+            created_at: r?.created_at ?? "",
+          };
+        })
       );
     } finally {
       setLoading(false);
@@ -141,12 +161,14 @@ export default function UserManagementPage() {
           });
           if (signUpError) throw signUpError;
           if (signUpData.user) {
+            await addMemberToCurrentOrganization(supabase, signUpData.user.id);
             await setUserRole(supabase, signUpData.user.id, newRole);
           }
         } else {
           throw error;
         }
       } else if (data.user) {
+        await addMemberToCurrentOrganization(supabase, data.user.id);
         await setUserRole(supabase, data.user.id, newRole);
       }
 

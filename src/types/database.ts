@@ -1,8 +1,22 @@
 export type UserRole = "admin" | "staff";
 
+export interface Organization {
+  id: string;
+  name: string;
+  created_at: string;
+}
+
+export interface OrganizationMember {
+  id: string;
+  organization_id: string;
+  user_id: string;
+  created_at: string;
+}
+
 export interface UserRoleRecord {
   id: string;
   user_id: string;
+  organization_id: string;
   role: UserRole;
   created_at: string;
 }
@@ -26,6 +40,7 @@ export const EVENT_STATUSES: { value: EventStatus; label: string }[] = [
 
 export interface Event {
   id: string;
+  organization_id: string;
   name: string;
   date: string;
   location: string;

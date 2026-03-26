@@ -11,6 +11,7 @@ import {
   DocumentTag,
   MediaTag,
 } from "@/types/database";
+import { getCurrentOrganizationId } from "@/lib/organization";
 
 export async function getEvents(supabase: SupabaseClient) {
   const { data, error } = await supabase
@@ -185,7 +186,10 @@ export async function uploadDocument(
   tag: DocumentTag,
   uploadedBy: string
 ) {
-  const filePath = `${eventId}/${Date.now()}-${file.name}`;
+  const organizationId = await getCurrentOrganizationId(supabase);
+  if (!organizationId) throw new Error("No organization");
+
+  const filePath = `${organizationId}/${eventId}/${Date.now()}-${file.name}`;
 
   const { error: uploadError } = await supabase.storage
     .from("event-documents")
@@ -282,7 +286,10 @@ export async function uploadMedia(
   tag: MediaTag,
   uploadedBy: string
 ) {
-  const filePath = `${eventId}/media/${Date.now()}-${file.name}`;
+  const organizationId = await getCurrentOrganizationId(supabase);
+  if (!organizationId) throw new Error("No organization");
+
+  const filePath = `${organizationId}/${eventId}/media/${Date.now()}-${file.name}`;
 
   const { error: uploadError } = await supabase.storage
     .from("event-documents")

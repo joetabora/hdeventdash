@@ -1,5 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { UserRole, UserRoleRecord } from "@/types/database";
+import { getCurrentOrganizationId } from "@/lib/organization";
 
 export async function getUserRole(
   supabase: SupabaseClient,
@@ -44,9 +45,13 @@ export async function setUserRole(
   userId: string,
   role: UserRole
 ): Promise<void> {
-  const { error } = await supabase
-    .from("user_roles")
-    .upsert({ user_id: userId, role }, { onConflict: "user_id" });
+  const organizationId = await getCurrentOrganizationId(supabase);
+  if (!organizationId) throw new Error("No organization");
+
+  const { error } = await supabase.from("user_roles").upsert(
+    { user_id: userId, role, organization_id: organizationId },
+    { onConflict: "user_id" }
+  );
 
   if (error) throw error;
 }
