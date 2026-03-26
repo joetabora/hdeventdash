@@ -12,12 +12,15 @@ import {
   updateEvent,
   deleteEvent,
 } from "@/lib/events";
+import { getVendors, getActiveEventVendors } from "@/lib/vendors";
 import {
   Event,
   ChecklistItem,
   EventDocument,
   EventComment,
   EventMedia,
+  Vendor,
+  EventVendorWithVendor,
   CHECKLIST_SECTIONS,
   EVENT_STATUSES,
   EventStatus,
@@ -35,6 +38,7 @@ import { MediaGallery } from "@/components/events/media-gallery";
 import { AiAssistant } from "@/components/events/ai-assistant";
 import { EventRecap } from "@/components/events/event-recap";
 import { EventRoiSection } from "@/components/events/event-roi-section";
+import { EventVendorsSection } from "@/components/vendors/event-vendors-section";
 import { EventMobileActionBar } from "@/components/events/event-mobile-action-bar";
 import { ProgressBar } from "@/components/events/progress-bar";
 import { DaysUntilEvent } from "@/components/events/days-until";
@@ -61,6 +65,7 @@ import {
   Sparkles,
   ChevronDown,
   DollarSign,
+  Store,
 } from "lucide-react";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
@@ -123,6 +128,8 @@ export default function EventDetailPage() {
   const [documents, setDocuments] = useState<EventDocument[]>([]);
   const [comments, setComments] = useState<EventComment[]>([]);
   const [media, setMedia] = useState<EventMedia[]>([]);
+  const [allVendors, setAllVendors] = useState<Vendor[]>([]);
+  const [eventVendors, setEventVendors] = useState<EventVendorWithVendor[]>([]);
   const [loading, setLoading] = useState(true);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [showStatusPills, setShowStatusPills] = useState(false);
@@ -131,18 +138,22 @@ export default function EventDetailPage() {
     const supabase = supabaseRef.current;
     if (!supabase) return;
     try {
-      const [ev, cl, docs, coms, med] = await Promise.all([
+      const [ev, cl, docs, coms, med, vendors, evVendors] = await Promise.all([
         getEvent(supabase, id),
         getChecklistItems(supabase, id),
         getEventDocuments(supabase, id),
         getEventComments(supabase, id),
         getEventMedia(supabase, id),
+        getVendors(supabase).catch(() => [] as Vendor[]),
+        getActiveEventVendors(supabase, id).catch(() => [] as EventVendorWithVendor[]),
       ]);
       setEvent(ev);
       setChecklist(cl);
       setDocuments(docs);
       setComments(coms);
       setMedia(med);
+      setAllVendors(vendors);
+      setEventVendors(evVendors);
     } catch (err) {
       console.error("Failed to load event:", err);
     } finally {
@@ -566,6 +577,23 @@ export default function EventDetailPage() {
               );
             })}
           </div>
+        </CollapsibleSection>
+
+        {/* ── VENDORS ─────────────────────────────────────────── */}
+        <CollapsibleSection
+          icon={<Store className="w-4.5 h-4.5" />}
+          title="Vendors"
+          count={eventVendors.length}
+          defaultOpen={typeof window !== "undefined" && window.innerWidth >= 768}
+          mobileCollapsed
+        >
+          <EventVendorsSection
+            eventId={event.id}
+            eventVendors={eventVendors}
+            allVendors={allVendors}
+            onUpdate={loadAll}
+            canMutate={canManageEvents}
+          />
         </CollapsibleSection>
 
         {/* ── FILES & MEDIA (collapsed on mobile) ─────────────── */}

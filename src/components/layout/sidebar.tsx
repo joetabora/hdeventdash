@@ -14,6 +14,7 @@ import {
   PlusCircle,
   X,
   ShieldCheck,
+  Store,
 } from "lucide-react";
 
 const navItems = [
@@ -117,6 +118,20 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
               </Link>
             );
           })}
+          {canManageEvents && (
+            <Link
+              href="/vendors"
+              onClick={onClose}
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${
+                pathname === "/vendors" || pathname.startsWith("/vendors/")
+                  ? "bg-harley-orange/15 text-harley-orange"
+                  : "text-harley-text-muted hover:bg-harley-gray-light/30 hover:text-harley-text hover:translate-x-0.5"
+              }`}
+            >
+              <Store className="w-4 h-4" />
+              Vendors
+            </Link>
+          )}
           {isAdmin && (
             <>
               <p className="px-3 pt-5 pb-2 text-[10px] font-semibold text-harley-text-muted uppercase tracking-widest">

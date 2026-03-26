@@ -155,6 +155,60 @@ export interface EventMedia {
   created_at: string;
 }
 
+export type VendorParticipationStatus =
+  | "invited"
+  | "confirmed"
+  | "participated"
+  | "declined"
+  | "cancelled";
+
+export const VENDOR_PARTICIPATION_STATUSES: {
+  value: VendorParticipationStatus;
+  label: string;
+}[] = [
+  { value: "invited", label: "Invited" },
+  { value: "confirmed", label: "Confirmed" },
+  { value: "participated", label: "Participated" },
+  { value: "declined", label: "Declined" },
+  { value: "cancelled", label: "Cancelled" },
+];
+
+/** Organization vendor directory entry */
+export interface Vendor {
+  id: string;
+  organization_id: string;
+  name: string;
+  contact_name: string;
+  email: string;
+  phone: string;
+  website: string;
+  category: string;
+  notes: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Link between an event and a vendor (row kept for participation history when detached). */
+export interface EventVendor {
+  id: string;
+  event_id: string;
+  vendor_id: string;
+  role: string;
+  participation_status: VendorParticipationStatus;
+  notes: string;
+  detached_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EventVendorWithVendor extends EventVendor {
+  vendor: Vendor;
+}
+
+export interface EventVendorWithEvent extends EventVendor {
+  event: Pick<Event, "id" | "name" | "date" | "status" | "location">;
+}
+
 export const CHECKLIST_SECTIONS = [
   "Booking & Logistics",
   "Marketing & Promotion",
