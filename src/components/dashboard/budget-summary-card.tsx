@@ -29,29 +29,35 @@ function formatPct(n: number): string {
   return `${n.toFixed(n >= 100 && n % 1 < 0.05 ? 0 : 1)}%`;
 }
 
+const DIVIDER = "border-t border-[#2a2a2a]";
+
 const statusCopy: Record<
   BudgetCardStatus,
-  { label: string; dot: string; bar: string }
+  { label: string; dot: string; bar: string; barGlow: string }
 > = {
   neutral: {
     label: "On track",
     dot: "bg-harley-text-muted",
     bar: "bg-harley-gray-lighter",
+    barGlow: "",
   },
   warning: {
     label: "Approaching limit",
     dot: "bg-harley-orange",
     bar: "bg-harley-orange",
+    barGlow: "shadow-[0_0_10px_rgba(255,102,0,0.3)]",
   },
   danger: {
     label: "Over budget",
     dot: "bg-harley-danger",
     bar: "bg-harley-danger",
+    barGlow: "shadow-[0_0_12px_rgba(240,80,80,0.35)]",
   },
   no_budget: {
     label: "No cap set",
     dot: "bg-harley-text-muted",
     bar: "bg-transparent",
+    barGlow: "",
   },
 };
 
@@ -174,16 +180,16 @@ export function BudgetSummaryCard({
           </label>
         </div>
 
-        <div className="mt-8">
+        <div className={`mt-8 pt-8 ${DIVIDER}`}>
           <p className="text-xs font-medium text-harley-text-muted uppercase tracking-wider">
             Monthly budget
           </p>
-          <p className="mt-1 text-3xl sm:text-4xl font-bold text-harley-text tracking-tight tabular-nums">
+          <p className="mt-1 text-3xl sm:text-4xl font-bold text-harley-text tracking-tight tabular-nums transition-colors duration-300">
             {cap > 0 ? formatUsd(cap) : "—"}
           </p>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+        <div className={`mt-8 pt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 ${DIVIDER}`}>
           <div>
             <p className="text-xs font-medium text-harley-text-muted uppercase tracking-wider">
               Planned spend
@@ -218,34 +224,37 @@ export function BudgetSummaryCard({
           </div>
         </div>
 
-        <div className="mt-8">
-          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-            <span className="text-xs font-medium text-harley-text-muted tabular-nums">
+        <div className={`mt-8 pt-8 ${DIVIDER}`}>
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <span className="text-xs font-medium text-harley-text-muted tabular-nums transition-all duration-300">
               {cap > 0
                 ? `${formatPct(pctUsed)} of budget used`
                 : "Set a monthly cap to track utilization"}
             </span>
             <span className="inline-flex items-center gap-2 text-xs font-semibold text-harley-text">
               <span
-                className={`h-2 w-2 rounded-full shrink-0 ${statusTheme.dot}`}
+                className={`h-2 w-2 rounded-full shrink-0 transition-colors duration-300 ${statusTheme.dot}`}
                 aria-hidden
               />
               {statusTheme.label}
             </span>
           </div>
-          <div className="h-2 rounded-full bg-harley-gray overflow-hidden">
-            {cap > 0 ? (
-              <div
-                className={`h-full rounded-full transition-all duration-500 ease-out ${statusTheme.bar}`}
-                style={{ width: `${barWidthPct}%` }}
-              />
-            ) : null}
+          {/* Vertical padding so bar glow is not clipped */}
+          <div className="py-2 -my-1">
+            <div className="relative h-2 w-full rounded-full bg-harley-gray">
+              {cap > 0 ? (
+                <div
+                  className={`absolute left-0 top-0 h-full rounded-full ease-out will-change-[width] motion-reduce:transition-none ${statusTheme.bar} ${statusTheme.barGlow} transition-[width,box-shadow] duration-700 [transition-timing-function:cubic-bezier(0.33,1,0.68,1)]`}
+                  style={{ width: `${barWidthPct}%` }}
+                />
+              ) : null}
+            </div>
           </div>
         </div>
       </div>
 
       {canManageBudgets && (
-        <div className="border-t border-harley-gray px-6 py-5 md:px-8 md:py-6 bg-harley-black/30">
+        <div className={`border-t border-[#2a2a2a] px-6 py-5 md:px-8 md:py-6 bg-harley-black/30`}>
           <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-harley-text-muted">
             Manage caps
           </p>
