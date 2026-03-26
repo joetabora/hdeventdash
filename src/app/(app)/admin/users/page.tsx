@@ -1,9 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { getAllUserRoles, setUserRole, deleteUserRole, isAdmin } from "@/lib/roles";
-import { addMemberToCurrentOrganization } from "@/lib/organization";
+import { useEffect, useState, useCallback } from "react";
 import { UserRole } from "@/types/database";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,10 +24,6 @@ interface ManagedUser {
 }
 
 export default function UserManagementPage() {
-  const supabaseRef = useRef(
-    typeof window !== "undefined" ? createClient() : null
-  );
-
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [authorized, setAuthorized] = useState(false);
@@ -45,82 +38,27 @@ export default function UserManagementPage() {
   const [createSuccess, setCreateSuccess] = useState("");
 
   const loadUsers = useCallback(async () => {
-    const supabase = supabaseRef.current;
-    if (!supabase) return;
-
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      setCurrentUserId(user.id);
-
-      const adminCheck = await isAdmin(supabase, user.id);
-      if (!adminCheck) {
+      const res = await fetch("/api/admin/users");
+      if (res.status === 401 || res.status === 403) {
         setAuthorized(false);
-        setLoading(false);
         return;
       }
-      setAuthorized(true);
-
-      const roles = await getAllUserRoles(supabase);
-
-      const { data: memberRows, error: membersError } = await supabase
-        .from("organization_members")
-        .select("user_id");
-      if (membersError) throw membersError;
-      const memberIds = new Set(
-        (memberRows ?? []).map((m: { user_id: string }) => m.user_id)
-      );
-
-      const { data: authUsers } = await supabase.auth.admin.listUsers();
-
-      const merged: ManagedUser[] = [];
-
-      if (authUsers?.users) {
-        for (const au of authUsers.users) {
-          if (!memberIds.has(au.id)) continue;
-          const roleRecord = roles.find((r) => r.user_id === au.id);
-          merged.push({
-            id: au.id,
-            email: au.email || "unknown",
-            role: (roleRecord?.role as UserRole) || "staff",
-            created_at: au.created_at,
-          });
-        }
-      } else {
-        for (const userId of memberIds) {
-          const roleRecord = roles.find((r) => r.user_id === userId);
-          merged.push({
-            id: userId,
-            email: userId,
-            role: (roleRecord?.role as UserRole) || "staff",
-            created_at: roleRecord?.created_at ?? "",
-          });
-        }
+      if (!res.ok) {
+        setAuthorized(false);
+        console.error("Failed to load users:", await res.text());
+        return;
       }
-
-      setUsers(merged);
+      const data = (await res.json()) as {
+        users: ManagedUser[];
+        currentUserId: string;
+      };
+      setAuthorized(true);
+      setCurrentUserId(data.currentUserId);
+      setUsers(data.users ?? []);
     } catch (err) {
       console.error("Failed to load users:", err);
-      const supabase = supabaseRef.current;
-      if (!supabase) return;
-      const { data: memberRows } = await supabase
-        .from("organization_members")
-        .select("user_id");
-      const memberIdList = (memberRows ?? []).map(
-        (m: { user_id: string }) => m.user_id
-      );
-      const roles = await getAllUserRoles(supabase);
-      setUsers(
-        memberIdList.map((userId) => {
-          const r = roles.find((x) => x.user_id === userId);
-          return {
-            id: userId,
-            email: userId.slice(0, 8) + "...",
-            role: (r?.role as UserRole) ?? "staff",
-            created_at: r?.created_at ?? "",
-          };
-        })
-      );
+      setAuthorized(false);
     } finally {
       setLoading(false);
     }
@@ -131,9 +69,6 @@ export default function UserManagementPage() {
   }, [loadUsers]);
 
   async function handleCreateUser() {
-    const supabase = supabaseRef.current;
-    if (!supabase) return;
-
     setCreateError("");
     setCreateSuccess("");
 
@@ -148,29 +83,20 @@ export default function UserManagementPage() {
 
     setCreating(true);
     try {
-      const { data, error } = await supabase.auth.admin.createUser({
-        email: newEmail.trim(),
-        password: newPassword,
-        email_confirm: true,
+      const res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: newEmail.trim(),
+          password: newPassword,
+          role: newRole,
+        }),
       });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
 
-      if (error) {
-        if (error.message?.includes("not authorized") || error.message?.includes("not allowed")) {
-          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-            email: newEmail.trim(),
-            password: newPassword,
-          });
-          if (signUpError) throw signUpError;
-          if (signUpData.user) {
-            await addMemberToCurrentOrganization(supabase, signUpData.user.id);
-            await setUserRole(supabase, signUpData.user.id, newRole);
-          }
-        } else {
-          throw error;
-        }
-      } else if (data.user) {
-        await addMemberToCurrentOrganization(supabase, data.user.id);
-        await setUserRole(supabase, data.user.id, newRole);
+      if (!res.ok) {
+        setCreateError(data.error ?? "Failed to create user.");
+        return;
       }
 
       setCreateSuccess(`User "${newEmail}" created as ${newRole}.`);
@@ -188,10 +114,17 @@ export default function UserManagementPage() {
   }
 
   async function handleRoleChange(userId: string, role: UserRole) {
-    const supabase = supabaseRef.current;
-    if (!supabase) return;
     try {
-      await setUserRole(supabase, userId, role);
+      const res = await fetch(`/api/admin/users/${userId}/role`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        console.error("Failed to update role:", data.error ?? res.status);
+        return;
+      }
       setUsers((prev) =>
         prev.map((u) => (u.id === userId ? { ...u, role } : u))
       );
@@ -201,12 +134,17 @@ export default function UserManagementPage() {
   }
 
   async function handleDeleteUser(userId: string, email: string) {
-    const supabase = supabaseRef.current;
-    if (!supabase) return;
     if (!confirm(`Remove role for "${email}"? This won't delete their auth account.`))
       return;
     try {
-      await deleteUserRole(supabase, userId);
+      const res = await fetch(`/api/admin/users/${userId}/role`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        console.error("Failed to delete role:", data.error ?? res.status);
+        return;
+      }
       loadUsers();
     } catch (err) {
       console.error("Failed to delete role:", err);
@@ -434,8 +372,9 @@ export default function UserManagementPage() {
       </Card>
 
       <p className="text-xs text-harley-text-muted/50 text-center">
-        Users are created via Supabase Auth. Roles are stored in the user_roles
-        table.
+        Users are created on the server via Supabase Auth (service role). Roles
+        are stored in the user_roles table and updated through authenticated
+        admin API routes.
       </p>
     </div>
   );
