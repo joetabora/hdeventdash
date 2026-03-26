@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef, useLayoutEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -33,12 +33,23 @@ function currentYearMonth(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
-export function DashboardContent() {
+export function DashboardContent({
+  initialEvents,
+  initialChecklistStats,
+  initialMonthlyBudgets,
+  initialBudgetMonth,
+}: {
+  initialEvents: Event[];
+  initialChecklistStats: ChecklistStats;
+  initialMonthlyBudgets: MonthlyBudget[];
+  initialBudgetMonth: string;
+}) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const supabaseRef = useRef(
     typeof window !== "undefined" ? createClient() : null
   );
+  const prevBudgetMonthRef = useRef<string | null>(null);
 
   const rawView = searchParams.get("view");
   const currentView: ViewType =
@@ -48,14 +59,16 @@ export function DashboardContent() {
       ? rawView
       : "kanban";
 
-  const [events, setEvents] = useState<Event[]>([]);
-  const [checklistStats, setChecklistStats] = useState<ChecklistStats>({});
-  const [loading, setLoading] = useState(true);
+  const [events, setEvents] = useState<Event[]>(initialEvents);
+  const [checklistStats, setChecklistStats] =
+    useState<ChecklistStats>(initialChecklistStats);
+  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
   const [ownerFilter, setOwnerFilter] = useState("");
-  const [budgetMonth, setBudgetMonth] = useState(currentYearMonth);
-  const [monthlyBudgets, setMonthlyBudgets] = useState<MonthlyBudget[]>([]);
+  const [budgetMonth, setBudgetMonth] = useState(initialBudgetMonth);
+  const [monthlyBudgets, setMonthlyBudgets] =
+    useState<MonthlyBudget[]>(initialMonthlyBudgets);
   const { canManageEvents } = useAppRole();
 
   const loadEvents = useCallback(async () => {
@@ -78,10 +91,6 @@ export function DashboardContent() {
     }
   }, []);
 
-  useEffect(() => {
-    loadEvents();
-  }, [loadEvents]);
-
   const loadMonthlyBudgets = useCallback(async () => {
     const supabase = supabaseRef.current;
     if (!supabase) return;
@@ -96,9 +105,28 @@ export function DashboardContent() {
     }
   }, [budgetMonth]);
 
+  useLayoutEffect(() => {
+    setEvents(initialEvents);
+    setChecklistStats(initialChecklistStats);
+    setMonthlyBudgets(initialMonthlyBudgets);
+    setBudgetMonth(initialBudgetMonth);
+    prevBudgetMonthRef.current = null;
+  }, [
+    initialEvents,
+    initialChecklistStats,
+    initialMonthlyBudgets,
+    initialBudgetMonth,
+  ]);
+
   useEffect(() => {
-    loadMonthlyBudgets();
-  }, [loadMonthlyBudgets]);
+    if (prevBudgetMonthRef.current === null) {
+      prevBudgetMonthRef.current = budgetMonth;
+      return;
+    }
+    if (prevBudgetMonthRef.current === budgetMonth) return;
+    prevBudgetMonthRef.current = budgetMonth;
+    void loadMonthlyBudgets();
+  }, [budgetMonth, loadMonthlyBudgets]);
 
   const atRiskIds = useMemo(() => {
     const ids = new Set<string>();
