@@ -5,11 +5,13 @@ import { Sidebar } from "./sidebar";
 import { TopHeader } from "./top-header";
 import { PushNotificationPrompt } from "@/components/push/push-notification-prompt";
 import { AppRoleProvider } from "@/contexts/app-role-context";
+import { QueryProvider } from "@/components/providers/query-provider";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
+    <QueryProvider>
     <AppRoleProvider>
     <div className="min-h-screen bg-harley-black">
       <Sidebar mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
@@ -30,5 +32,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
     </div>
     </AppRoleProvider>
+    </QueryProvider>
   );
 }

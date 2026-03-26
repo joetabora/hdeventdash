@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useCallback, useRef, useLayoutEffect } from "react";
+import { useState, useLayoutEffect, useRef } from "react";
 import Link from "next/link";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { getVendors, createVendor } from "@/lib/vendors";
 import { Vendor } from "@/types/database";
@@ -11,15 +12,27 @@ import { Modal } from "@/components/ui/modal";
 import { Input, Textarea } from "@/components/ui/input";
 import { useAppRole } from "@/contexts/app-role-context";
 import { Loader2, PlusCircle, Store, Search, ChevronRight } from "lucide-react";
+import { vendorKeys, eventKeys } from "@/lib/query-keys";
 
 export function VendorsPageClient({ initialVendors }: { initialVendors: Vendor[] }) {
+  const queryClient = useQueryClient();
   const supabaseRef = useRef(
     typeof window !== "undefined" ? createClient() : null
   );
   const { canManageEvents } = useAppRole();
 
-  const [vendors, setVendors] = useState<Vendor[]>(initialVendors);
-  const [loading, setLoading] = useState(false);
+  const vendorsQuery = useQuery({
+    queryKey: vendorKeys.list(),
+    queryFn: () => getVendors(createClient()),
+    initialData: initialVendors,
+  });
+
+  const vendors = vendorsQuery.data ?? [];
+
+  useLayoutEffect(() => {
+    queryClient.setQueryData(vendorKeys.list(), initialVendors);
+  }, [initialVendors, queryClient]);
+
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -31,24 +44,6 @@ export function VendorsPageClient({ initialVendors }: { initialVendors: Vendor[]
   const [website, setWebsite] = useState("");
   const [category, setCategory] = useState("");
   const [notes, setNotes] = useState("");
-
-  const load = useCallback(async () => {
-    const supabase = supabaseRef.current;
-    if (!supabase) return;
-    setLoading(true);
-    try {
-      const list = await getVendors(supabase);
-      setVendors(list);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useLayoutEffect(() => {
-    setVendors(initialVendors);
-  }, [initialVendors]);
 
   const filtered = vendors.filter((v) => {
     const q = search.trim().toLowerCase();
@@ -84,7 +79,8 @@ export function VendorsPageClient({ initialVendors }: { initialVendors: Vendor[]
       setWebsite("");
       setCategory("");
       setNotes("");
-      load();
+      void queryClient.invalidateQueries({ queryKey: vendorKeys.list() });
+      void queryClient.invalidateQueries({ queryKey: eventKeys.orgVendors() });
     } catch (err) {
       console.error(err);
     } finally {
@@ -132,11 +128,7 @@ export function VendorsPageClient({ initialVendors }: { initialVendors: Vendor[]
         />
       </div>
 
-      {loading ? (
-        <div className="flex justify-center py-16">
-          <Loader2 className="w-8 h-8 animate-spin text-harley-orange" />
-        </div>
-      ) : filtered.length === 0 ? (
+      {filtered.length === 0 ? (
         <Card className="!p-8 text-center text-harley-text-muted text-sm">
           {vendors.length === 0
             ? "No vendors yet. Add your first vendor to start attaching them to events."

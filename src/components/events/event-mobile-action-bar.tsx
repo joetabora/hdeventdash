@@ -20,7 +20,12 @@ import {
 interface EventMobileActionBarProps {
   eventId: string;
   checklist: ChecklistItem[];
-  onUpdate: () => void;
+  /** After checklist item toggled (mobile quick-complete). */
+  onAfterChecklistChange?: () => void;
+  /** After media upload from the bar. */
+  onAfterMediaChange?: () => void;
+  /** After comment posted from the bar. */
+  onAfterCommentChange?: () => void;
   /** Staff: checklist quick-complete only (no media upload / comment). */
   canManageExtras?: boolean;
 }
@@ -28,7 +33,9 @@ interface EventMobileActionBarProps {
 export function EventMobileActionBar({
   eventId,
   checklist,
-  onUpdate,
+  onAfterChecklistChange,
+  onAfterMediaChange,
+  onAfterCommentChange,
   canManageExtras = true,
 }: EventMobileActionBarProps) {
   const supabase = createClient();
@@ -47,7 +54,7 @@ export function EventMobileActionBar({
     setTogglingId(item.id);
     try {
       await updateChecklistItem(supabase, item.id, { is_checked: true });
-      onUpdate();
+      onAfterChecklistChange?.();
       setTaskModalOpen(false);
     } catch (e) {
       console.error(e);
@@ -68,7 +75,7 @@ export function EventMobileActionBar({
       for (const file of Array.from(files)) {
         await uploadMedia(supabase, eventId, file, "social_media", email);
       }
-      onUpdate();
+      onAfterMediaChange?.();
     } catch (err) {
       console.error("Upload failed:", err);
     } finally {
@@ -94,7 +101,7 @@ export function EventMobileActionBar({
       });
       setCommentText("");
       setCommentModalOpen(false);
-      onUpdate();
+      onAfterCommentChange?.();
     } catch (err) {
       console.error(err);
     } finally {

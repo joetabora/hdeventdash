@@ -1,7 +1,9 @@
 "use client";
 
-import { useLayoutEffect, useState, useCallback } from "react";
+import { useLayoutEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ManagedUserDto } from "@/lib/admin/managed-users";
+import { adminKeys } from "@/lib/query-keys";
 import { UserRole } from "@/types/database";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,11 +28,36 @@ export function UserManagementClient({
   initialUsers: ManagedUserDto[];
   initialCurrentUserId: string | null;
 }) {
-  const [users, setUsers] = useState<ManagedUserDto[]>(initialUsers);
-  const [authorized, setAuthorized] = useState(initialAuthorized);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(
-    initialCurrentUserId
-  );
+  const queryClient = useQueryClient();
+
+  type AdminUsersPayload = {
+    users: ManagedUserDto[];
+    currentUserId: string;
+  };
+
+  const usersQuery = useQuery({
+    queryKey: adminKeys.managedUsers(),
+    queryFn: async (): Promise<AdminUsersPayload> => {
+      const res = await fetch("/api/admin/users");
+      if (res.status === 401 || res.status === 403) {
+        throw new Error("forbidden");
+      }
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
+      return res.json() as Promise<AdminUsersPayload>;
+    },
+    initialData: initialAuthorized
+      ? {
+          users: initialUsers,
+          currentUserId: initialCurrentUserId ?? "",
+        }
+      : undefined,
+    enabled: initialAuthorized,
+  });
+
+  const users = usersQuery.data?.users ?? [];
+  const currentUserId = usersQuery.data?.currentUserId ?? null;
 
   const [showCreate, setShowCreate] = useState(false);
   const [newEmail, setNewEmail] = useState("");
@@ -40,36 +67,21 @@ export function UserManagementClient({
   const [createError, setCreateError] = useState("");
   const [createSuccess, setCreateSuccess] = useState("");
 
-  const loadUsers = useCallback(async () => {
-    try {
-      const res = await fetch("/api/admin/users");
-      if (res.status === 401 || res.status === 403) {
-        setAuthorized(false);
-        return;
-      }
-      if (!res.ok) {
-        setAuthorized(false);
-        console.error("Failed to load users:", await res.text());
-        return;
-      }
-      const data = (await res.json()) as {
-        users: ManagedUserDto[];
-        currentUserId: string;
-      };
-      setAuthorized(true);
-      setCurrentUserId(data.currentUserId);
-      setUsers(data.users ?? []);
-    } catch (err) {
-      console.error("Failed to load users:", err);
-      setAuthorized(false);
-    }
-  }, []);
-
   useLayoutEffect(() => {
-    setAuthorized(initialAuthorized);
-    setUsers(initialUsers);
-    setCurrentUserId(initialCurrentUserId);
-  }, [initialAuthorized, initialUsers, initialCurrentUserId]);
+    if (initialAuthorized) {
+      queryClient.setQueryData<AdminUsersPayload>(adminKeys.managedUsers(), {
+        users: initialUsers,
+        currentUserId: initialCurrentUserId ?? "",
+      });
+    } else {
+      queryClient.removeQueries({ queryKey: adminKeys.managedUsers() });
+    }
+  }, [
+    initialAuthorized,
+    initialUsers,
+    initialCurrentUserId,
+    queryClient,
+  ]);
 
   async function handleCreateUser() {
     setCreateError("");
@@ -107,7 +119,7 @@ export function UserManagementClient({
       setNewPassword("");
       setNewRole("staff");
       setShowCreate(false);
-      loadUsers();
+      void queryClient.invalidateQueries({ queryKey: adminKeys.managedUsers() });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to create user";
       setCreateError(message);
@@ -128,8 +140,17 @@ export function UserManagementClient({
         console.error("Failed to update role:", data.error ?? res.status);
         return;
       }
-      setUsers((prev) =>
-        prev.map((u) => (u.id === userId ? { ...u, role } : u))
+      queryClient.setQueryData<AdminUsersPayload>(
+        adminKeys.managedUsers(),
+        (old) =>
+          old
+            ? {
+                ...old,
+                users: old.users.map((u) =>
+                  u.id === userId ? { ...u, role } : u
+                ),
+              }
+            : old
       );
     } catch (err) {
       console.error("Failed to update role:", err);
@@ -148,13 +169,13 @@ export function UserManagementClient({
         console.error("Failed to delete role:", data.error ?? res.status);
         return;
       }
-      loadUsers();
+      void queryClient.invalidateQueries({ queryKey: adminKeys.managedUsers() });
     } catch (err) {
       console.error("Failed to delete role:", err);
     }
   }
 
-  if (!authorized) {
+  if (!initialAuthorized) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <AlertTriangle className="w-12 h-12 text-harley-danger" />

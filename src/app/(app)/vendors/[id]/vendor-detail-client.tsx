@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useCallback, useRef, useLayoutEffect } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import {
   getVendor,
@@ -28,6 +29,7 @@ import {
   MapPin,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import { vendorKeys, eventKeys } from "@/lib/query-keys";
 
 function participationVariant(
   s: string
@@ -57,38 +59,36 @@ export function VendorDetailClient({
   initialHistory: EventVendorWithEvent[];
 }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const supabaseRef = useRef(
     typeof window !== "undefined" ? createClient() : null
   );
   const { canManageEvents } = useAppRole();
 
-  const [vendor, setVendor] = useState<Vendor | null>(initialVendor);
-  const [history, setHistory] = useState<EventVendorWithEvent[]>(initialHistory);
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const vendorQuery = useQuery({
+    queryKey: vendorKeys.detail(vendorId),
+    queryFn: () => getVendor(createClient(), vendorId),
+    initialData: initialVendor,
+  });
 
-  const load = useCallback(async () => {
-    const supabase = supabaseRef.current;
-    if (!supabase) return;
-    try {
-      const [v, h] = await Promise.all([
-        getVendor(supabase, vendorId),
-        getVendorParticipationHistory(supabase, vendorId),
-      ]);
-      setVendor(v);
-      setHistory(h);
-    } catch (e) {
-      console.error(e);
-      setVendor(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [vendorId]);
+  const historyQuery = useQuery({
+    queryKey: vendorKeys.participationHistory(vendorId),
+    queryFn: () => getVendorParticipationHistory(createClient(), vendorId),
+    initialData: initialHistory,
+  });
+
+  const vendor = vendorQuery.data ?? null;
+  const history = historyQuery.data ?? [];
 
   useLayoutEffect(() => {
-    setVendor(initialVendor);
-    setHistory(initialHistory);
-  }, [vendorId, initialVendor, initialHistory]);
+    queryClient.setQueryData(vendorKeys.detail(vendorId), initialVendor);
+    queryClient.setQueryData(
+      vendorKeys.participationHistory(vendorId),
+      initialHistory
+    );
+  }, [vendorId, initialVendor, initialHistory, queryClient]);
+
+  const [saving, setSaving] = useState(false);
 
   async function handleSave(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -106,7 +106,8 @@ export function VendorDetailClient({
         category: String(fd.get("category") ?? ""),
         notes: String(fd.get("notes") ?? ""),
       });
-      setVendor(updated);
+      queryClient.setQueryData(vendorKeys.detail(vendorId), updated);
+      void queryClient.invalidateQueries({ queryKey: vendorKeys.list() });
     } catch (err) {
       console.error(err);
     } finally {
@@ -122,6 +123,8 @@ export function VendorDetailClient({
     if (!supabase || !vendor) return;
     try {
       await deleteVendor(supabase, vendor.id);
+      void queryClient.invalidateQueries({ queryKey: vendorKeys.list() });
+      void queryClient.invalidateQueries({ queryKey: eventKeys.orgVendors() });
       router.push("/vendors");
     } catch (err) {
       console.error(err);
@@ -134,7 +137,7 @@ export function VendorDetailClient({
     );
   }
 
-  if (loading) {
+  if (vendorQuery.isPending && !vendor) {
     return (
       <div className="flex justify-center py-20">
         <Loader2 className="w-8 h-8 animate-spin text-harley-orange" />

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback, useRef, useLayoutEffect } from "react";
+import { useMemo, useState, useLayoutEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import {
   getEvents,
@@ -9,7 +10,7 @@ import {
   getChecklistStatsForEvents,
   ChecklistStats,
 } from "@/lib/events";
-import { Event, EventStatus } from "@/types/database";
+import { Event, EventStatus, MonthlyBudget } from "@/types/database";
 import { isEventAtRisk } from "@/lib/at-risk";
 import { KanbanBoard } from "@/components/dashboard/kanban-board";
 import { CalendarView } from "@/components/dashboard/calendar-view";
@@ -24,13 +25,15 @@ import { LayoutGrid, Calendar, List, BarChart3, Loader2 } from "lucide-react";
 import { parseISO, isBefore, startOfDay } from "date-fns";
 import { useAppRole } from "@/contexts/app-role-context";
 import { getMonthlyBudgetsForMonth, budgetMonthToDbDate } from "@/lib/budgets";
-import { MonthlyBudget } from "@/types/database";
+import { dashboardKeys } from "@/lib/query-keys";
 
 type ViewType = "kanban" | "calendar" | "list" | "analytics";
 
-function currentYearMonth(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+function eventIdsKeyFor(events: Event[]): string {
+  return [...events]
+    .map((e) => e.id)
+    .sort()
+    .join("\0");
 }
 
 export function DashboardContent({
@@ -46,10 +49,10 @@ export function DashboardContent({
 }) {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const supabaseRef = useRef(
     typeof window !== "undefined" ? createClient() : null
   );
-  const prevBudgetMonthRef = useRef<string | null>(null);
 
   const rawView = searchParams.get("view");
   const currentView: ViewType =
@@ -59,74 +62,77 @@ export function DashboardContent({
       ? rawView
       : "kanban";
 
-  const [events, setEvents] = useState<Event[]>(initialEvents);
-  const [checklistStats, setChecklistStats] =
-    useState<ChecklistStats>(initialChecklistStats);
-  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
   const [ownerFilter, setOwnerFilter] = useState("");
   const [budgetMonth, setBudgetMonth] = useState(initialBudgetMonth);
-  const [monthlyBudgets, setMonthlyBudgets] =
-    useState<MonthlyBudget[]>(initialMonthlyBudgets);
   const { canManageEvents } = useAppRole();
 
-  const loadEvents = useCallback(async () => {
-    const supabase = supabaseRef.current;
-    if (!supabase) return;
-    try {
-      const data = await getEvents(supabase);
-      const active = data.filter((e) => !e.is_archived);
-      setEvents(active);
+  const eventsQuery = useQuery({
+    queryKey: dashboardKeys.eventsActive(),
+    queryFn: async () => {
+      const data = await getEvents(createClient());
+      return data.filter((e) => !e.is_archived);
+    },
+    initialData: initialEvents,
+  });
 
-      const stats = await getChecklistStatsForEvents(
-        supabase,
-        active.map((e) => e.id)
-      );
-      setChecklistStats(stats);
-    } catch (err) {
-      console.error("Failed to load events:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const events = useMemo(
+    () => eventsQuery.data ?? [],
+    [eventsQuery.data]
+  );
 
-  const loadMonthlyBudgets = useCallback(async () => {
-    const supabase = supabaseRef.current;
-    if (!supabase) return;
-    try {
-      const rows = await getMonthlyBudgetsForMonth(
-        supabase,
+  const statsIdsKey = useMemo(() => eventIdsKeyFor(events), [events]);
+
+  const checklistStatsQuery = useQuery({
+    queryKey: dashboardKeys.checklistStats(statsIdsKey),
+    queryFn: () =>
+      getChecklistStatsForEvents(
+        createClient(),
+        events.map((e) => e.id)
+      ),
+    initialData: initialChecklistStats,
+  });
+
+  const checklistStats = useMemo(
+    () => checklistStatsQuery.data ?? {},
+    [checklistStatsQuery.data]
+  );
+
+  const monthlyBudgetsQuery = useQuery({
+    queryKey: dashboardKeys.monthlyBudgets(budgetMonth),
+    queryFn: () =>
+      getMonthlyBudgetsForMonth(
+        createClient(),
         budgetMonthToDbDate(budgetMonth)
-      );
-      setMonthlyBudgets(rows);
-    } catch {
-      setMonthlyBudgets([]);
-    }
-  }, [budgetMonth]);
+      ),
+    initialData:
+      budgetMonth === initialBudgetMonth ? initialMonthlyBudgets : undefined,
+  });
+
+  const monthlyBudgets = monthlyBudgetsQuery.data ?? [];
 
   useLayoutEffect(() => {
-    setEvents(initialEvents);
-    setChecklistStats(initialChecklistStats);
-    setMonthlyBudgets(initialMonthlyBudgets);
+    queryClient.setQueryData(dashboardKeys.eventsActive(), initialEvents);
+    const idsKey = eventIdsKeyFor(initialEvents);
+    queryClient.setQueryData(
+      dashboardKeys.checklistStats(idsKey),
+      initialChecklistStats
+    );
+    queryClient.setQueryData(
+      dashboardKeys.monthlyBudgets(initialBudgetMonth),
+      initialMonthlyBudgets
+    );
+    // Align picker when server props refresh (e.g. soft navigation with new RSC payload).
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional sync with RSC payload
     setBudgetMonth(initialBudgetMonth);
-    prevBudgetMonthRef.current = null;
   }, [
     initialEvents,
     initialChecklistStats,
     initialMonthlyBudgets,
     initialBudgetMonth,
+    queryClient,
   ]);
-
-  useEffect(() => {
-    if (prevBudgetMonthRef.current === null) {
-      prevBudgetMonthRef.current = budgetMonth;
-      return;
-    }
-    if (prevBudgetMonthRef.current === budgetMonth) return;
-    prevBudgetMonthRef.current = budgetMonth;
-    void loadMonthlyBudgets();
-  }, [budgetMonth, loadMonthlyBudgets]);
 
   const atRiskIds = useMemo(() => {
     const ids = new Set<string>();
@@ -162,8 +168,6 @@ export function DashboardContent({
         ? Math.round(completions.reduce((a, b) => a + b, 0) / completions.length)
         : 0;
 
-    // Event score: weighted blend of checklist completion (70%) and
-    // status progression (30%), scaled to 10
     const scores: number[] = [];
     const statusWeight: Record<string, number> = {
       idea: 0,
@@ -210,13 +214,21 @@ export function DashboardContent({
     if (!canManageEvents) return;
     const supabase = supabaseRef.current;
     if (!supabase) return;
-    setEvents((prev) =>
-      prev.map((e) => (e.id === eventId ? { ...e, status: newStatus } : e))
+    const key = dashboardKeys.eventsActive();
+    const previous = queryClient.getQueryData<Event[]>(key);
+    queryClient.setQueryData<Event[]>(key, (old) =>
+      (old ?? []).map((e) =>
+        e.id === eventId ? { ...e, status: newStatus } : e
+      )
     );
     try {
       await updateEvent(supabase, eventId, { status: newStatus });
     } catch {
-      loadEvents();
+      if (previous) {
+        queryClient.setQueryData(key, previous);
+      } else {
+        void queryClient.invalidateQueries({ queryKey: dashboardKeys.all() });
+      }
     }
   }
 
@@ -235,7 +247,10 @@ export function DashboardContent({
     { id: "analytics", label: "Analytics", icon: BarChart3 },
   ];
 
-  if (loading) {
+  const dashboardLoading =
+    eventsQuery.isPending && !eventsQuery.data;
+
+  if (dashboardLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Loader2 className="w-8 h-8 text-harley-orange animate-spin" />
@@ -284,7 +299,11 @@ export function DashboardContent({
         onBudgetMonthChange={setBudgetMonth}
         locationFilter={locationFilter}
         canManageBudgets={canManageEvents}
-        onBudgetsUpdated={loadMonthlyBudgets}
+        onBudgetsUpdated={() =>
+          void queryClient.invalidateQueries({
+            queryKey: dashboardKeys.monthlyBudgets(budgetMonth),
+          })
+        }
       />
 
       <Filters

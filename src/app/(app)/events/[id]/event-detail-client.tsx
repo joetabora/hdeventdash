@@ -1,26 +1,11 @@
 "use client";
 
-import {
-  useEffect,
-  useState,
-  useCallback,
-  useMemo,
-  useRef,
-  useLayoutEffect,
-} from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import {
-  getEvent,
-  getEvents,
-  getChecklistItems,
-  getEventDocuments,
-  getEventComments,
-  getEventMedia,
-  updateEvent,
-  deleteEvent,
-} from "@/lib/events";
-import { getVendors, getActiveEventVendors } from "@/lib/vendors";
+import { updateEvent, deleteEvent } from "@/lib/events";
+import { eventKeys } from "@/lib/query-keys";
+import { useEventDetailQueries } from "@/hooks/use-event-detail-queries";
 import {
   Event,
   ChecklistItem,
@@ -159,70 +144,30 @@ export function EventDetailClient({
     typeof window !== "undefined" ? createClient() : null
   );
 
-  const [event, setEvent] = useState<Event | null>(initialEvent);
-  const [checklist, setChecklist] = useState<ChecklistItem[]>(initialChecklist);
-  const [documents, setDocuments] = useState<EventDocument[]>(initialDocuments);
-  const [comments, setComments] = useState<EventComment[]>(initialComments);
-  const [media, setMedia] = useState<EventMedia[]>(initialMedia);
-  const [allVendors, setAllVendors] = useState<Vendor[]>(initialAllVendors);
-  const [eventVendors, setEventVendors] =
-    useState<EventVendorWithVendor[]>(initialEventVendors);
-  const [allEventsForBudget, setAllEventsForBudget] = useState<Event[]>(
-    initialAllEventsForBudget
-  );
+  const {
+    queryClient,
+    event,
+    checklist,
+    documents,
+    comments,
+    media,
+    allVendors,
+    eventVendors,
+    allEventsForBudget,
+    invalidate,
+  } = useEventDetailQueries(eventId, {
+    event: initialEvent,
+    checklist: initialChecklist,
+    documents: initialDocuments,
+    comments: initialComments,
+    media: initialMedia,
+    allVendors: initialAllVendors,
+    eventVendors: initialEventVendors,
+    allEventsForBudget: initialAllEventsForBudget,
+  });
+
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [showStatusPills, setShowStatusPills] = useState(false);
-
-  useLayoutEffect(() => {
-    setEvent(initialEvent);
-    setChecklist(initialChecklist);
-    setDocuments(initialDocuments);
-    setComments(initialComments);
-    setMedia(initialMedia);
-    setAllVendors(initialAllVendors);
-    setEventVendors(initialEventVendors);
-    setAllEventsForBudget(initialAllEventsForBudget);
-  }, [
-    eventId,
-    initialEvent,
-    initialChecklist,
-    initialDocuments,
-    initialComments,
-    initialMedia,
-    initialAllVendors,
-    initialEventVendors,
-    initialAllEventsForBudget,
-  ]);
-
-  const loadAll = useCallback(async () => {
-    const supabase = supabaseRef.current;
-    if (!supabase) return;
-    try {
-      const [ev, cl, docs, coms, med, vendors, evVendors, orgEvents] =
-        await Promise.all([
-          getEvent(supabase, eventId),
-          getChecklistItems(supabase, eventId),
-          getEventDocuments(supabase, eventId),
-          getEventComments(supabase, eventId),
-          getEventMedia(supabase, eventId),
-          getVendors(supabase).catch(() => [] as Vendor[]),
-          getActiveEventVendors(supabase, eventId).catch(
-            () => [] as EventVendorWithVendor[]
-          ),
-          getEvents(supabase).catch(() => [] as Event[]),
-        ]);
-      setEvent(ev);
-      setChecklist(cl);
-      setDocuments(docs);
-      setComments(coms);
-      setMedia(med);
-      setAllVendors(vendors);
-      setEventVendors(evVendors);
-      setAllEventsForBudget(orgEvents.filter((e) => !e.is_archived));
-    } catch (err) {
-      console.error("Failed to load event:", err);
-    }
-  }, [eventId]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -248,16 +193,18 @@ export function EventDetailClient({
 
   async function handleToggleLiveMode() {
     if (!event || !supabaseRef.current) return;
-    await updateEvent(supabaseRef.current, event.id, {
+    const updated = await updateEvent(supabaseRef.current, event.id, {
       is_live_mode: !event.is_live_mode,
     });
-    loadAll();
+    queryClient.setQueryData(eventKeys.detail(event.id), updated);
   }
 
   async function handleStatusChange(newStatus: EventStatus) {
     if (!event || !supabaseRef.current) return;
-    await updateEvent(supabaseRef.current, event.id, { status: newStatus });
-    loadAll();
+    const updated = await updateEvent(supabaseRef.current, event.id, {
+      status: newStatus,
+    });
+    queryClient.setQueryData(eventKeys.detail(event.id), updated);
   }
 
   async function handleEditSubmit(data: {
@@ -273,7 +220,7 @@ export function EventDetailClient({
     actual_budget: number | null;
   }) {
     if (!event || !supabaseRef.current) return;
-    await updateEvent(supabaseRef.current, event.id, {
+    const updated = await updateEvent(supabaseRef.current, event.id, {
       ...data,
       status: data.status as EventStatus,
       onedrive_link: data.onedrive_link || null,
@@ -282,7 +229,8 @@ export function EventDetailClient({
       actual_budget: data.actual_budget,
     });
     setEditModalOpen(false);
-    loadAll();
+    queryClient.setQueryData(eventKeys.detail(event.id), updated);
+    void invalidate.orgEventsActive();
   }
 
   async function handleDelete() {
@@ -396,7 +344,7 @@ export function EventDetailClient({
                 section={section}
                 items={items}
                 eventId={event.id}
-                onUpdate={loadAll}
+                onUpdate={() => void invalidate.checklist()}
                 liveMode
                 allowStructureEdit={canManageEvents}
               />
@@ -407,7 +355,9 @@ export function EventDetailClient({
       <EventMobileActionBar
         eventId={event.id}
         checklist={checklist}
-        onUpdate={loadAll}
+        onAfterChecklistChange={() => void invalidate.checklist()}
+        onAfterMediaChange={() => void invalidate.media()}
+        onAfterCommentChange={() => void invalidate.comments()}
         canManageExtras={canManageEvents}
       />
       </>
@@ -643,7 +593,7 @@ export function EventDetailClient({
                   section={section}
                   items={items}
                   eventId={event.id}
-                  onUpdate={loadAll}
+                  onUpdate={() => void invalidate.checklist()}
                   allowStructureEdit={canManageEvents}
                 />
               );
@@ -663,7 +613,7 @@ export function EventDetailClient({
             eventId={event.id}
             eventVendors={eventVendors}
             allVendors={allVendors}
-            onUpdate={loadAll}
+            onUpdate={() => void invalidate.eventVendors()}
             canMutate={canManageEvents}
           />
         </CollapsibleSection>
@@ -680,13 +630,13 @@ export function EventDetailClient({
             <MediaGallery
               eventId={event.id}
               media={media}
-              onUpdate={loadAll}
+              onUpdate={() => void invalidate.media()}
               canMutate={canManageEvents}
             />
             <DocumentManager
               eventId={event.id}
               documents={documents}
-              onUpdate={loadAll}
+              onUpdate={() => void invalidate.documents()}
               canMutate={canManageEvents}
             />
           </div>
@@ -713,7 +663,7 @@ export function EventDetailClient({
           <CommentsSection
             eventId={event.id}
             comments={comments}
-            onUpdate={loadAll}
+            onUpdate={() => void invalidate.comments()}
             canPost={canManageEvents}
             canDelete={canManageEvents}
           />
@@ -728,7 +678,7 @@ export function EventDetailClient({
         >
           <EventRoiSection
             event={event}
-            onUpdate={loadAll}
+            onUpdate={() => void invalidate.event()}
             canEdit={canManageEvents}
           />
         </CollapsibleSection>
@@ -741,7 +691,11 @@ export function EventDetailClient({
             defaultOpen={typeof window !== "undefined" && window.innerWidth >= 768}
             mobileCollapsed
           >
-            <EventRecap event={event} onUpdate={loadAll} canEdit={canManageEvents} />
+            <EventRecap
+              event={event}
+              onUpdate={() => void invalidate.event()}
+              canEdit={canManageEvents}
+            />
           </CollapsibleSection>
         )}
       </div>
@@ -768,7 +722,9 @@ export function EventDetailClient({
       <EventMobileActionBar
         eventId={event.id}
         checklist={checklist}
-        onUpdate={loadAll}
+        onAfterChecklistChange={() => void invalidate.checklist()}
+        onAfterMediaChange={() => void invalidate.media()}
+        onAfterCommentChange={() => void invalidate.comments()}
         canManageExtras={canManageEvents}
       />
     </>
