@@ -6,15 +6,16 @@ import {
   budgetMonthToDbDate,
   sumPlannedBudgetForMonth,
   totalMonthlyBudgetCapacity,
-  budgetHealth,
+  budgetPercentUsed,
+  budgetCardStatus,
   upsertMonthlyBudget,
   deleteMonthlyBudget,
-  type BudgetHealth,
+  type BudgetCardStatus,
 } from "@/lib/budgets";
 import { Event, MonthlyBudget } from "@/types/database";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, PiggyBank, Trash2, Plus } from "lucide-react";
+import { Loader2, Trash2, Plus } from "lucide-react";
 
 function formatUsd(n: number): string {
   return new Intl.NumberFormat("en-US", {
@@ -24,18 +25,34 @@ function formatUsd(n: number): string {
   }).format(n);
 }
 
-const healthRing: Record<BudgetHealth, string> = {
-  green: "border-harley-success/60 bg-harley-success/5",
-  yellow: "border-harley-warning/60 bg-harley-warning/5",
-  red: "border-harley-danger/60 bg-harley-danger/5",
-  neutral: "border-harley-gray-lighter/50 bg-harley-gray/20",
-};
+function formatPct(n: number): string {
+  return `${n.toFixed(n >= 100 && n % 1 < 0.05 ? 0 : 1)}%`;
+}
 
-const healthLabel: Record<BudgetHealth, string> = {
-  green: "Under budget",
-  yellow: "80%+ of budget planned",
-  red: "Over planned cap",
-  neutral: "Set a monthly cap to track",
+const statusCopy: Record<
+  BudgetCardStatus,
+  { label: string; dot: string; bar: string }
+> = {
+  neutral: {
+    label: "On track",
+    dot: "bg-harley-text-muted",
+    bar: "bg-harley-gray-lighter",
+  },
+  warning: {
+    label: "Approaching limit",
+    dot: "bg-harley-orange",
+    bar: "bg-harley-orange",
+  },
+  danger: {
+    label: "Over budget",
+    dot: "bg-harley-danger",
+    bar: "bg-harley-danger",
+  },
+  no_budget: {
+    label: "No cap set",
+    dot: "bg-harley-text-muted",
+    bar: "bg-transparent",
+  },
 };
 
 interface BudgetSummaryCardProps {
@@ -65,7 +82,10 @@ export function BudgetSummaryCard({
   const cap = totalMonthlyBudgetCapacity(monthlyBudgets, locationFilter);
   const planned = sumPlannedBudgetForMonth(events, budgetMonth, locationFilter);
   const remaining = cap - planned;
-  const health = budgetHealth(planned, cap);
+  const pctUsed = budgetPercentUsed(planned, cap);
+  const status = budgetCardStatus(planned, cap);
+  const statusTheme = statusCopy[status];
+  const barWidthPct = cap > 0 ? Math.min(100, pctUsed) : 0;
 
   async function handleAddRow(e: React.FormEvent) {
     e.preventDefault();
@@ -123,88 +143,121 @@ export function BudgetSummaryCard({
   }
 
   return (
-    <Card
-      className={`!p-4 md:!p-5 border-2 transition-colors ${healthRing[health]}`}
-    >
-      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-        <div className="flex items-start gap-3 min-w-0">
-          <div className="p-2 rounded-lg bg-harley-black/30 text-harley-orange shrink-0">
-            <PiggyBank className="w-5 h-5" />
-          </div>
-          <div className="min-w-0">
-            <h2 className="text-sm font-semibold text-harley-text uppercase tracking-wide">
-              Monthly budget
-            </h2>
-            <p className="text-xs text-harley-text-muted mt-0.5">
-              {healthLabel[health]}
-              {locationFilter
-                ? ` · Filtered to events at "${locationFilter}".`
-                : " · All locations: caps are summed; planned includes every event in this month."}
+    <Card className="!p-0 overflow-hidden border-harley-gray shadow-none">
+      <div className="p-6 md:p-8">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-harley-text-muted">
+              Budget overview
             </p>
-            <div className="mt-3 flex flex-wrap gap-3">
-              <label className="flex flex-col gap-1 text-xs text-harley-text-muted">
-                <span>Month</span>
-                <input
-                  type="month"
-                  value={budgetMonth}
-                  onChange={(e) => onBudgetMonthChange(e.target.value)}
-                  className="px-3 py-2 rounded-lg bg-harley-black/40 border border-harley-gray-lighter/40 text-harley-text text-sm focus:outline-none focus:border-harley-orange/60"
-                />
-              </label>
-            </div>
+            <p className="text-xs text-harley-text-muted mt-1 max-w-xl leading-relaxed">
+              {locationFilter ? (
+                <>Events at &quot;{locationFilter}&quot; · month {budgetMonth}</>
+              ) : (
+                <>
+                  All locations combined · caps summed · planned includes every
+                  event in {budgetMonth}
+                </>
+              )}
+            </p>
           </div>
+          <label className="flex flex-col gap-1 shrink-0">
+            <span className="text-[10px] font-medium uppercase tracking-wider text-harley-text-muted">
+              Period
+            </span>
+            <input
+              type="month"
+              value={budgetMonth}
+              onChange={(e) => onBudgetMonthChange(e.target.value)}
+              className="px-3 py-2 rounded-lg bg-harley-black border border-harley-gray text-harley-text text-sm font-medium focus:outline-none focus:ring-1 focus:ring-harley-orange/50"
+            />
+          </label>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 lg:gap-4 shrink-0 w-full lg:w-auto">
-          <div className="rounded-lg bg-harley-black/25 px-4 py-3 border border-harley-gray/40">
-            <p className="text-[10px] uppercase tracking-wide text-harley-text-muted">
-              Monthly cap
+        <div className="mt-8">
+          <p className="text-xs font-medium text-harley-text-muted uppercase tracking-wider">
+            Monthly budget
+          </p>
+          <p className="mt-1 text-3xl sm:text-4xl font-bold text-harley-text tracking-tight tabular-nums">
+            {cap > 0 ? formatUsd(cap) : "—"}
+          </p>
+        </div>
+
+        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+          <div>
+            <p className="text-xs font-medium text-harley-text-muted uppercase tracking-wider">
+              Planned spend
             </p>
-            <p className="text-lg font-bold text-harley-text tabular-nums">
-              {formatUsd(cap)}
-            </p>
-          </div>
-          <div className="rounded-lg bg-harley-black/25 px-4 py-3 border border-harley-gray/40">
-            <p className="text-[10px] uppercase tracking-wide text-harley-text-muted">
-              Planned (events)
-            </p>
-            <p className="text-lg font-bold text-harley-orange tabular-nums">
+            <p className="mt-2 text-xl font-semibold text-harley-text tabular-nums tracking-tight">
               {formatUsd(planned)}
             </p>
           </div>
-          <div className="rounded-lg bg-harley-black/25 px-4 py-3 border border-harley-gray/40">
-            <p className="text-[10px] uppercase tracking-wide text-harley-text-muted">
-              Remaining
+          <div
+            className={`rounded-xl border px-5 py-4 ${
+              status === "danger"
+                ? "border-harley-danger/35 bg-harley-danger/[0.06]"
+                : status === "warning"
+                  ? "border-harley-orange/35 bg-harley-orange/[0.06]"
+                  : "border-harley-gray bg-harley-black/40"
+            }`}
+          >
+            <p className="text-xs font-medium text-harley-text-muted uppercase tracking-wider">
+              Remaining budget
             </p>
             <p
-              className={`text-lg font-bold tabular-nums ${
-                remaining < 0
-                  ? "text-harley-danger"
-                  : remaining === 0
-                    ? "text-harley-warning"
-                    : "text-harley-success"
+              className={`mt-2 text-xl font-bold tabular-nums tracking-tight ${
+                cap <= 0
+                  ? "text-harley-text-muted"
+                  : remaining < 0
+                    ? "text-harley-danger"
+                    : "text-harley-text"
               }`}
             >
-              {formatUsd(remaining)}
+              {cap > 0 ? formatUsd(remaining) : "—"}
             </p>
+          </div>
+        </div>
+
+        <div className="mt-8">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <span className="text-xs font-medium text-harley-text-muted tabular-nums">
+              {cap > 0
+                ? `${formatPct(pctUsed)} of budget used`
+                : "Set a monthly cap to track utilization"}
+            </span>
+            <span className="inline-flex items-center gap-2 text-xs font-semibold text-harley-text">
+              <span
+                className={`h-2 w-2 rounded-full shrink-0 ${statusTheme.dot}`}
+                aria-hidden
+              />
+              {statusTheme.label}
+            </span>
+          </div>
+          <div className="h-2 rounded-full bg-harley-gray overflow-hidden">
+            {cap > 0 ? (
+              <div
+                className={`h-full rounded-full transition-all duration-500 ease-out ${statusTheme.bar}`}
+                style={{ width: `${barWidthPct}%` }}
+              />
+            ) : null}
           </div>
         </div>
       </div>
 
       {canManageBudgets && (
-        <div className="mt-5 pt-5 border-t border-harley-gray/50 space-y-4">
-          <p className="text-xs font-medium text-harley-text-muted uppercase tracking-wide">
-            Caps by location (managers)
+        <div className="border-t border-harley-gray px-6 py-5 md:px-8 md:py-6 bg-harley-black/30">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-harley-text-muted">
+            Manage caps
           </p>
-          <p className="text-xs text-harley-text-muted">
-            Use the same location text as on events (exact match). One row per location per month.
+          <p className="text-xs text-harley-text-muted mt-1 mb-4">
+            Match event location text exactly. One cap per location per month.
           </p>
           {monthlyBudgets.length > 0 && (
-            <ul className="space-y-2">
+            <ul className="space-y-2 mb-4">
               {monthlyBudgets.map((row) => (
                 <li
                   key={row.id}
-                  className="flex flex-wrap items-center gap-2 text-sm bg-harley-black/20 rounded-lg px-3 py-2 border border-harley-gray/40"
+                  className="flex flex-wrap items-center gap-2 text-sm rounded-lg px-3 py-2.5 border border-harley-gray bg-harley-dark/50"
                 >
                   <span className="font-medium text-harley-text min-w-[100px]">
                     {row.location || "(default)"}
@@ -217,7 +270,7 @@ export function BudgetSummaryCard({
                     key={`${row.id}-${row.updated_at}`}
                     disabled={busyId === row.id}
                     onBlur={(e) => handleAmountBlur(row, e.target.value)}
-                    className="w-32 px-2 py-1 rounded bg-harley-black/40 border border-harley-gray-lighter/40 text-harley-text text-sm tabular-nums disabled:opacity-50"
+                    className="w-32 px-2 py-1.5 rounded-md bg-harley-black border border-harley-gray text-harley-text text-sm tabular-nums disabled:opacity-50"
                   />
                   {busyId === row.id ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin text-harley-text-muted" />
@@ -226,7 +279,7 @@ export function BudgetSummaryCard({
                     type="button"
                     onClick={() => handleDeleteRow(row.id)}
                     disabled={busyId === row.id}
-                    className="ml-auto p-1.5 rounded text-harley-text-muted hover:text-harley-danger hover:bg-harley-danger/10 disabled:opacity-50"
+                    className="ml-auto p-1.5 rounded-md text-harley-text-muted hover:text-harley-danger hover:bg-harley-danger/10 disabled:opacity-50"
                     aria-label="Delete budget row"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -237,21 +290,21 @@ export function BudgetSummaryCard({
           )}
           <form
             onSubmit={handleAddRow}
-            className="flex flex-col sm:flex-row flex-wrap items-end gap-2"
+            className="flex flex-col sm:flex-row flex-wrap items-end gap-3"
           >
             <div className="flex-1 min-w-[140px]">
-              <label className="block text-[10px] uppercase text-harley-text-muted mb-1">
+              <label className="block text-[10px] font-medium uppercase tracking-wider text-harley-text-muted mb-1.5">
                 Location
               </label>
               <input
                 value={newLocation}
                 onChange={(e) => setNewLocation(e.target.value)}
                 placeholder="e.g. Milwaukee, WI"
-                className="w-full px-3 py-2 rounded-lg bg-harley-black/40 border border-harley-gray-lighter/40 text-sm text-harley-text"
+                className="w-full px-3 py-2 rounded-lg bg-harley-black border border-harley-gray text-sm text-harley-text"
               />
             </div>
             <div className="w-full sm:w-36">
-              <label className="block text-[10px] uppercase text-harley-text-muted mb-1">
+              <label className="block text-[10px] font-medium uppercase tracking-wider text-harley-text-muted mb-1.5">
                 Cap ($)
               </label>
               <input
@@ -260,7 +313,7 @@ export function BudgetSummaryCard({
                 step={0.01}
                 value={newAmount}
                 onChange={(e) => setNewAmount(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-harley-black/40 border border-harley-gray-lighter/40 text-sm text-harley-text tabular-nums"
+                className="w-full px-3 py-2 rounded-lg bg-harley-black border border-harley-gray text-sm text-harley-text tabular-nums"
               />
             </div>
             <Button type="submit" disabled={saving} size="sm" className="w-full sm:w-auto">

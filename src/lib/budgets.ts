@@ -105,18 +105,27 @@ export function sumOthersPlannedForMonth(
   return sum;
 }
 
-export type BudgetHealth = "green" | "yellow" | "red" | "neutral";
+/**
+ * Dashboard budget card:
+ * - Under 70% → neutral
+ * - 70–90% → warning
+ * - Above 90% up to 100% → warning (still at risk before cap)
+ * - Over 100% → danger
+ */
+export type BudgetCardStatus = "neutral" | "warning" | "danger" | "no_budget";
 
-/** Green: under 80% used. Yellow: 80%+ used but not over. Red: over cap. */
-export function budgetHealth(
+export function budgetPercentUsed(plannedTotal: number, monthlyCap: number): number {
+  if (monthlyCap <= 0) return 0;
+  return (plannedTotal / monthlyCap) * 100;
+}
+
+export function budgetCardStatus(
   plannedTotal: number,
   monthlyCap: number
-): BudgetHealth {
-  if (monthlyCap <= 0) {
-    if (plannedTotal > 0) return "yellow";
-    return "neutral";
-  }
-  if (plannedTotal > monthlyCap) return "red";
-  if (plannedTotal / monthlyCap >= 0.8) return "yellow";
-  return "green";
+): BudgetCardStatus {
+  if (monthlyCap <= 0) return "no_budget";
+  const pct = budgetPercentUsed(plannedTotal, monthlyCap);
+  if (pct > 100) return "danger";
+  if (pct >= 70) return "warning";
+  return "neutral";
 }
