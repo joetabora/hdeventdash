@@ -31,12 +31,12 @@ import { format, parseISO } from "date-fns";
 
 function participationVariant(
   s: string
-): "default" | "success" | "warning" | "danger" | "info" | "orange" {
+): "default" | "success" | "warning" | "danger" | "muted" | "orange" {
   switch (s) {
     case "participated":
       return "success";
     case "confirmed":
-      return "info";
+      return "muted";
     case "invited":
       return "warning";
     case "declined":

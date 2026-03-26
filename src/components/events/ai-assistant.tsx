@@ -227,11 +227,11 @@ export function AiAssistant({ event }: AiAssistantProps) {
     }
   }
 
-  const platformColor: Record<string, "info" | "orange" | "default"> = {
+  const platformColor: Record<string, "orange" | "default" | "muted"> = {
     Instagram: "orange",
-    Facebook: "info",
+    Facebook: "muted",
     "X / Twitter": "default",
-    LinkedIn: "info",
+    LinkedIn: "muted",
     "TikTok / Reels caption": "orange",
   };
 
@@ -448,7 +448,7 @@ function SocialPostEditor({
   onRegenerate,
 }: {
   post: SocialPostDraft;
-  platformColor: Record<string, "info" | "orange" | "default">;
+  platformColor: Record<string, "orange" | "default" | "muted">;
   disabled: boolean;
   regenDisabled: boolean;
   regenLoading: boolean;

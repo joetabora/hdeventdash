@@ -456,15 +456,13 @@ export default function EventDetailPage() {
                   <div
                     className={`h-full rounded-full transition-all duration-500 ease-out ${
                       percentage === 100
-                        ? "bg-gradient-to-r from-harley-success to-emerald-400"
+                        ? "bg-gradient-to-r from-harley-orange to-harley-orange-light"
                         : "bg-gradient-to-r from-harley-orange-dark to-harley-orange"
                     }`}
                     style={{ width: `${percentage}%` }}
                   />
                 </div>
-                <span className={`text-xs font-bold shrink-0 ${
-                  percentage === 100 ? "text-harley-success" : "text-harley-orange"
-                }`}>
+                <span className="text-xs font-bold shrink-0 text-harley-orange">
                   {percentage}%
                 </span>
               </div>

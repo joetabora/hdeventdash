@@ -1,27 +1,25 @@
 @import "tailwindcss";
 
 @theme inline {
-  /* Accent — Harley orange, used sparingly for CTAs and active states */
-  --color-harley-orange: #F26522;
-  --color-harley-orange-light: #FF7A38;
-  --color-harley-orange-dark: #D4541A;
+  /* Accent — orange for buttons, progress, and key highlights only */
+  --color-harley-orange: #ff6600;
+  --color-harley-orange-light: #ff8533;
+  --color-harley-orange-dark: #e65c00;
 
-  /* Surfaces — layered dark neutrals with subtle cool undertone */
-  --color-harley-black: #0C0E14;
-  --color-harley-dark: #161821;
-  --color-harley-gray: #21232E;
-  --color-harley-gray-light: #2B2D3A;
-  --color-harley-gray-lighter: #3D3F4D;
+  /* Surfaces — neutral dark (no blue) */
+  --color-harley-black: #0f0f0f;
+  --color-harley-dark: #1a1a1a;
+  --color-harley-gray: #2a2a2a;
+  --color-harley-gray-light: #1a1a1a;
+  --color-harley-gray-lighter: #3a3a3a;
 
-  /* Text — high contrast for readability */
-  --color-harley-text: #EAECF2;
-  --color-harley-text-muted: #8B8EA4;
+  --color-harley-text: #e8e8e8;
+  --color-harley-text-muted: #888888;
 
-  /* Semantic — kept vibrant against dark surfaces */
-  --color-harley-success: #34D374;
-  --color-harley-warning: #F5C518;
-  --color-harley-danger: #F04848;
-  --color-harley-info: #4B92FF;
+  /* Semantic — no blue; subdued for minimal UI */
+  --color-harley-success: #52b768;
+  --color-harley-warning: #d9a526;
+  --color-harley-danger: #e05050;
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);

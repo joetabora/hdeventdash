@@ -32,11 +32,7 @@ export function ProgressBar({ checklist, variant = "default" }: ProgressBarProps
             <span className="text-base sm:text-lg text-harley-text-muted">
               {completed} / {total} tasks
             </span>
-            <span
-              className={`text-2xl sm:text-3xl font-bold tabular-nums ${
-                isComplete ? "text-harley-success" : "text-harley-orange"
-              }`}
-            >
+            <span className="text-2xl sm:text-3xl font-bold tabular-nums text-harley-orange">
               {percentage}%
             </span>
           </div>
@@ -45,7 +41,7 @@ export function ProgressBar({ checklist, variant = "default" }: ProgressBarProps
           <div
             className={`h-full rounded-full transition-all duration-500 ease-out ${
               isComplete
-                ? "bg-gradient-to-r from-harley-success to-emerald-400"
+                ? "bg-gradient-to-r from-harley-orange to-harley-orange-light"
                 : "bg-gradient-to-r from-harley-orange-dark to-harley-orange"
             }`}
             style={{ width: `${percentage}%` }}
@@ -70,11 +66,7 @@ export function ProgressBar({ checklist, variant = "default" }: ProgressBarProps
           <span className="text-xs text-harley-text-muted">
             {completed} of {total} tasks
           </span>
-          <span
-            className={`text-sm font-bold ${
-              isComplete ? "text-harley-success" : "text-harley-orange"
-            }`}
-          >
+          <span className="text-sm font-bold text-harley-orange">
             {percentage}% Complete
           </span>
         </div>
@@ -83,7 +75,7 @@ export function ProgressBar({ checklist, variant = "default" }: ProgressBarProps
         <div
           className={`h-full rounded-full transition-all duration-500 ease-out ${
             isComplete
-              ? "bg-gradient-to-r from-harley-success to-emerald-400"
+              ? "bg-gradient-to-r from-harley-orange to-harley-orange-light"
               : "bg-gradient-to-r from-harley-orange-dark to-harley-orange"
           }`}
           style={{ width: `${percentage}%` }}

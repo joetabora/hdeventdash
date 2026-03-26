@@ -99,7 +99,7 @@ export function AnalyticsDashboard({
                   : "Add attendance in event recap"}
               </p>
             </div>
-            <Users className="w-8 h-8 text-harley-info/80 shrink-0" />
+            <Users className="w-8 h-8 text-harley-text-muted shrink-0" />
           </div>
         </Card>
 
@@ -174,7 +174,7 @@ export function AnalyticsDashboard({
                     </Link>
                     <div className="flex-1 min-w-[80px] h-2 rounded-full bg-harley-gray/50 overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-harley-info/80 to-harley-info"
+                        className="h-full rounded-full bg-gradient-to-r from-harley-orange-dark to-harley-orange"
                         style={{ width: `${Math.max(w, 3)}%` }}
                       />
                     </div>

@@ -403,7 +403,7 @@ export default function UserManagementPage() {
                           Admin
                         </Badge>
                       ) : user.role === "manager" ? (
-                        <Badge variant="info" className="ml-2">
+                        <Badge variant="muted" className="ml-2">
                           <Briefcase className="w-3 h-3 mr-1" />
                           Manager
                         </Badge>

@@ -42,7 +42,7 @@ function TopHeaderInner({ onMenuToggle }: TopHeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-20 h-16 bg-harley-dark/70 backdrop-blur-xl border-b border-harley-gray/50 flex items-center justify-between px-4 lg:px-8">
+    <header className="sticky top-0 z-20 h-16 bg-harley-dark/90 backdrop-blur-xl border-b border-harley-gray flex items-center justify-between px-4 lg:px-8">
       <div className="flex items-center gap-3">
         <button
           type="button"
@@ -77,7 +77,7 @@ function TopHeaderInner({ onMenuToggle }: TopHeaderProps) {
               className="fixed inset-0 z-10"
               onClick={() => setMenuOpen(false)}
             />
-            <div className="absolute right-0 mt-2 w-56 bg-harley-dark rounded-xl border border-harley-gray-lighter/30 shadow-[0_8px_30px_rgba(0,0,0,0.4)] z-20 py-1">
+            <div className="absolute right-0 mt-2 w-56 bg-harley-dark rounded-xl border border-harley-gray shadow-[0_8px_24px_rgba(0,0,0,0.55)] z-20 py-1">
               <div className="px-4 py-3 border-b border-harley-gray">
                 <p className="text-xs text-harley-text-muted">Signed in as</p>
                 <p className="text-sm text-harley-text font-medium truncate">
@@ -103,7 +103,7 @@ export function TopHeader(props: TopHeaderProps) {
   return (
     <Suspense
       fallback={
-        <header className="sticky top-0 z-20 h-16 bg-harley-dark/70 backdrop-blur-xl border-b border-harley-gray/50 flex items-center justify-between px-4 lg:px-8">
+        <header className="sticky top-0 z-20 h-16 bg-harley-dark/90 backdrop-blur-xl border-b border-harley-gray flex items-center justify-between px-4 lg:px-8">
           <h1 className="text-lg font-semibold text-harley-text">Dashboard</h1>
         </header>
       }

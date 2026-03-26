@@ -8,14 +8,14 @@ interface MetricCardProps {
   value: string;
   subtext?: string;
   icon: React.ReactNode;
-  accent?: "orange" | "danger" | "success" | "info";
+  accent?: "orange" | "danger" | "success" | "muted";
 }
 
 const accentStyles = {
   orange: "text-harley-orange bg-harley-orange/10",
   danger: "text-harley-danger bg-harley-danger/10",
   success: "text-harley-success bg-harley-success/10",
-  info: "text-harley-info bg-harley-info/10",
+  muted: "text-harley-text-muted bg-harley-gray",
 };
 
 function MetricCard({ label, value, subtext, icon, accent = "orange" }: MetricCardProps) {

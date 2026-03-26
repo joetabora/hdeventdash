@@ -1,6 +1,6 @@
 import { EventStatus } from "@/types/database";
 
-type BadgeVariant = "default" | "success" | "warning" | "danger" | "info" | "orange";
+type BadgeVariant = "default" | "success" | "warning" | "danger" | "muted" | "orange";
 
 interface BadgeProps {
   children: React.ReactNode;
@@ -9,12 +9,12 @@ interface BadgeProps {
 }
 
 const variantStyles: Record<BadgeVariant, string> = {
-  default: "bg-harley-gray-lighter/30 text-harley-text-muted",
-  success: "bg-harley-success/15 text-harley-success",
-  warning: "bg-harley-warning/15 text-harley-warning",
-  danger: "bg-harley-danger/15 text-harley-danger",
-  info: "bg-harley-info/15 text-harley-info",
-  orange: "bg-harley-orange/15 text-harley-orange",
+  default: "bg-harley-gray text-harley-text-muted border border-harley-gray",
+  muted: "bg-harley-black/50 text-harley-text-muted border border-harley-gray",
+  success: "bg-harley-success/12 text-harley-success",
+  warning: "bg-harley-warning/12 text-harley-warning",
+  danger: "bg-harley-danger/12 text-harley-danger",
+  orange: "bg-harley-orange/12 text-harley-orange",
 };
 
 export function Badge({ children, variant = "default", className = "" }: BadgeProps) {
@@ -29,7 +29,7 @@ export function Badge({ children, variant = "default", className = "" }: BadgePr
 
 const statusVariantMap: Record<EventStatus, BadgeVariant> = {
   idea: "default",
-  planning: "info",
+  planning: "muted",
   in_progress: "warning",
   ready_for_execution: "orange",
   live_event: "success",

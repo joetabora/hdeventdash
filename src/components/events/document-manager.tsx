@@ -95,8 +95,8 @@ export function DocumentManager({
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
 
-  const tagVariant: Record<DocumentTag, "default" | "info" | "warning" | "orange" | "success" | "danger"> = {
-    contract: "info",
+  const tagVariant: Record<DocumentTag, "default" | "muted" | "warning" | "orange" | "success" | "danger"> = {
+    contract: "muted",
     invoice: "warning",
     flyer: "orange",
     photo: "success",

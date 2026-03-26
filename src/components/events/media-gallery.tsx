@@ -23,8 +23,8 @@ interface MediaGalleryProps {
   canMutate?: boolean;
 }
 
-const tagVariant: Record<MediaTag, "info" | "orange" | "success"> = {
-  social_media: "info",
+const tagVariant: Record<MediaTag, "muted" | "orange" | "success"> = {
+  social_media: "muted",
   recap: "orange",
   marketing_asset: "success",
 };
