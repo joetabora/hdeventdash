@@ -33,6 +33,7 @@ import { CommentsSection } from "@/components/events/comments-section";
 import { MediaGallery } from "@/components/events/media-gallery";
 import { AiAssistant } from "@/components/events/ai-assistant";
 import { EventRecap } from "@/components/events/event-recap";
+import { EventRoiSection } from "@/components/events/event-roi-section";
 import { EventMobileActionBar } from "@/components/events/event-mobile-action-bar";
 import { ProgressBar } from "@/components/events/progress-bar";
 import { DaysUntilEvent } from "@/components/events/days-until";
@@ -58,6 +59,7 @@ import {
   BarChart3,
   Sparkles,
   ChevronDown,
+  DollarSign,
 } from "lucide-react";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
@@ -611,6 +613,20 @@ export default function EventDetailPage() {
             onUpdate={loadAll}
             canPost={canManageEvents}
             canDelete={canManageEvents}
+          />
+        </CollapsibleSection>
+
+        {/* ── ROI & OUTCOMES ─────────────────────────────────── */}
+        <CollapsibleSection
+          icon={<DollarSign className="w-4.5 h-4.5" />}
+          title="ROI & outcomes"
+          defaultOpen={typeof window !== "undefined" && window.innerWidth >= 768}
+          mobileCollapsed
+        >
+          <EventRoiSection
+            event={event}
+            onUpdate={loadAll}
+            canEdit={canManageEvents}
           />
         </CollapsibleSection>
 

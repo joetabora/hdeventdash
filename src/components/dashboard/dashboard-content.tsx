@@ -16,6 +16,7 @@ import { CalendarView } from "@/components/dashboard/calendar-view";
 import { ListView } from "@/components/dashboard/list-view";
 import { Filters } from "@/components/dashboard/filters";
 import { DashboardMetrics } from "@/components/dashboard/metrics";
+import { RoiTrendsCard } from "@/components/dashboard/roi-trends-card";
 import { Card } from "@/components/ui/card";
 import { LayoutGrid, Calendar, List, Loader2 } from "lucide-react";
 import { parseISO, isBefore, startOfDay } from "date-fns";
@@ -218,6 +219,8 @@ export function DashboardContent() {
         ownerFilter={ownerFilter}
         onOwnerFilterChange={setOwnerFilter}
       />
+
+      <RoiTrendsCard events={filteredEvents} />
 
       {currentView === "kanban" && (
         <div className="overflow-x-auto -mx-2 px-2">

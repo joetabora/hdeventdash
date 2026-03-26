@@ -56,6 +56,13 @@ export interface Event {
   recap_notes: string | null;
   sales_estimate: number | null;
   is_archived: boolean;
+  /** ROI / outcome tracking (null/omitted until migration applied) */
+  roi_leads_generated?: number | null;
+  roi_bikes_sold?: number | null;
+  roi_service_revenue?: number | null;
+  roi_motorclothes_revenue?: number | null;
+  roi_bike_sales_revenue?: number | null;
+  roi_event_cost?: number | null;
 }
 
 export interface ChecklistItem {
