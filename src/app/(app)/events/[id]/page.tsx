@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
   getEvent,
+  getEvents,
   getChecklistItems,
   getEventDocuments,
   getEventComments,
@@ -139,6 +140,7 @@ export default function EventDetailPage() {
   const [media, setMedia] = useState<EventMedia[]>([]);
   const [allVendors, setAllVendors] = useState<Vendor[]>([]);
   const [eventVendors, setEventVendors] = useState<EventVendorWithVendor[]>([]);
+  const [allEventsForBudget, setAllEventsForBudget] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [showStatusPills, setShowStatusPills] = useState(false);
@@ -147,15 +149,19 @@ export default function EventDetailPage() {
     const supabase = supabaseRef.current;
     if (!supabase) return;
     try {
-      const [ev, cl, docs, coms, med, vendors, evVendors] = await Promise.all([
-        getEvent(supabase, id),
-        getChecklistItems(supabase, id),
-        getEventDocuments(supabase, id),
-        getEventComments(supabase, id),
-        getEventMedia(supabase, id),
-        getVendors(supabase).catch(() => [] as Vendor[]),
-        getActiveEventVendors(supabase, id).catch(() => [] as EventVendorWithVendor[]),
-      ]);
+      const [ev, cl, docs, coms, med, vendors, evVendors, orgEvents] =
+        await Promise.all([
+          getEvent(supabase, id),
+          getChecklistItems(supabase, id),
+          getEventDocuments(supabase, id),
+          getEventComments(supabase, id),
+          getEventMedia(supabase, id),
+          getVendors(supabase).catch(() => [] as Vendor[]),
+          getActiveEventVendors(supabase, id).catch(
+            () => [] as EventVendorWithVendor[]
+          ),
+          getEvents(supabase).catch(() => [] as Event[]),
+        ]);
       setEvent(ev);
       setChecklist(cl);
       setDocuments(docs);
@@ -163,6 +169,7 @@ export default function EventDetailPage() {
       setMedia(med);
       setAllVendors(vendors);
       setEventVendors(evVendors);
+      setAllEventsForBudget(orgEvents.filter((e) => !e.is_archived));
     } catch (err) {
       console.error("Failed to load event:", err);
     } finally {
@@ -717,6 +724,7 @@ export default function EventDetailPage() {
           <EventForm
             event={event}
             canEditBudget={canManageEvents}
+            allEvents={allEventsForBudget}
             onSubmit={handleEditSubmit}
             onCancel={() => setEditModalOpen(false)}
             submitLabel="Save Changes"

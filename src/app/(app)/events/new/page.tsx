@@ -2,14 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { createEvent } from "@/lib/events";
+import { createEvent, getEvents } from "@/lib/events";
 import { EventForm } from "@/components/events/event-form";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
 import { useAppRole } from "@/contexts/app-role-context";
-import type { EventType } from "@/types/database";
+import type { Event, EventType } from "@/types/database";
 
 export default function NewEventPage() {
   const router = useRouter();
@@ -18,12 +18,23 @@ export default function NewEventPage() {
     typeof window !== "undefined" ? createClient() : null
   );
   const [userId, setUserId] = useState<string | null>(null);
+  const [allEvents, setAllEvents] = useState<Event[]>([]);
 
   useEffect(() => {
     supabaseRef.current?.auth.getUser().then(({ data }) => {
       setUserId(data.user?.id ?? null);
     });
   }, []);
+
+  useEffect(() => {
+    const supabase = supabaseRef.current;
+    if (!supabase || !canManageEvents) return;
+    getEvents(supabase)
+      .then((rows) =>
+        setAllEvents(rows.filter((e) => !e.is_archived))
+      )
+      .catch(() => setAllEvents([]));
+  }, [canManageEvents]);
 
   useEffect(() => {
     if (roleLoading) return;
@@ -77,6 +88,7 @@ export default function NewEventPage() {
       <Card padding="lg">
         <EventForm
           canEditBudget
+          allEvents={allEvents}
           onSubmit={handleCreate}
           onCancel={() => router.push("/dashboard")}
         />

@@ -1,21 +1,40 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Event,
   EventStatus,
   EventType,
+  MonthlyBudget,
   EVENT_STATUSES,
   EVENT_TYPES,
 } from "@/types/database";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea, Select } from "@/components/ui/input";
-import { Loader2 } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import {
+  getMonthlyBudgetsForMonth,
+  budgetMonthToDbDate,
+  eventDateToYearMonth,
+  totalMonthlyBudgetCapacity,
+  sumOthersPlannedForMonth,
+} from "@/lib/budgets";
+import { Loader2, AlertTriangle } from "lucide-react";
+
+function formatBudgetUsd(n: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(n);
+}
 
 interface EventFormProps {
   event?: Partial<Event>;
   /** Managers/admins only — staff cannot edit budget fields (DB-enforced). */
   canEditBudget?: boolean;
+  /** Other org events (non-archived) for planned-vs-cap check; omit to skip validation. */
+  allEvents?: Event[];
   onSubmit: (data: {
     name: string;
     date: string;
@@ -42,6 +61,7 @@ function numOrNull(v: string): number | null {
 export function EventForm({
   event,
   canEditBudget = false,
+  allEvents = [],
   onSubmit,
   onCancel,
   submitLabel = "Create Event",
@@ -64,11 +84,92 @@ export function EventForm({
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [monthlyBudgets, setMonthlyBudgets] = useState<MonthlyBudget[]>([]);
+  const [budgetsLoading, setBudgetsLoading] = useState(false);
+  const [budgetOverrideConfirmed, setBudgetOverrideConfirmed] = useState(false);
+
+  const yearMonth =
+    date.length >= 7 ? eventDateToYearMonth(date) : null;
+  const locationTrimmed = location.trim();
+
+  useEffect(() => {
+    if (!yearMonth) {
+      setMonthlyBudgets([]);
+      return;
+    }
+    const supabase = createClient();
+    let cancelled = false;
+    setBudgetsLoading(true);
+    getMonthlyBudgetsForMonth(supabase, budgetMonthToDbDate(yearMonth))
+      .then((rows) => {
+        if (!cancelled) setMonthlyBudgets(rows);
+      })
+      .catch(() => {
+        if (!cancelled) setMonthlyBudgets([]);
+      })
+      .finally(() => {
+        if (!cancelled) setBudgetsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [yearMonth]);
+
+  const budgetCheck = useMemo(() => {
+    if (!canEditBudget || !yearMonth) {
+      return {
+        cap: 0,
+        othersPlanned: 0,
+        thisPlanned: 0,
+        total: 0,
+        exceeds: false,
+      };
+    }
+    const thisPlanned = numOrNull(plannedBudget) ?? 0;
+    const cap = totalMonthlyBudgetCapacity(monthlyBudgets, locationTrimmed);
+    const othersPlanned = sumOthersPlannedForMonth(
+      allEvents,
+      yearMonth,
+      locationTrimmed,
+      event?.id
+    );
+    const total = othersPlanned + thisPlanned;
+    const exceeds = cap > 0 && total > cap;
+    return {
+      cap,
+      othersPlanned,
+      thisPlanned,
+      total,
+      exceeds,
+    };
+  }, [
+    canEditBudget,
+    yearMonth,
+    allEvents,
+    monthlyBudgets,
+    locationTrimmed,
+    plannedBudget,
+    event?.id,
+  ]);
+
+  useEffect(() => {
+    setBudgetOverrideConfirmed(false);
+  }, [date, location, plannedBudget, yearMonth]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim() || !date) {
       setError("Name and date are required");
+      return;
+    }
+    if (
+      canEditBudget &&
+      budgetCheck.exceeds &&
+      !budgetOverrideConfirmed
+    ) {
+      setError(
+        "Planned budgets exceed the monthly cap. Confirm the override below or reduce the planned amount."
+      );
       return;
     }
     setLoading(true);
@@ -151,28 +252,83 @@ export function EventForm({
       />
 
       {canEditBudget && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg border border-harley-orange/25 bg-harley-orange/5">
-          <p className="md:col-span-2 text-xs text-harley-text-muted">
+        <div className="space-y-3 p-4 rounded-lg border border-harley-orange/25 bg-harley-orange/5">
+          <p className="text-xs text-harley-text-muted">
             Budget (managers only)
           </p>
-          <Input
-            label="Planned budget ($)"
-            type="number"
-            min={0}
-            step={0.01}
-            value={plannedBudget}
-            onChange={(e) => setPlannedBudget(e.target.value)}
-            placeholder="0"
-          />
-          <Input
-            label="Actual budget ($, optional)"
-            type="number"
-            min={0}
-            step={0.01}
-            value={actualBudget}
-            onChange={(e) => setActualBudget(e.target.value)}
-            placeholder="After event"
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="Planned budget ($)"
+              type="number"
+              min={0}
+              step={0.01}
+              value={plannedBudget}
+              onChange={(e) => setPlannedBudget(e.target.value)}
+              placeholder="0"
+            />
+            <Input
+              label="Actual budget ($, optional)"
+              type="number"
+              min={0}
+              step={0.01}
+              value={actualBudget}
+              onChange={(e) => setActualBudget(e.target.value)}
+              placeholder="After event"
+            />
+          </div>
+          {yearMonth && (
+            <p className="text-[11px] text-harley-text-muted">
+              {budgetsLoading
+                ? "Loading monthly cap…"
+                : budgetCheck.cap > 0
+                  ? `Monthly cap for ${yearMonth}${locationTrimmed ? ` · ${locationTrimmed}` : " (all locations combined)"}: ${formatBudgetUsd(budgetCheck.cap)} · Other events this month: ${formatBudgetUsd(budgetCheck.othersPlanned)}`
+                  : `No monthly cap set for ${yearMonth}${locationTrimmed ? ` at "${locationTrimmed}"` : ""}. Add one on the dashboard if you want warnings.`}
+            </p>
+          )}
+          {budgetCheck.exceeds && (
+            <div className="rounded-lg border border-harley-warning/50 bg-harley-warning/10 p-3 space-y-3">
+                <div className="flex gap-2">
+                  <AlertTriangle className="w-5 h-5 text-harley-warning shrink-0 mt-0.5" />
+                  <div className="text-sm text-harley-text">
+                    <p className="font-medium text-harley-warning">
+                      Planned total would exceed the monthly budget
+                    </p>
+                    <p className="text-harley-text-muted mt-1 leading-relaxed">
+                      With this event, planned spend for{" "}
+                      <strong>{yearMonth}</strong>
+                      {locationTrimmed
+                        ? <> at <strong>{locationTrimmed}</strong></>
+                        : <> (all locations)</>}{" "}
+                      would be{" "}
+                      <strong>{formatBudgetUsd(budgetCheck.total)}</strong>,
+                      over the cap of{" "}
+                      <strong>{formatBudgetUsd(budgetCheck.cap)}</strong> (
+                      {formatBudgetUsd(budgetCheck.total - budgetCheck.cap)}{" "}
+                      over).
+                    </p>
+                    <p className="text-xs text-harley-text-muted mt-2">
+                      You can still save — check the box below to confirm you
+                      want to override the cap.
+                    </p>
+                  </div>
+                </div>
+                <label className="flex items-start gap-2.5 cursor-pointer text-sm text-harley-text">
+                  <input
+                    type="checkbox"
+                    checked={budgetOverrideConfirmed}
+                    onChange={(e) => {
+                      setBudgetOverrideConfirmed(e.target.checked);
+                      if (e.target.checked) setError("");
+                    }}
+                    className="mt-1 rounded border-harley-gray-lighter"
+                  />
+                  <span>
+                    I understand this exceeds the monthly budget and want to
+                    save anyway.
+                  </span>
+                </label>
+            </div>
+          )}
         </div>
       )}
 

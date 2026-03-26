@@ -84,6 +84,27 @@ export function totalMonthlyBudgetCapacity(
   return budgets.reduce((s, b) => s + (Number(b.budget_amount) || 0), 0);
 }
 
+/**
+ * Sum planned budgets for other events in the same calendar month.
+ * Matches dashboard rules: if `eventLocation` is set, only events at that location; otherwise all events in the month.
+ */
+export function sumOthersPlannedForMonth(
+  events: Event[],
+  yearMonth: string,
+  eventLocationTrimmed: string,
+  excludeEventId?: string
+): number {
+  let sum = 0;
+  for (const e of events) {
+    if (e.is_archived) continue;
+    if (eventDateToYearMonth(e.date) !== yearMonth) continue;
+    if (excludeEventId && e.id === excludeEventId) continue;
+    if (eventLocationTrimmed && e.location !== eventLocationTrimmed) continue;
+    sum += Number(e.planned_budget) || 0;
+  }
+  return sum;
+}
+
 export type BudgetHealth = "green" | "yellow" | "red" | "neutral";
 
 /** Green: under 80% used. Yellow: 80%+ used but not over. Red: over cap. */
