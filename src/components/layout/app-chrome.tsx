@@ -1,22 +1,29 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState } from "react";
-import { Sidebar } from "./sidebar";
-import { TopHeader } from "./top-header";
-import { PushNotificationPrompt } from "@/components/push/push-notification-prompt";
-import { AppRoleProvider } from "@/contexts/app-role-context";
-import { QueryProvider } from "@/components/providers/query-provider";
+import { Sidebar } from "@/components/layout/sidebar";
+import { TopHeader } from "@/components/layout/top-header";
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+const PushNotificationPrompt = dynamic(
+  () =>
+    import("@/components/push/push-notification-prompt").then((m) => ({
+      default: m.PushNotificationPrompt,
+    })),
+  { ssr: false }
+);
+
+/**
+ * Interactive app chrome: mobile sidebar state, nav, header, user menu.
+ * Server routes render as `children` inside `<main>` (RSC composition).
+ */
+export function AppChrome({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <QueryProvider>
-    <AppRoleProvider>
-    <div className="min-h-screen bg-harley-black">
+    <>
       <Sidebar mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
 
-      {/* Main area offset by sidebar width on desktop */}
       <div id="app-shell-main" className="lg:pl-64 flex flex-col min-h-screen">
         <TopHeader onMenuToggle={() => setMobileOpen((v) => !v)} />
         <PushNotificationPrompt />
@@ -30,8 +37,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </main>
       </div>
-    </div>
-    </AppRoleProvider>
-    </QueryProvider>
+    </>
   );
 }
