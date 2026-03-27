@@ -19,7 +19,7 @@ import {
   getMonthlyBudgetsForMonth,
   budgetMonthToDbDate,
   eventDateToYearMonth,
-  totalMonthlyBudgetCapacity,
+  effectiveMonthlyCapForEvent,
   sumOthersPlannedForMonth,
 } from "@/lib/budgets";
 import { normalizeLocationKey } from "@/lib/location-key";
@@ -159,11 +159,12 @@ export function EventForm({
     const thisPlanned = numOrNull(plannedBudget) ?? 0;
     const checklistLineSpend = Math.max(0, checklistEstimatedTotalForEvent);
     const thisCommitted = thisPlanned + checklistLineSpend;
-    const cap = totalMonthlyBudgetCapacity(capBudgetRows, locationKey);
+    const cap = effectiveMonthlyCapForEvent(capBudgetRows, locationKey);
+    const singleVenueMonth = capBudgetRows.length === 1;
     const othersPlanned = sumOthersPlannedForMonth(
       allEvents,
       yearMonth,
-      locationKey,
+      singleVenueMonth ? "" : locationKey,
       event?.id
     );
     const total = othersPlanned + thisCommitted;

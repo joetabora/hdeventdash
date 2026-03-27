@@ -10,7 +10,8 @@ import { useAppRole } from "@/contexts/app-role-context";
 import { isEventAtRisk } from "@/lib/at-risk";
 import {
   eventDateToYearMonth,
-  totalMonthlyBudgetCapacity,
+  effectiveMonthlyCapForEvent,
+  sumMonthlyBudgetRows,
   sumOthersPlannedForMonth,
   sumChecklistEstimatedCost,
 } from "@/lib/budgets";
@@ -63,16 +64,22 @@ export function useEventController(
     const key =
       (event.location_key && event.location_key.trim()) ||
       normalizeLocationKey(event.location?.trim() ?? "");
-    const cap = totalMonthlyBudgetCapacity(monthlyBudgetsForEventMonth, key);
+    const cap = effectiveMonthlyCapForEvent(monthlyBudgetsForEventMonth, key);
+    const monthTotalCap = sumMonthlyBudgetRows(monthlyBudgetsForEventMonth);
+    const hasVenueCapMismatch =
+      Boolean(key) && cap === 0 && monthTotalCap > 0;
+    const singleVenueMonth = monthlyBudgetsForEventMonth.length === 1;
     const othersPlanned = sumOthersPlannedForMonth(
       budgetPeers,
       eventMonthYearMonth,
-      key,
+      singleVenueMonth ? "" : key,
       event.id
     );
     return {
       yearMonth: eventMonthYearMonth,
       cap,
+      monthTotalCap,
+      hasVenueCapMismatch,
       othersPlanned,
       locationLabel: event.location?.trim() ?? "",
     };
@@ -83,6 +90,12 @@ export function useEventController(
     monthlyBudgetsForEventMonth,
     budgetPeers,
   ]);
+
+  /** Refresh caps/peers after Budget page changes or client navigation (SSR bundle can be stale). */
+  useEffect(() => {
+    if (!eventMonthYearMonth) return;
+    void refetch.budgetContextForMonth(eventMonthYearMonth);
+  }, [eventId, eventMonthYearMonth, refetch]);
 
   useEffect(() => {
     if (!editModalOpen || !event || !eventMonthYearMonth) return;

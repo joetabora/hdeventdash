@@ -258,6 +258,30 @@ export function totalMonthlyBudgetCapacity(
   return budgets.reduce((s, b) => s + (Number(b.budget_amount) || 0), 0);
 }
 
+/** Sum every venue cap row for the month (same rows as Budget page for that period). */
+export function sumMonthlyBudgetRows(budgets: readonly MonthlyBudget[]): number {
+  return budgets.reduce((s, b) => s + (Number(b.budget_amount) || 0), 0);
+}
+
+/**
+ * Monthly cap for an event: exact venue match (or combined if event has no venue key),
+ * then if there is exactly one budget row for that month, use it anyway (single-store orgs
+ * where event location text may not match the Budget row label). With multiple rows and no
+ * key match, returns 0 so callers can show a venue mismatch hint.
+ */
+export function effectiveMonthlyCapForEvent(
+  budgets: readonly MonthlyBudget[],
+  eventLocationKey: string
+): number {
+  const key = (eventLocationKey || "").trim();
+  const matched = totalMonthlyBudgetCapacity(budgets as MonthlyBudget[], key);
+  if (matched > 0) return matched;
+  if (budgets.length === 1) {
+    return Number(budgets[0].budget_amount) || 0;
+  }
+  return 0;
+}
+
 /**
  * Sum planned budgets for other events in the same calendar month.
  * Matches dashboard rules: if `eventLocationKey` is set, only events at that location_key; otherwise all events in the month.

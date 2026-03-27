@@ -42,6 +42,10 @@ export type EventDetailHeaderLiveProps = {
 export type EventBudgetMonthSummary = {
   yearMonth: string;
   cap: number;
+  /** Sum of all venue cap rows for this month (Budget page). */
+  monthTotalCap: number;
+  /** Event has a venue key but no monthly_budgets row for that key. */
+  hasVenueCapMismatch: boolean;
   othersPlanned: number;
   locationLabel: string;
 };
@@ -363,6 +367,27 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
                       : {formatUsd(budgetSummaryForEventMonth.cap)} · Other
                       events planned:{" "}
                       {formatUsd(budgetSummaryForEventMonth.othersPlanned)}
+                    </>
+                  ) : budgetSummaryForEventMonth.hasVenueCapMismatch ? (
+                    <>
+                      {format(
+                        parseISO(`${budgetSummaryForEventMonth.yearMonth}-01`),
+                        "MMMM yyyy"
+                      )}{" "}
+                      has venue budgets totaling{" "}
+                      {formatUsd(budgetSummaryForEventMonth.monthTotalCap)}, but
+                      no row for this event&apos;s location
+                      {budgetSummaryForEventMonth.locationLabel
+                        ? ` (“${budgetSummaryForEventMonth.locationLabel}”)`
+                        : ""}
+                      . Add a matching cap on the{" "}
+                      <Link
+                        href="/budget"
+                        className="text-harley-orange hover:text-harley-orange-light underline-offset-2 hover:underline"
+                      >
+                        Budget
+                      </Link>{" "}
+                      page, or align the event location with an existing venue.
                     </>
                   ) : (
                     <>
