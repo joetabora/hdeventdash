@@ -7,10 +7,18 @@ import { Vendor } from "@/types/database";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
-import { Input, Textarea } from "@/components/ui/input";
+import { FormActions } from "@/components/forms/form-actions";
+import { FormErrorAlert } from "@/components/forms/form-error-alert";
+import {
+  EMPTY_VENDOR_FORM_VALUES,
+  VendorFormFields,
+  vendorFormValuesToPayload,
+  type VendorFormValues,
+} from "@/components/forms/vendor-form-fields";
+import { useFormSubmitState } from "@/hooks/use-form-submit-state";
 import { useAppRole } from "@/contexts/app-role-context";
 import { apiFetchJson } from "@/lib/api/api-fetch-json";
-import { Loader2, PlusCircle, Store, Search, ChevronRight } from "lucide-react";
+import { PlusCircle, Store, Search, ChevronRight } from "lucide-react";
 
 export function VendorsPageClient({ initialVendors }: { initialVendors: Vendor[] }) {
   const router = useRouter();
@@ -20,15 +28,24 @@ export function VendorsPageClient({ initialVendors }: { initialVendors: Vendor[]
 
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const { pending, error, setError, clearError, run } = useFormSubmitState();
+  const [formValues, setFormValues] = useState<VendorFormValues>(
+    EMPTY_VENDOR_FORM_VALUES
+  );
 
-  const [name, setName] = useState("");
-  const [contactName, setContactName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [website, setWebsite] = useState("");
-  const [category, setCategory] = useState("");
-  const [notes, setNotes] = useState("");
+  function patchForm(field: keyof VendorFormValues, value: string) {
+    setFormValues((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function resetCreateForm() {
+    setFormValues(EMPTY_VENDOR_FORM_VALUES);
+    clearError();
+  }
+
+  function closeModal() {
+    setModalOpen(false);
+    resetCreateForm();
+  }
 
   const filtered = vendors.filter((v) => {
     const q = search.trim().toLowerCase();
@@ -43,39 +60,24 @@ export function VendorsPageClient({ initialVendors }: { initialVendors: Vendor[]
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim()) return;
-    setSaving(true);
-    try {
-      const created = await apiFetchJson<Vendor>("/api/vendors", {
+    clearError();
+    if (!formValues.name.trim()) {
+      setError("Name is required");
+      return;
+    }
+    const created = await run(async () =>
+      apiFetchJson<Vendor>("/api/vendors", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name.trim(),
-          contact_name: contactName,
-          email,
-          phone,
-          website,
-          category,
-          notes,
-        }),
-      });
-      setVendors((prev) =>
-        [...prev, created].sort((a, b) => a.name.localeCompare(b.name))
-      );
-      setModalOpen(false);
-      setName("");
-      setContactName("");
-      setEmail("");
-      setPhone("");
-      setWebsite("");
-      setCategory("");
-      setNotes("");
-      router.refresh();
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setSaving(false);
-    }
+        body: JSON.stringify(vendorFormValuesToPayload(formValues)),
+      })
+    );
+    if (!created) return;
+    setVendors((prev) =>
+      [...prev, created].sort((a, b) => a.name.localeCompare(b.name))
+    );
+    closeModal();
+    router.refresh();
   }
 
   if (!canManageEvents) {
@@ -147,62 +149,17 @@ export function VendorsPageClient({ initialVendors }: { initialVendors: Vendor[]
         </ul>
       )}
 
-      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="New vendor" size="lg">
+      <Modal isOpen={modalOpen} onClose={closeModal} title="New vendor" size="lg">
         <form onSubmit={handleCreate} className="space-y-4">
-          <Input
-            label="Name *"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            placeholder="Company or vendor name"
+          <VendorFormFields values={formValues} onChange={patchForm} />
+          <FormErrorAlert message={error} />
+          <FormActions
+            pending={pending}
+            submitLabel="Save vendor"
+            disableSubmit={!formValues.name.trim()}
+            onCancel={closeModal}
+            order="cancel-first"
           />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input
-              label="Category"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              placeholder="e.g. Catering, AV, sponsor"
-            />
-            <Input
-              label="Contact name"
-              value={contactName}
-              onChange={(e) => setContactName(e.target.value)}
-            />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input
-              label="Email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-            <Input
-              label="Phone"
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-            />
-          </div>
-          <Input
-            label="Website"
-            value={website}
-            onChange={(e) => setWebsite(e.target.value)}
-            placeholder="https://"
-          />
-          <Textarea
-            label="Internal notes"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-          />
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={saving || !name.trim()}>
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-              Save vendor
-            </Button>
-          </div>
         </form>
       </Modal>
     </div>

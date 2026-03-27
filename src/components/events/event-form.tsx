@@ -9,8 +9,10 @@ import {
   EVENT_STATUSES,
   EVENT_TYPES,
 } from "@/types/database";
-import { Button } from "@/components/ui/button";
+import { FormActions } from "@/components/forms/form-actions";
+import { FormErrorAlert } from "@/components/forms/form-error-alert";
 import { Input, Textarea, Select } from "@/components/ui/input";
+import { useFormSubmitState } from "@/hooks/use-form-submit-state";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
   getMonthlyBudgetsForMonth,
@@ -21,7 +23,7 @@ import {
 } from "@/lib/budgets";
 import { normalizeLocationKey } from "@/lib/location-key";
 import { formatUsd } from "@/lib/format-currency";
-import { Loader2, AlertTriangle } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 
 interface EventFormProps {
   event?: Partial<Event>;
@@ -76,8 +78,7 @@ export function EventForm({
   const [actualBudget, setActualBudget] = useState(
     event?.actual_budget != null ? String(event.actual_budget) : ""
   );
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const { pending, error, setError, clearError, run } = useFormSubmitState();
   const [monthlyBudgets, setMonthlyBudgets] = useState<MonthlyBudget[]>([]);
   const [budgetsLoading, setBudgetsLoading] = useState(false);
   const [budgetOverrideConfirmed, setBudgetOverrideConfirmed] = useState(false);
@@ -153,6 +154,7 @@ export function EventForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    clearError();
     if (!name.trim() || !date) {
       setError("Name and date are required");
       return;
@@ -167,10 +169,8 @@ export function EventForm({
       );
       return;
     }
-    setLoading(true);
-    setError("");
-    try {
-      await onSubmit({
+    await run(() =>
+      onSubmit({
         name: name.trim(),
         date,
         location: location.trim(),
@@ -185,12 +185,8 @@ export function EventForm({
         actual_budget: canEditBudget
           ? numOrNull(actualBudget)
           : (event?.actual_budget ?? null),
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setLoading(false);
-    }
+      })
+    );
   }
 
   return (
@@ -313,7 +309,7 @@ export function EventForm({
                     checked={budgetOverrideConfirmed}
                     onChange={(e) => {
                       setBudgetOverrideConfirmed(e.target.checked);
-                      if (e.target.checked) setError("");
+                      if (e.target.checked) clearError();
                     }}
                     className="mt-1 rounded border-harley-gray-lighter"
                   />
@@ -343,23 +339,14 @@ export function EventForm({
         placeholder="https://onedrive.live.com/..."
       />
 
-      {error && (
-        <div className="text-harley-danger text-sm bg-harley-danger/10 rounded-lg p-3">
-          {error}
-        </div>
-      )}
+      <FormErrorAlert message={error} />
 
-      <div className="flex gap-3 pt-2">
-        <Button type="submit" disabled={loading}>
-          {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-          {submitLabel}
-        </Button>
-        {onCancel && (
-          <Button type="button" variant="secondary" onClick={onCancel}>
-            Cancel
-          </Button>
-        )}
-      </div>
+      <FormActions
+        pending={pending}
+        submitLabel={submitLabel}
+        onCancel={onCancel}
+        order="submit-first"
+      />
     </form>
   );
 }

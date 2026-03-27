@@ -11,16 +11,18 @@ import {
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input, Textarea } from "@/components/ui/input";
+import { FormActions } from "@/components/forms/form-actions";
+import { FormErrorAlert } from "@/components/forms/form-error-alert";
+import {
+  VendorFormFields,
+  vendorFormValuesFromVendor,
+  vendorFormValuesToPayload,
+  type VendorFormValues,
+} from "@/components/forms/vendor-form-fields";
+import { useFormSubmitState } from "@/hooks/use-form-submit-state";
 import { useAppRole } from "@/contexts/app-role-context";
 import { apiFetchJson } from "@/lib/api/api-fetch-json";
-import {
-  ArrowLeft,
-  Loader2,
-  Trash2,
-  CalendarDays,
-  MapPin,
-} from "lucide-react";
+import { ArrowLeft, Trash2, CalendarDays, MapPin } from "lucide-react";
 import { format, parseISO } from "date-fns";
 
 export function VendorDetailClient({
@@ -34,35 +36,34 @@ export function VendorDetailClient({
   const { canManageEvents } = useAppRole();
 
   const [vendor, setVendor] = useState<Vendor | null>(initialVendor);
+  const [formValues, setFormValues] = useState<VendorFormValues>(() =>
+    vendorFormValuesFromVendor(initialVendor)
+  );
+  const { pending, error, setError, clearError, run } = useFormSubmitState();
 
-  const [saving, setSaving] = useState(false);
+  function patchForm(field: keyof VendorFormValues, value: string) {
+    setFormValues((prev) => ({ ...prev, [field]: value }));
+  }
 
-  async function handleSave(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!vendor) return;
-    const fd = new FormData(e.currentTarget);
-    setSaving(true);
-    try {
-      const updated = await apiFetchJson<Vendor>(`/api/vendors/${vendor.id}`, {
+    clearError();
+    if (!formValues.name.trim()) {
+      setError("Name is required");
+      return;
+    }
+    const updated = await run(async () =>
+      apiFetchJson<Vendor>(`/api/vendors/${vendor.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: String(fd.get("name") ?? "").trim(),
-          contact_name: String(fd.get("contact_name") ?? ""),
-          email: String(fd.get("email") ?? ""),
-          phone: String(fd.get("phone") ?? ""),
-          website: String(fd.get("website") ?? ""),
-          category: String(fd.get("category") ?? ""),
-          notes: String(fd.get("notes") ?? ""),
-        }),
-      });
-      setVendor(updated);
-      router.refresh();
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setSaving(false);
-    }
+        body: JSON.stringify(vendorFormValuesToPayload(formValues)),
+      })
+    );
+    if (!updated) return;
+    setVendor(updated);
+    setFormValues(vendorFormValuesFromVendor(updated));
+    router.refresh();
   }
 
   async function handleDelete() {
@@ -118,30 +119,19 @@ export function VendorDetailClient({
         </Button>
       </div>
 
-      <form
-        key={`vendor-form-${vendor.updated_at}`}
-        onSubmit={handleSave}
-        className="space-y-6"
-      >
+      <form onSubmit={handleSave} className="space-y-6">
         <Card className="!p-5 space-y-4">
           <h2 className="text-sm font-semibold text-harley-text uppercase tracking-wide">
             Vendor details
           </h2>
-          <Input name="name" label="Name *" defaultValue={vendor.name} required />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input name="category" label="Category" defaultValue={vendor.category} />
-            <Input name="contact_name" label="Contact name" defaultValue={vendor.contact_name} />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input name="email" label="Email" type="email" defaultValue={vendor.email} />
-            <Input name="phone" label="Phone" type="tel" defaultValue={vendor.phone} />
-          </div>
-          <Input name="website" label="Website" defaultValue={vendor.website} />
-          <Textarea name="notes" label="Internal notes" defaultValue={vendor.notes} />
-          <Button type="submit" disabled={saving}>
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-            Save changes
-          </Button>
+          <VendorFormFields values={formValues} onChange={patchForm} />
+          <FormErrorAlert message={error} />
+          <FormActions
+            pending={pending}
+            submitLabel="Save changes"
+            disableSubmit={!formValues.name.trim()}
+            order="submit-first"
+          />
         </Card>
       </form>
 
