@@ -5,7 +5,8 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
   uploadDocument,
   deleteDocument,
-  getDocumentUrl,
+  createSignedEventDocumentUrl,
+  EVENT_DOCUMENTS_SIGNED_URL_TTL_SECONDS,
 } from "@/lib/events";
 import {
   EventDocument,
@@ -76,16 +77,23 @@ export function DocumentManager({
     }
   }
 
-  function handleView(doc: EventDocument) {
-    const url = getDocumentUrl(supabase, doc.file_path);
-    window.open(url, "_blank");
+  async function handleView(doc: EventDocument) {
+    const url = await createSignedEventDocumentUrl(supabase, doc.file_path);
+    if (url) window.open(url, "_blank", "noopener,noreferrer");
   }
 
-  function handleDownload(doc: EventDocument) {
-    const url = getDocumentUrl(supabase, doc.file_path);
+  async function handleDownload(doc: EventDocument) {
+    const url = await createSignedEventDocumentUrl(
+      supabase,
+      doc.file_path,
+      EVENT_DOCUMENTS_SIGNED_URL_TTL_SECONDS,
+      { download: doc.file_name }
+    );
+    if (!url) return;
     const a = document.createElement("a");
     a.href = url;
     a.download = doc.file_name;
+    a.rel = "noopener noreferrer";
     a.click();
   }
 
@@ -170,14 +178,16 @@ export function DocumentManager({
               </div>
               <div className="flex items-center gap-0.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                 <button
-                  onClick={() => handleView(doc)}
+                  type="button"
+                  onClick={() => void handleView(doc)}
                   className="p-2 md:p-1.5 text-harley-text-muted hover:text-harley-orange transition-colors rounded-md"
                   title="View"
                 >
                   <Eye className="w-4 h-4" />
                 </button>
                 <button
-                  onClick={() => handleDownload(doc)}
+                  type="button"
+                  onClick={() => void handleDownload(doc)}
                   className="p-2 md:p-1.5 text-harley-text-muted hover:text-harley-orange transition-colors rounded-md"
                   title="Download"
                 >
@@ -185,6 +195,7 @@ export function DocumentManager({
                 </button>
                 {canMutate && (
                   <button
+                    type="button"
                     onClick={() => handleDelete(doc)}
                     className="p-2 md:p-1.5 text-harley-text-muted hover:text-harley-danger transition-colors rounded-md"
                     title="Delete"

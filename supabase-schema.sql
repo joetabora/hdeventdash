@@ -146,15 +146,15 @@ create policy "Users can insert comments" on public.event_comments
 create policy "Users can delete own comments" on public.event_comments
   for delete to authenticated using (auth.uid() = user_id);
 
--- Storage bucket for event documents
+-- Storage bucket for event documents (private; app uses signed URLs for reads)
 insert into storage.buckets (id, name, public)
-values ('event-documents', 'event-documents', true)
+values ('event-documents', 'event-documents', false)
 on conflict do nothing;
 
 create policy "Authenticated users can upload" on storage.objects
   for insert to authenticated with check (bucket_id = 'event-documents');
 
-create policy "Anyone can view" on storage.objects
+create policy "Authenticated users can read" on storage.objects
   for select to authenticated using (bucket_id = 'event-documents');
 
 create policy "Authenticated users can delete" on storage.objects

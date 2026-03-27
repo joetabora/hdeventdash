@@ -14,6 +14,11 @@ import {
 } from "@/types/database";
 import { getCurrentOrganizationId } from "@/lib/organization";
 
+export const EVENT_DOCUMENTS_BUCKET = "event-documents" as const;
+
+/** Signed URL lifetime for event storage objects (authenticated users only). */
+export const EVENT_DOCUMENTS_SIGNED_URL_TTL_SECONDS = 3600;
+
 export async function getEvents(supabase: SupabaseClient) {
   const { data, error } = await supabase
     .from("events")
@@ -196,7 +201,7 @@ export async function uploadDocument(
   const filePath = `${organizationId}/${eventId}/${Date.now()}-${file.name}`;
 
   const { error: uploadError } = await supabase.storage
-    .from("event-documents")
+    .from(EVENT_DOCUMENTS_BUCKET)
     .upload(filePath, file);
   if (uploadError) throw uploadError;
 
@@ -220,7 +225,7 @@ export async function deleteDocument(
   supabase: SupabaseClient,
   doc: EventDocument
 ) {
-  await supabase.storage.from("event-documents").remove([doc.file_path]);
+  await supabase.storage.from(EVENT_DOCUMENTS_BUCKET).remove([doc.file_path]);
   const { error } = await supabase
     .from("event_documents")
     .delete()
@@ -228,11 +233,51 @@ export async function deleteDocument(
   if (error) throw error;
 }
 
-export function getDocumentUrl(supabase: SupabaseClient, filePath: string) {
-  const { data } = supabase.storage
-    .from("event-documents")
-    .getPublicUrl(filePath);
-  return data.publicUrl;
+/**
+ * Time-limited read URL; requires an authenticated Supabase client that passes
+ * storage RLS (org-scoped paths).
+ */
+export async function createSignedEventDocumentUrl(
+  supabase: SupabaseClient,
+  filePath: string,
+  expiresInSeconds: number = EVENT_DOCUMENTS_SIGNED_URL_TTL_SECONDS,
+  options?: { download?: string | boolean }
+): Promise<string | null> {
+  const { data, error } = await supabase.storage
+    .from(EVENT_DOCUMENTS_BUCKET)
+    .createSignedUrl(filePath, expiresInSeconds, options);
+  if (error) {
+    console.error("createSignedUrl:", error.message);
+    return null;
+  }
+  return data?.signedUrl ?? null;
+}
+
+/** Batch signed URLs for gallery grids (same TTL). */
+export async function createSignedEventDocumentUrls(
+  supabase: SupabaseClient,
+  filePaths: string[],
+  expiresInSeconds: number = EVENT_DOCUMENTS_SIGNED_URL_TTL_SECONDS
+): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+  const unique = [...new Set(filePaths)].filter(Boolean);
+  if (unique.length === 0) return map;
+
+  const { data, error } = await supabase.storage
+    .from(EVENT_DOCUMENTS_BUCKET)
+    .createSignedUrls(unique, expiresInSeconds);
+
+  if (error) {
+    console.error("createSignedUrls:", error.message);
+    return map;
+  }
+
+  for (const row of data ?? []) {
+    if (row.path && row.signedUrl && !row.error) {
+      map.set(row.path, row.signedUrl);
+    }
+  }
+  return map;
 }
 
 // Comment operations
@@ -296,7 +341,7 @@ export async function uploadMedia(
   const filePath = `${organizationId}/${eventId}/media/${Date.now()}-${file.name}`;
 
   const { error: uploadError } = await supabase.storage
-    .from("event-documents")
+    .from(EVENT_DOCUMENTS_BUCKET)
     .upload(filePath, file);
   if (uploadError) throw uploadError;
 
@@ -318,7 +363,7 @@ export async function uploadMedia(
 }
 
 export async function deleteMedia(supabase: SupabaseClient, media: EventMedia) {
-  await supabase.storage.from("event-documents").remove([media.file_path]);
+  await supabase.storage.from(EVENT_DOCUMENTS_BUCKET).remove([media.file_path]);
   const { error } = await supabase
     .from("event_media")
     .delete()
@@ -326,9 +371,3 @@ export async function deleteMedia(supabase: SupabaseClient, media: EventMedia) {
   if (error) throw error;
 }
 
-export function getMediaUrl(supabase: SupabaseClient, filePath: string) {
-  const { data } = supabase.storage
-    .from("event-documents")
-    .getPublicUrl(filePath);
-  return data.publicUrl;
-}

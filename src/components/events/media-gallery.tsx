@@ -1,8 +1,13 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { uploadMedia, deleteMedia, getMediaUrl } from "@/lib/events";
+import {
+  uploadMedia,
+  deleteMedia,
+  createSignedEventDocumentUrl,
+  createSignedEventDocumentUrls,
+} from "@/lib/events";
 import { EventMedia, MediaTag, MEDIA_TAGS } from "@/types/database";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -40,8 +45,36 @@ export function MediaGallery({
   const [filterTag, setFilterTag] = useState<MediaTag | "all">("all");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewType, setPreviewType] = useState<string>("");
+  const [signedUrlByPath, setSignedUrlByPath] = useState<Record<string, string>>(
+    {}
+  );
+  const [urlsLoading, setUrlsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const supabase = getSupabaseBrowserClient();
+
+  useEffect(() => {
+    let cancelled = false;
+    const paths = media.map((m) => m.file_path);
+    if (paths.length === 0) {
+      setSignedUrlByPath({});
+      setUrlsLoading(false);
+      return;
+    }
+    setUrlsLoading(true);
+    void (async () => {
+      const map = await createSignedEventDocumentUrls(supabase, paths);
+      if (cancelled) return;
+      const next: Record<string, string> = {};
+      map.forEach((url, path) => {
+        next[path] = url;
+      });
+      setSignedUrlByPath(next);
+      setUrlsLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [media, supabase]);
 
   const filteredMedia =
     filterTag === "all" ? media : media.filter((m) => m.tag === filterTag);
@@ -79,10 +112,12 @@ export function MediaGallery({
     }
   }
 
-  function openPreview(item: EventMedia) {
-    const url = getMediaUrl(supabase, item.file_path);
-    setPreviewUrl(url);
-    setPreviewType(item.file_type);
+  async function openPreview(item: EventMedia) {
+    const url = await createSignedEventDocumentUrl(supabase, item.file_path);
+    if (url) {
+      setPreviewUrl(url);
+      setPreviewType(item.file_type);
+    }
   }
 
   function isImage(fileType: string) {
@@ -139,6 +174,7 @@ export function MediaGallery({
       {media.length > 0 && (
         <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
           <button
+            type="button"
             onClick={() => setFilterTag("all")}
             className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
               filterTag === "all"
@@ -153,6 +189,7 @@ export function MediaGallery({
             if (count === 0) return null;
             return (
               <button
+                type="button"
                 key={tag.value}
                 onClick={() => setFilterTag(tag.value)}
                 className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
@@ -178,25 +215,32 @@ export function MediaGallery({
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 md:gap-3">
           {filteredMedia.map((item) => {
-            const url = getMediaUrl(supabase, item.file_path);
+            const url = signedUrlByPath[item.file_path];
             return (
               <div
                 key={item.id}
                 className="group relative rounded-lg overflow-hidden border border-harley-gray bg-harley-gray/30 aspect-square"
               >
-                {isImage(item.file_type) ? (
-                  // Supabase signed/public URLs; next/image needs remotePatterns for each host.
+                {urlsLoading && !url ? (
+                  <div className="w-full h-full flex items-center justify-center bg-harley-gray/40">
+                    <Loader2 className="w-6 h-6 text-harley-text-muted animate-spin" />
+                  </div>
+                ) : isImage(item.file_type) && url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={url}
                     alt={item.file_name}
                     className="w-full h-full object-cover cursor-pointer"
-                    onClick={() => openPreview(item)}
+                    onClick={() => void openPreview(item)}
                   />
+                ) : isImage(item.file_type) ? (
+                  <div className="w-full h-full flex items-center justify-center bg-harley-gray/40">
+                    <ImageIcon className="w-8 h-8 text-harley-text-muted" />
+                  </div>
                 ) : isVideo(item.file_type) ? (
                   <div
                     className="w-full h-full flex flex-col items-center justify-center cursor-pointer bg-harley-gray/50"
-                    onClick={() => openPreview(item)}
+                    onClick={() => void openPreview(item)}
                   >
                     <Film className="w-8 h-8 text-harley-text-muted mb-2" />
                     <span className="text-xs text-harley-text-muted px-2 text-center truncate max-w-full">
@@ -220,6 +264,7 @@ export function MediaGallery({
                   <div className="flex justify-end">
                     {canMutate && (
                       <button
+                        type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDelete(item);
@@ -252,6 +297,7 @@ export function MediaGallery({
           onClick={() => setPreviewUrl(null)}
         >
           <button
+            type="button"
             className="absolute top-4 right-4 p-2 rounded-lg bg-harley-gray/80 text-white hover:bg-harley-gray transition-colors"
             onClick={() => setPreviewUrl(null)}
           >
