@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getOrgManagerContext } from "@/lib/admin/require-org-manager";
 import { deleteMonthlyBudget } from "@/lib/budgets";
+import { parseUuidParam } from "@/lib/validation/request-json";
 
 export async function DELETE(
   _request: Request,
@@ -9,10 +10,10 @@ export async function DELETE(
   const ctx = await getOrgManagerContext();
   if (!ctx.ok) return ctx.response;
 
-  const { id } = await context.params;
-  if (!id) {
-    return NextResponse.json({ error: "Missing id." }, { status: 400 });
-  }
+  const { id: rawId } = await context.params;
+  const idCheck = parseUuidParam(rawId, "id");
+  if (!idCheck.ok) return idCheck.response;
+  const id = idCheck.id;
 
   const { data: row, error: fetchError } = await ctx.supabase
     .from("monthly_budgets")

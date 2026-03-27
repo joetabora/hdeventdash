@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { getOrgAdminContext } from "@/lib/admin/require-org-admin";
 import { setUserRole, deleteUserRole } from "@/lib/roles";
-import type { UserRole } from "@/types/database";
-
-const ROLES: UserRole[] = ["staff", "manager", "admin"];
+import { adminRolePatchSchema } from "@/lib/validation/api-schemas";
+import { parseUuidParam, parseWithSchema, readJsonBody } from "@/lib/validation/request-json";
 
 type RouteContext = { params: Promise<{ userId: string }> };
 
@@ -11,10 +10,10 @@ export async function PATCH(request: Request, context: RouteContext) {
   const ctx = await getOrgAdminContext();
   if (!ctx.ok) return ctx.response;
 
-  const { userId } = await context.params;
-  if (!userId) {
-    return NextResponse.json({ error: "Missing user id" }, { status: 400 });
-  }
+  const { userId: rawUserId } = await context.params;
+  const userIdCheck = parseUuidParam(rawUserId, "user id");
+  if (!userIdCheck.ok) return userIdCheck.response;
+  const userId = userIdCheck.id;
   if (userId === ctx.user.id) {
     return NextResponse.json(
       { error: "Cannot change your own role." },
@@ -22,27 +21,14 @@ export async function PATCH(request: Request, context: RouteContext) {
     );
   }
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
+  const raw = await readJsonBody(request);
+  if (!raw.ok) return raw.response;
 
-  const role =
-    typeof body === "object" &&
-    body !== null &&
-    "role" in body &&
-    typeof (body as { role: unknown }).role === "string"
-      ? ((body as { role: string }).role as UserRole)
-      : null;
-
-  if (!role || !ROLES.includes(role)) {
-    return NextResponse.json({ error: "Invalid role." }, { status: 400 });
-  }
+  const parsed = parseWithSchema(adminRolePatchSchema, raw.body);
+  if (!parsed.ok) return parsed.response;
 
   try {
-    await setUserRole(ctx.supabase, userId, role);
+    await setUserRole(ctx.supabase, userId, parsed.data.role);
     return NextResponse.json({ ok: true });
   } catch (e) {
     const message =
@@ -56,10 +42,10 @@ export async function DELETE(_request: Request, context: RouteContext) {
   const ctx = await getOrgAdminContext();
   if (!ctx.ok) return ctx.response;
 
-  const { userId } = await context.params;
-  if (!userId) {
-    return NextResponse.json({ error: "Missing user id" }, { status: 400 });
-  }
+  const { userId: rawUserId } = await context.params;
+  const userIdCheck = parseUuidParam(rawUserId, "user id");
+  if (!userIdCheck.ok) return userIdCheck.response;
+  const userId = userIdCheck.id;
   if (userId === ctx.user.id) {
     return NextResponse.json(
       { error: "Cannot remove your own role." },

@@ -4,9 +4,8 @@ import { listManagedUsersForAdmin } from "@/lib/admin/managed-users";
 import { setUserRole } from "@/lib/roles";
 import { addMemberToCurrentOrganization } from "@/lib/organization";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { UserRole } from "@/types/database";
-
-const ROLES: UserRole[] = ["staff", "manager", "admin"];
+import { adminCreateUserSchema } from "@/lib/validation/api-schemas";
+import { parseWithSchema, readJsonBody } from "@/lib/validation/request-json";
 
 export async function GET() {
   const ctx = await getOrgAdminContext();
@@ -44,50 +43,13 @@ export async function POST(request: Request) {
     );
   }
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
+  const raw = await readJsonBody(request);
+  if (!raw.ok) return raw.response;
 
-  const email =
-    typeof body === "object" &&
-    body !== null &&
-    "email" in body &&
-    typeof (body as { email: unknown }).email === "string"
-      ? (body as { email: string }).email.trim()
-      : "";
-  const password =
-    typeof body === "object" &&
-    body !== null &&
-    "password" in body &&
-    typeof (body as { password: unknown }).password === "string"
-      ? (body as { password: string }).password
-      : "";
-  const role =
-    typeof body === "object" &&
-    body !== null &&
-    "role" in body &&
-    typeof (body as { role: unknown }).role === "string"
-      ? ((body as { role: string }).role as UserRole)
-      : null;
+  const parsed = parseWithSchema(adminCreateUserSchema, raw.body);
+  if (!parsed.ok) return parsed.response;
 
-  if (!email || !password) {
-    return NextResponse.json(
-      { error: "Email and password are required." },
-      { status: 400 }
-    );
-  }
-  if (password.length < 6) {
-    return NextResponse.json(
-      { error: "Password must be at least 6 characters." },
-      { status: 400 }
-    );
-  }
-  if (!role || !ROLES.includes(role)) {
-    return NextResponse.json({ error: "Invalid role." }, { status: 400 });
-  }
+  const { email, password, role } = parsed.data;
 
   const { data, error } = await admin.auth.admin.createUser({
     email,

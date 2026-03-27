@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { getOrgManagerContext } from "@/lib/admin/require-org-manager";
 import { updateVendor, deleteVendor } from "@/lib/vendors";
+import { vendorPatchSchema } from "@/lib/validation/api-schemas";
+import {
+  parseUuidParam,
+  parseWithSchema,
+  readJsonBody,
+} from "@/lib/validation/request-json";
 
 export async function PATCH(
   request: Request,
@@ -9,10 +15,10 @@ export async function PATCH(
   const ctx = await getOrgManagerContext();
   if (!ctx.ok) return ctx.response;
 
-  const { id } = await context.params;
-  if (!id) {
-    return NextResponse.json({ error: "Missing id." }, { status: 400 });
-  }
+  const { id: rawId } = await context.params;
+  const idCheck = parseUuidParam(rawId, "id");
+  if (!idCheck.ok) return idCheck.response;
+  const id = idCheck.id;
 
   const { data: existing, error: fetchError } = await ctx.supabase
     .from("vendors")
@@ -28,32 +34,14 @@ export async function PATCH(
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
+  const raw = await readJsonBody(request);
+  if (!raw.ok) return raw.response;
 
-  const b = body as Record<string, unknown>;
-  const updates: Parameters<typeof updateVendor>[2] = {};
-  if (typeof b.name === "string") updates.name = b.name.trim();
-  if (typeof b.contact_name === "string") updates.contact_name = b.contact_name;
-  if (typeof b.email === "string") updates.email = b.email;
-  if (typeof b.phone === "string") updates.phone = b.phone;
-  if (typeof b.website === "string") updates.website = b.website;
-  if (typeof b.category === "string") updates.category = b.category;
-  if (typeof b.notes === "string") updates.notes = b.notes;
-
-  if (Object.keys(updates).length === 0) {
-    return NextResponse.json({ error: "No valid fields to update." }, { status: 400 });
-  }
-  if (updates.name !== undefined && !updates.name) {
-    return NextResponse.json({ error: "Name cannot be empty." }, { status: 400 });
-  }
+  const parsed = parseWithSchema(vendorPatchSchema, raw.body);
+  if (!parsed.ok) return parsed.response;
 
   try {
-    const vendor = await updateVendor(ctx.supabase, id, updates);
+    const vendor = await updateVendor(ctx.supabase, id, parsed.data);
     return NextResponse.json(vendor);
   } catch (e) {
     console.error("PATCH /api/vendors/[id]:", e);
@@ -71,10 +59,10 @@ export async function DELETE(
   const ctx = await getOrgManagerContext();
   if (!ctx.ok) return ctx.response;
 
-  const { id } = await context.params;
-  if (!id) {
-    return NextResponse.json({ error: "Missing id." }, { status: 400 });
-  }
+  const { id: rawId } = await context.params;
+  const idCheck = parseUuidParam(rawId, "id");
+  if (!idCheck.ok) return idCheck.response;
+  const id = idCheck.id;
 
   const { data: existing, error: fetchError } = await ctx.supabase
     .from("vendors")

@@ -2,19 +2,13 @@ import { NextResponse } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getOrgManagerContext } from "@/lib/admin/require-org-manager";
 import { getCurrentOrganizationId } from "@/lib/organization";
+import { updateEventVendor, detachVendorFromEvent } from "@/lib/vendors";
+import { eventVendorPatchSchema } from "@/lib/validation/api-schemas";
 import {
-  updateEventVendor,
-  detachVendorFromEvent,
-} from "@/lib/vendors";
-import type { VendorParticipationStatus } from "@/types/database";
-
-const PARTICIPATION: VendorParticipationStatus[] = [
-  "invited",
-  "confirmed",
-  "declined",
-  "participated",
-  "cancelled",
-];
+  parseUuidParam,
+  parseWithSchema,
+  readJsonBody,
+} from "@/lib/validation/request-json";
 
 async function assertLinkInOrgEvent(
   supabase: SupabaseClient,
@@ -65,10 +59,14 @@ export async function PATCH(
   const ctx = await getOrgManagerContext();
   if (!ctx.ok) return ctx.response;
 
-  const { eventId, linkId } = await context.params;
-  if (!eventId || !linkId) {
-    return NextResponse.json({ error: "Missing parameters." }, { status: 400 });
-  }
+  const { eventId: rawEventId, linkId: rawLinkId } = await context.params;
+  const eventCheck = parseUuidParam(rawEventId, "event id");
+  if (!eventCheck.ok) return eventCheck.response;
+  const eventId = eventCheck.id;
+
+  const linkCheck = parseUuidParam(rawLinkId, "link id");
+  if (!linkCheck.ok) return linkCheck.response;
+  const linkId = linkCheck.id;
 
   const orgId = await getCurrentOrganizationId(ctx.supabase);
   if (!orgId) {
@@ -78,34 +76,14 @@ export async function PATCH(
   const gate = await assertLinkInOrgEvent(ctx.supabase, eventId, linkId, orgId);
   if (!gate.ok) return gate.response;
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
+  const raw = await readJsonBody(request);
+  if (!raw.ok) return raw.response;
 
-  const b = body as Record<string, unknown>;
-  const updates: Parameters<typeof updateEventVendor>[2] = {};
-  if (typeof b.role === "string") updates.role = b.role;
-  if (typeof b.notes === "string") updates.notes = b.notes;
-  if (typeof b.participation_status === "string") {
-    if (!PARTICIPATION.includes(b.participation_status as VendorParticipationStatus)) {
-      return NextResponse.json(
-        { error: "Invalid participation_status." },
-        { status: 400 }
-      );
-    }
-    updates.participation_status =
-      b.participation_status as VendorParticipationStatus;
-  }
-
-  if (Object.keys(updates).length === 0) {
-    return NextResponse.json({ error: "No valid fields to update." }, { status: 400 });
-  }
+  const parsed = parseWithSchema(eventVendorPatchSchema, raw.body);
+  if (!parsed.ok) return parsed.response;
 
   try {
-    const row = await updateEventVendor(ctx.supabase, linkId, updates);
+    const row = await updateEventVendor(ctx.supabase, linkId, parsed.data);
     return NextResponse.json(row);
   } catch (e) {
     console.error("PATCH event vendor link:", e);
@@ -123,10 +101,14 @@ export async function DELETE(
   const ctx = await getOrgManagerContext();
   if (!ctx.ok) return ctx.response;
 
-  const { eventId, linkId } = await context.params;
-  if (!eventId || !linkId) {
-    return NextResponse.json({ error: "Missing parameters." }, { status: 400 });
-  }
+  const { eventId: rawEventId, linkId: rawLinkId } = await context.params;
+  const eventCheck = parseUuidParam(rawEventId, "event id");
+  if (!eventCheck.ok) return eventCheck.response;
+  const eventId = eventCheck.id;
+
+  const linkCheck = parseUuidParam(rawLinkId, "link id");
+  if (!linkCheck.ok) return linkCheck.response;
+  const linkId = linkCheck.id;
 
   const orgId = await getCurrentOrganizationId(ctx.supabase);
   if (!orgId) {

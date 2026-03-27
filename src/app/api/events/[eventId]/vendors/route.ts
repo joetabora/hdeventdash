@@ -2,15 +2,8 @@ import { NextResponse } from "next/server";
 import { getOrgManagerContext } from "@/lib/admin/require-org-manager";
 import { getCurrentOrganizationId } from "@/lib/organization";
 import { attachVendorToEvent } from "@/lib/vendors";
-import type { VendorParticipationStatus } from "@/types/database";
-
-const PARTICIPATION: VendorParticipationStatus[] = [
-  "invited",
-  "confirmed",
-  "declined",
-  "participated",
-  "cancelled",
-];
+import { attachEventVendorSchema } from "@/lib/validation/api-schemas";
+import { parseUuidParam, parseWithSchema, readJsonBody } from "@/lib/validation/request-json";
 
 export async function POST(
   request: Request,
@@ -19,10 +12,10 @@ export async function POST(
   const ctx = await getOrgManagerContext();
   if (!ctx.ok) return ctx.response;
 
-  const { eventId } = await context.params;
-  if (!eventId) {
-    return NextResponse.json({ error: "Missing event id." }, { status: 400 });
-  }
+  const { eventId: rawEventId } = await context.params;
+  const eventCheck = parseUuidParam(rawEventId, "event id");
+  if (!eventCheck.ok) return eventCheck.response;
+  const eventId = eventCheck.id;
 
   const orgId = await getCurrentOrganizationId(ctx.supabase);
   if (!orgId) {
@@ -43,18 +36,13 @@ export async function POST(
     return NextResponse.json({ error: "Event not found." }, { status: 404 });
   }
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
+  const raw = await readJsonBody(request);
+  if (!raw.ok) return raw.response;
 
-  const b = body as Record<string, unknown>;
-  const vendor_id = typeof b.vendor_id === "string" ? b.vendor_id.trim() : "";
-  if (!vendor_id) {
-    return NextResponse.json({ error: "vendor_id is required." }, { status: 400 });
-  }
+  const parsed = parseWithSchema(attachEventVendorSchema, raw.body);
+  if (!parsed.ok) return parsed.response;
+
+  const { vendor_id, role, notes, participation_status } = parsed.data;
 
   const { data: vendor, error: vError } = await ctx.supabase
     .from("vendors")
@@ -70,23 +58,12 @@ export async function POST(
     return NextResponse.json({ error: "Vendor not found." }, { status: 404 });
   }
 
-  let participation_status: VendorParticipationStatus | undefined;
-  if (typeof b.participation_status === "string") {
-    if (!PARTICIPATION.includes(b.participation_status as VendorParticipationStatus)) {
-      return NextResponse.json(
-        { error: "Invalid participation_status." },
-        { status: 400 }
-      );
-    }
-    participation_status = b.participation_status as VendorParticipationStatus;
-  }
-
   try {
     const link = await attachVendorToEvent(ctx.supabase, {
       event_id: eventId,
       vendor_id,
-      role: typeof b.role === "string" ? b.role : "",
-      notes: typeof b.notes === "string" ? b.notes : "",
+      role,
+      notes,
       ...(participation_status ? { participation_status } : {}),
     });
     return NextResponse.json(link);
