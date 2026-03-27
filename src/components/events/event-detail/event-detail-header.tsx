@@ -12,7 +12,7 @@ import { StatusBadge, Badge } from "@/components/ui/badge";
 import { Button, buttonStyles } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DaysUntilEvent } from "@/components/events/days-until";
-import { formatUsd, formatUsdNullable } from "@/lib/format-currency";
+import { formatUsd } from "@/lib/format-currency";
 import {
   ArrowLeft,
   Edit,
@@ -48,6 +48,12 @@ export type EventBudgetMonthSummary = {
   hasVenueCapMismatch: boolean;
   othersPlanned: number;
   locationLabel: string;
+  thisEventPlanned: number;
+  checklistLineSpend: number;
+  thisEventCommitted: number;
+  totalCommittedInMonth: number;
+  /** null when no monthly cap (cap === 0). */
+  remaining: number | null;
 };
 
 export type EventDetailHeaderStandardProps = {
@@ -335,43 +341,95 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
               {event.description}
             </p>
           )}
-          {(event.planned_budget != null ||
-            event.actual_budget != null ||
-            canManageEvents) && (
-            <div className="mt-3 pt-3 border-t border-harley-gray/50 text-sm">
-              <div className="flex items-center gap-2 text-harley-text-muted mb-2">
-                <Wallet className="w-4 h-4 text-harley-orange shrink-0" />
-                <span className="font-medium text-harley-text">Budget</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-harley-text-muted">
-                <span>Planned: {formatUsdNullable(event.planned_budget)}</span>
-                <span>Actual: {formatUsdNullable(event.actual_budget)}</span>
-              </div>
-              {canManageEvents && (
-                <p className="text-xs text-harley-text-muted/80 mt-2">
-                  Edit planned and actual amounts when you open Edit event.
-                </p>
-              )}
-              {canManageEvents && budgetSummaryForEventMonth && (
-                <p className="text-xs text-harley-text-muted/90 mt-2 leading-relaxed">
-                  {budgetSummaryForEventMonth.cap > 0 ? (
-                    <>
-                      Monthly cap for{" "}
+          {canManageEvents && budgetSummaryForEventMonth && (
+            <div className="mt-3 pt-3 border-t border-harley-gray/50">
+              {budgetSummaryForEventMonth.cap > 0 &&
+              budgetSummaryForEventMonth.remaining !== null ? (
+                <div className="rounded-xl border border-harley-orange/35 bg-gradient-to-br from-harley-orange/10 to-harley-black/40 p-4 md:p-5 shadow-sm shadow-black/20">
+                  <div className="flex items-center gap-2 text-harley-orange mb-3">
+                    <Wallet className="w-5 h-5 shrink-0" />
+                    <span className="text-xs font-semibold uppercase tracking-[0.14em]">
+                      Monthly budget
+                    </span>
+                  </div>
+                  <p className="text-sm text-harley-text-muted">
+                    {format(
+                      parseISO(
+                        `${budgetSummaryForEventMonth.yearMonth}-01`
+                      ),
+                      "MMMM yyyy"
+                    )}
+                    {budgetSummaryForEventMonth.locationLabel
+                      ? ` · ${budgetSummaryForEventMonth.locationLabel}`
+                      : " · All locations combined"}
+                  </p>
+                  <p
+                    className={`mt-2 text-3xl md:text-4xl font-bold tabular-nums tracking-tight ${
+                      budgetSummaryForEventMonth.remaining < 0
+                        ? "text-harley-danger"
+                        : budgetSummaryForEventMonth.cap > 0 &&
+                            budgetSummaryForEventMonth.remaining <=
+                              budgetSummaryForEventMonth.cap * 0.15
+                          ? "text-harley-warning"
+                          : "text-harley-success"
+                    }`}
+                  >
+                    {formatUsd(budgetSummaryForEventMonth.remaining)}
+                  </p>
+                  <p className="text-sm text-harley-text-muted mt-1">
+                    {budgetSummaryForEventMonth.remaining < 0
+                      ? "over monthly cap"
+                      : "remaining this month"}
+                  </p>
+                  <div className="mt-4 grid grid-cols-2 gap-3 text-sm border-t border-harley-gray/40 pt-4">
+                    <div>
+                      <p className="text-[11px] uppercase tracking-wide text-harley-text-muted">
+                        Monthly cap
+                      </p>
+                      <p className="font-semibold text-harley-text tabular-nums mt-0.5">
+                        {formatUsd(budgetSummaryForEventMonth.cap)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] uppercase tracking-wide text-harley-text-muted">
+                        Committed
+                      </p>
+                      <p className="font-semibold text-harley-text tabular-nums mt-0.5">
+                        {formatUsd(
+                          budgetSummaryForEventMonth.totalCommittedInMonth
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-harley-text-muted/90 mt-3 leading-relaxed">
+                    This event:{" "}
+                    {formatUsd(budgetSummaryForEventMonth.thisEventPlanned)}{" "}
+                    planned +{" "}
+                    {formatUsd(budgetSummaryForEventMonth.checklistLineSpend)}{" "}
+                    checklist · Other events:{" "}
+                    {formatUsd(budgetSummaryForEventMonth.othersPlanned)}
+                  </p>
+                  <p className="text-[11px] text-harley-text-muted/70 mt-2 leading-relaxed">
+                    Set planned budget in{" "}
+                    <span className="text-harley-text-muted">Edit event</span>;
+                    add line-item costs in checklist details (pencil). Updates
+                    here are live.
+                  </p>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-harley-gray/50 bg-harley-gray-light/5 p-4 text-sm">
+                  <div className="flex items-center gap-2 text-harley-text-muted mb-2">
+                    <Wallet className="w-4 h-4 text-harley-orange shrink-0" />
+                    <span className="font-medium text-harley-text">
+                      Monthly budget
+                    </span>
+                  </div>
+                  {budgetSummaryForEventMonth.hasVenueCapMismatch ? (
+                    <p className="text-xs text-harley-text-muted/90 leading-relaxed">
                       {format(
-                        parseISO(`${budgetSummaryForEventMonth.yearMonth}-01`),
-                        "MMMM yyyy"
-                      )}
-                      {budgetSummaryForEventMonth.locationLabel
-                        ? ` · ${budgetSummaryForEventMonth.locationLabel}`
-                        : " (all locations combined)"}
-                      : {formatUsd(budgetSummaryForEventMonth.cap)} · Other
-                      events planned:{" "}
-                      {formatUsd(budgetSummaryForEventMonth.othersPlanned)}
-                    </>
-                  ) : budgetSummaryForEventMonth.hasVenueCapMismatch ? (
-                    <>
-                      {format(
-                        parseISO(`${budgetSummaryForEventMonth.yearMonth}-01`),
+                        parseISO(
+                          `${budgetSummaryForEventMonth.yearMonth}-01`
+                        ),
                         "MMMM yyyy"
                       )}{" "}
                       has venue budgets totaling{" "}
@@ -388,12 +446,14 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
                         Budget
                       </Link>{" "}
                       page, or align the event location with an existing venue.
-                    </>
+                    </p>
                   ) : (
-                    <>
+                    <p className="text-xs text-harley-text-muted/90 leading-relaxed">
                       No monthly cap set for{" "}
                       {format(
-                        parseISO(`${budgetSummaryForEventMonth.yearMonth}-01`),
+                        parseISO(
+                          `${budgetSummaryForEventMonth.yearMonth}-01`
+                        ),
                         "MMMM yyyy"
                       )}
                       {budgetSummaryForEventMonth.locationLabel
@@ -407,9 +467,9 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
                         Budget
                       </Link>{" "}
                       page.
-                    </>
+                    </p>
                   )}
-                </p>
+                </div>
               )}
             </div>
           )}

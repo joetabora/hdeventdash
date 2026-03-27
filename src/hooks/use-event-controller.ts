@@ -75,6 +75,12 @@ export function useEventController(
       singleVenueMonth ? "" : key,
       event.id
     );
+    const thisEventPlanned = Number(event.planned_budget) || 0;
+    const checklistLineSpend = sumChecklistEstimatedCost(checklist);
+    const thisEventCommitted = thisEventPlanned + checklistLineSpend;
+    const totalCommittedInMonth = othersPlanned + thisEventCommitted;
+    const remaining =
+      cap > 0 ? cap - totalCommittedInMonth : null;
     return {
       yearMonth: eventMonthYearMonth,
       cap,
@@ -82,9 +88,15 @@ export function useEventController(
       hasVenueCapMismatch,
       othersPlanned,
       locationLabel: event.location?.trim() ?? "",
+      thisEventPlanned,
+      checklistLineSpend,
+      thisEventCommitted,
+      totalCommittedInMonth,
+      remaining,
     };
   }, [
     event,
+    checklist,
     canManageEvents,
     eventMonthYearMonth,
     monthlyBudgetsForEventMonth,
