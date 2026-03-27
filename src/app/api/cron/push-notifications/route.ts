@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getFirebaseAdminMessaging } from "@/lib/firebase/admin-app";
@@ -9,13 +10,26 @@ import {
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-function authorize(request: NextRequest): boolean {
+function bearerMatchesSecret(authHeader: string | null, secret: string): boolean {
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return false;
+  }
+  const token = authHeader.slice(7).trim();
+  if (!token) return false;
+  try {
+    const a = Buffer.from(token, "utf8");
+    const b = Buffer.from(secret, "utf8");
+    if (a.length !== b.length) return false;
+    return timingSafeEqual(a, b);
+  } catch {
+    return false;
+  }
+}
+
+function authorizeCron(request: NextRequest): boolean {
   const secret = process.env.CRON_SECRET;
   if (!secret) return false;
-  const auth = request.headers.get("authorization");
-  const bearer = auth?.startsWith("Bearer ") ? auth.slice(7) : null;
-  const q = request.nextUrl.searchParams.get("secret");
-  return bearer === secret || q === secret;
+  return bearerMatchesSecret(request.headers.get("authorization"), secret);
 }
 
 function appBaseUrl(): string {
@@ -28,18 +42,14 @@ function appBaseUrl(): string {
   return "";
 }
 
-export async function GET(request: NextRequest) {
-  return runCron(request);
-}
-
 export async function POST(request: NextRequest) {
-  return runCron(request);
-}
-
-async function runCron(request: NextRequest) {
-  if (!authorize(request)) {
+  if (!authorizeCron(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  return runCron();
+}
+
+async function runCron() {
 
   const supabase = createAdminClient();
   const messaging = getFirebaseAdminMessaging();

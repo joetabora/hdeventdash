@@ -72,7 +72,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Push notifications (Firebase Cloud Messaging)
 
-Lightweight setup: **free Spark** Firebase plan + **one scheduled HTTP call** per day (Vercel Cron if available on your plan, or a free external cron hitting your API).
+Lightweight setup: **free Spark** Firebase plan + **one scheduled HTTP POST** per day (e.g. GitHub Actions `schedule`, [cron-job.org](https://cron-job.org) with POST, or another scheduler that can send a `Authorization` header).
 
 ### 1. Firebase
 
@@ -89,12 +89,11 @@ Add **Settings → API → service_role** key as `SUPABASE_SERVICE_ROLE_KEY` **o
 
 ### 3. Cron endpoint
 
-`GET` or `POST` `/api/cron/push-notifications` with:
+`POST` only: `https://<your-domain>/api/cron/push-notifications`
 
-- Header `Authorization: Bearer <CRON_SECRET>`, or  
-- Query `?secret=<CRON_SECRET>` (for simple external cron tools).
+- Header **`Authorization: Bearer <CRON_SECRET>`** (required). Query-string secrets are not accepted.
 
-Set `CRON_SECRET` in your environment. `vercel.json` includes a **daily** schedule (adjust as needed). If your Vercel plan does not include Cron, use [cron-job.org](https://cron-job.org) (or similar) to call the same URL once per day.
+Set `CRON_SECRET` in your environment to a long random value. **Vercel Cron** invokes routes with **GET**, so it cannot call this endpoint; schedule a **POST** from GitHub Actions, cron-job.org (enable POST + custom header), or similar once per day.
 
 ### 4. Behaviour
 
