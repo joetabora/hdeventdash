@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { updateEvent } from "@/lib/events";
+import { apiPatchEvent } from "@/lib/events-api-client";
 import type { Event } from "@/types/database";
 import {
   formatUsd,
@@ -47,7 +46,6 @@ export function EventRoiSection({
   );
   const [eventCost, setEventCost] = useState(moneyStr(event.roi_event_cost));
   const [saving, setSaving] = useState(false);
-  const supabase = getSupabaseBrowserClient();
 
   useEffect(() => {
     setLeads(intStr(event.roi_leads_generated));
@@ -74,7 +72,7 @@ export function EventRoiSection({
   async function handleSave() {
     setSaving(true);
     try {
-      await updateEvent(supabase, event.id, {
+      await apiPatchEvent(event.id, {
         roi_leads_generated: leads.trim() ? parseInt(leads, 10) : null,
         roi_bikes_sold: bikesSold.trim() ? parseInt(bikesSold, 10) : null,
         roi_service_revenue: serviceRev.trim() ? parseFloat(serviceRev) : null,

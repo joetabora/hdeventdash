@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { updateEvent } from "@/lib/events";
+import { apiPatchEvent } from "@/lib/events-api-client";
 import { Event } from "@/types/database";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
@@ -24,12 +23,11 @@ export function EventRecap({ event, onUpdate, canEdit = true }: EventRecapProps)
     event.sales_estimate?.toString() || ""
   );
   const [saving, setSaving] = useState(false);
-  const supabase = getSupabaseBrowserClient();
 
   async function handleSave() {
     setSaving(true);
     try {
-      await updateEvent(supabase, event.id, {
+      await apiPatchEvent(event.id, {
         attendance: attendance ? parseInt(attendance) : null,
         recap_notes: notes || null,
         sales_estimate: salesEstimate ? parseFloat(salesEstimate) : null,
@@ -50,7 +48,7 @@ export function EventRecap({ event, onUpdate, canEdit = true }: EventRecapProps)
     )
       return;
     try {
-      await updateEvent(supabase, event.id, {
+      await apiPatchEvent(event.id, {
         is_archived: true,
         status: "completed",
       });

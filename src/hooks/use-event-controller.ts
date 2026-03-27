@@ -1,15 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { updateEvent, deleteEvent } from "@/lib/events";
 import {
   useEventDetailData,
   type EventDetailServerBundle,
 } from "@/hooks/use-event-detail-data";
 import { useAppRole } from "@/contexts/app-role-context";
 import { isEventAtRisk } from "@/lib/at-risk";
+import {
+  apiDeleteEvent,
+  apiPatchEvent,
+} from "@/lib/events-api-client";
 import type { EventStatus, EventType } from "@/types/database";
 
 export function useEventController(
@@ -18,9 +20,6 @@ export function useEventController(
 ) {
   const router = useRouter();
   const { canManageEvents, isAdmin } = useAppRole();
-  const supabaseRef = useRef(
-    typeof window !== "undefined" ? getSupabaseBrowserClient() : null
-  );
 
   const {
     event,
@@ -72,8 +71,8 @@ export function useEventController(
   );
 
   const handleToggleLiveMode = useCallback(async () => {
-    if (!event || !supabaseRef.current) return;
-    const updated = await updateEvent(supabaseRef.current, event.id, {
+    if (!event) return;
+    const updated = await apiPatchEvent(event.id, {
       is_live_mode: !event.is_live_mode,
     });
     setEvent(updated);
@@ -81,10 +80,8 @@ export function useEventController(
 
   const handleStatusChange = useCallback(
     async (newStatus: EventStatus) => {
-      if (!event || !supabaseRef.current) return;
-      const updated = await updateEvent(supabaseRef.current, event.id, {
-        status: newStatus,
-      });
+      if (!event) return;
+      const updated = await apiPatchEvent(event.id, { status: newStatus });
       setEvent(updated);
     },
     [event, setEvent]
@@ -103,8 +100,8 @@ export function useEventController(
       planned_budget: number | null;
       actual_budget: number | null;
     }) => {
-      if (!event || !supabaseRef.current) return;
-      const updated = await updateEvent(supabaseRef.current, event.id, {
+      if (!event) return;
+      const updated = await apiPatchEvent(event.id, {
         ...data,
         status: data.status as EventStatus,
         onedrive_link: data.onedrive_link || null,
@@ -120,14 +117,14 @@ export function useEventController(
   );
 
   const handleDelete = useCallback(async () => {
-    if (!event || !supabaseRef.current) return;
+    if (!event) return;
     if (
       !confirm(
         "Are you sure you want to delete this event? This cannot be undone."
       )
     )
       return;
-    await deleteEvent(supabaseRef.current, event.id);
+    await apiDeleteEvent(event.id);
     router.push("/dashboard");
   }, [event, router]);
 

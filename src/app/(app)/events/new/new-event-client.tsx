@@ -1,26 +1,20 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useRef } from "react";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { createEvent } from "@/lib/events";
+import { useCallback } from "react";
+import { apiCreateEvent } from "@/lib/events-api-client";
 import { EventForm } from "@/components/events/event-form";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import type { Event, EventType } from "@/types/database";
+import type { Event, EventStatus, EventType } from "@/types/database";
 
 export function NewEventClient({
-  userId,
   initialAllEvents,
 }: {
-  userId: string;
   initialAllEvents: Event[];
 }) {
   const router = useRouter();
-  const supabaseRef = useRef<ReturnType<typeof getSupabaseBrowserClient> | null>(
-    null
-  );
 
   const handleCreate = useCallback(
     async (data: {
@@ -35,12 +29,13 @@ export function NewEventClient({
       planned_budget: number | null;
       actual_budget: number | null;
     }) => {
-      const supabase =
-        supabaseRef.current ?? (supabaseRef.current = getSupabaseBrowserClient());
-      const event = await createEvent(supabase, {
-        ...data,
-        status: data.status as "idea",
-        user_id: userId,
+      const event = await apiCreateEvent({
+        name: data.name,
+        date: data.date,
+        location: data.location,
+        owner: data.owner,
+        status: data.status as EventStatus,
+        description: data.description,
         onedrive_link: data.onedrive_link || undefined,
         event_type: data.event_type,
         planned_budget: data.planned_budget,
@@ -48,7 +43,7 @@ export function NewEventClient({
       });
       router.push(`/events/${event.id}`);
     },
-    [router, userId]
+    [router]
   );
 
   return (

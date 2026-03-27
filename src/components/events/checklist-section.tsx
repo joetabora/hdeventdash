@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 import { ChecklistItem, ChecklistSection as ChecklistSectionType } from "@/types/database";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { updateChecklistItem, addChecklistItem, deleteChecklistItem } from "@/lib/events";
+import {
+  apiAddChecklistItem,
+  apiDeleteChecklistItem,
+  apiPatchChecklistItem,
+} from "@/lib/events-api-client";
 import {
   Check,
   Plus,
@@ -37,13 +40,11 @@ export function ChecklistSectionComponent({
   const [isExpanded, setIsExpanded] = useState(true);
   const [newItemLabel, setNewItemLabel] = useState("");
   const [addingItem, setAddingItem] = useState(false);
-  const supabase = getSupabaseBrowserClient();
-
   const checkedCount = items.filter((i) => i.is_checked).length;
   const progress = items.length > 0 ? (checkedCount / items.length) * 100 : 0;
 
   async function handleToggle(item: ChecklistItem) {
-    await updateChecklistItem(supabase, item.id, {
+    await apiPatchChecklistItem(eventId, item.id, {
       is_checked: !item.is_checked,
     });
     onUpdate();
@@ -51,8 +52,7 @@ export function ChecklistSectionComponent({
 
   async function handleAddItem() {
     if (!newItemLabel.trim()) return;
-    await addChecklistItem(supabase, {
-      event_id: eventId,
+    await apiAddChecklistItem(eventId, {
       section,
       label: newItemLabel.trim(),
       sort_order: items.length,
@@ -63,19 +63,19 @@ export function ChecklistSectionComponent({
   }
 
   async function handleDelete(id: string) {
-    await deleteChecklistItem(supabase, id);
+    await apiDeleteChecklistItem(eventId, id);
     onUpdate();
   }
 
   async function handleAssigneeChange(item: ChecklistItem, assignee: string) {
-    await updateChecklistItem(supabase, item.id, {
+    await apiPatchChecklistItem(eventId, item.id, {
       assignee: assignee || null,
     });
     onUpdate();
   }
 
   async function handleCommentChange(item: ChecklistItem, comment: string) {
-    await updateChecklistItem(supabase, item.id, {
+    await apiPatchChecklistItem(eventId, item.id, {
       comment: comment || null,
     });
     onUpdate();

@@ -22,7 +22,5 @@ export default async function NewEventPage() {
   const data = await getEvents(supabase);
   const initialAllEvents = data.filter((e) => !e.is_archived);
 
-  return (
-    <NewEventClient userId={user.id} initialAllEvents={initialAllEvents} />
-  );
+  return <NewEventClient initialAllEvents={initialAllEvents} />;
 }

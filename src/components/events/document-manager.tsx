@@ -3,8 +3,10 @@
 import { useState, useRef } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
-  uploadDocument,
-  deleteDocument,
+  apiDeleteDocument,
+  apiUploadDocument,
+} from "@/lib/events-api-client";
+import {
   createSignedEventDocumentUrl,
   EVENT_DOCUMENTS_SIGNED_URL_TTL_SECONDS,
 } from "@/lib/events";
@@ -54,13 +56,8 @@ export function DocumentManager({
 
     setUploading(true);
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      const email = user?.email || "unknown";
-
       for (const file of Array.from(files)) {
-        await uploadDocument(supabase, eventId, file, selectedTag, email);
+        await apiUploadDocument(eventId, file, selectedTag);
       }
       onUpdate();
     } catch (err) {
@@ -77,7 +74,7 @@ export function DocumentManager({
   async function handleDelete(doc: EventDocument) {
     if (!confirm(`Delete "${doc.file_name}"?`)) return;
     try {
-      await deleteDocument(supabase, doc);
+      await apiDeleteDocument(eventId, doc.id);
       onUpdate();
     } catch (err) {
       console.error("Delete failed:", err);

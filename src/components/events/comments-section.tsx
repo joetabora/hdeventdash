@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { addComment, deleteComment } from "@/lib/events";
+import {
+  apiAddComment,
+  apiDeleteComment,
+} from "@/lib/events-api-client";
 import { EventComment } from "@/types/database";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -26,7 +28,6 @@ export function CommentsSection({
 }: CommentsSectionProps) {
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const supabase = getSupabaseBrowserClient();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -34,17 +35,7 @@ export function CommentsSection({
 
     setSubmitting(true);
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
-      await addComment(supabase, {
-        event_id: eventId,
-        user_id: user.id,
-        user_email: user.email || "unknown",
-        content: content.trim(),
-      });
+      await apiAddComment(eventId, content.trim());
       setContent("");
       onUpdate();
     } catch (err) {
@@ -56,7 +47,7 @@ export function CommentsSection({
 
   async function handleDelete(commentId: string) {
     try {
-      await deleteComment(supabase, commentId);
+      await apiDeleteComment(eventId, commentId);
       onUpdate();
     } catch (err) {
       console.error("Failed to delete comment:", err);

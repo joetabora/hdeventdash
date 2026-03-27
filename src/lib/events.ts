@@ -66,6 +66,8 @@ export async function getEvent(supabase: SupabaseClient, id: string) {
   return data as Event;
 }
 
+/** Browser mutations should use `@/lib/events-api-client` (API routes + validation). */
+
 export async function createEvent(
   supabase: SupabaseClient,
   event: {

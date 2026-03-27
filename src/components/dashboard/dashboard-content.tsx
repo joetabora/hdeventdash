@@ -3,7 +3,8 @@
 import { useMemo, useState, useLayoutEffect, useRef, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { updateEvent, ChecklistStats } from "@/lib/events";
+import { ChecklistStats } from "@/lib/events";
+import { apiPatchEvent } from "@/lib/events-api-client";
 import { Event, EventStatus, MonthlyBudget } from "@/types/database";
 import { isEventAtRisk } from "@/lib/at-risk";
 import { KanbanBoard } from "@/components/dashboard/kanban-board";
@@ -193,7 +194,7 @@ export function DashboardContent({
       )
     );
     try {
-      await updateEvent(supabase, eventId, { status: newStatus });
+      await apiPatchEvent(eventId, { status: newStatus });
     } catch {
       setEvents(previous);
     }

@@ -3,8 +3,10 @@
 import { useState, useRef, useEffect } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
-  uploadMedia,
-  deleteMedia,
+  apiDeleteMedia,
+  apiUploadMedia,
+} from "@/lib/events-api-client";
+import {
   createSignedEventDocumentUrl,
   createSignedEventDocumentUrls,
 } from "@/lib/events";
@@ -90,13 +92,8 @@ export function MediaGallery({
 
     setUploading(true);
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      const email = user?.email || "unknown";
-
       for (const file of Array.from(files)) {
-        await uploadMedia(supabase, eventId, file, selectedTag, email);
+        await apiUploadMedia(eventId, file, selectedTag);
       }
       onUpdate();
     } catch (err) {
@@ -113,7 +110,7 @@ export function MediaGallery({
   async function handleDelete(item: EventMedia) {
     if (!confirm(`Delete "${item.file_name}"?`)) return;
     try {
-      await deleteMedia(supabase, item);
+      await apiDeleteMedia(eventId, item.id);
       onUpdate();
     } catch (err) {
       console.error("Delete failed:", err);

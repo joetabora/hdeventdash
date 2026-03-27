@@ -1,12 +1,11 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
-  updateChecklistItem,
-  addComment,
-  uploadMedia,
-} from "@/lib/events";
+  apiAddComment,
+  apiPatchChecklistItem,
+  apiUploadMedia,
+} from "@/lib/events-api-client";
 import { EVENT_UPLOAD_ACCEPT_ATTR } from "@/lib/validation/upload-file";
 import type { ChecklistItem } from "@/types/database";
 import { Modal } from "@/components/ui/modal";
@@ -39,7 +38,6 @@ export function EventMobileActionBar({
   onAfterCommentChange,
   canManageExtras = true,
 }: EventMobileActionBarProps) {
-  const supabase = getSupabaseBrowserClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [taskModalOpen, setTaskModalOpen] = useState(false);
@@ -54,7 +52,7 @@ export function EventMobileActionBar({
   async function markComplete(item: ChecklistItem) {
     setTogglingId(item.id);
     try {
-      await updateChecklistItem(supabase, item.id, { is_checked: true });
+      await apiPatchChecklistItem(eventId, item.id, { is_checked: true });
       onAfterChecklistChange?.();
       setTaskModalOpen(false);
     } catch (e) {
@@ -69,12 +67,8 @@ export function EventMobileActionBar({
     if (!files?.length) return;
     setUploading(true);
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      const email = user?.email || "unknown";
       for (const file of Array.from(files)) {
-        await uploadMedia(supabase, eventId, file, "social_media", email);
+        await apiUploadMedia(eventId, file, "social_media");
       }
       onAfterMediaChange?.();
     } catch (err) {
@@ -93,16 +87,7 @@ export function EventMobileActionBar({
     if (!commentText.trim()) return;
     setCommentSubmitting(true);
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not signed in");
-      await addComment(supabase, {
-        event_id: eventId,
-        user_id: user.id,
-        user_email: user.email || "unknown",
-        content: commentText.trim(),
-      });
+      await apiAddComment(eventId, commentText.trim());
       setCommentText("");
       setCommentModalOpen(false);
       onAfterCommentChange?.();
