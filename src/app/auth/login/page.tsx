@@ -1,19 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Zap, Loader2 } from "lucide-react";
 
-export default function LoginPage() {
+const AUTH_REDIRECT_MESSAGES: Record<string, string> = {
+  configuration:
+    "Sign-in is not available right now (server configuration). Please try again later or contact support.",
+  unavailable:
+    "We could not verify your session. Please try again in a moment.",
+};
+
+function LoginPageInner() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const systemNotice = useMemo(() => {
+    const code = searchParams.get("error");
+    if (!code) return "";
+    return AUTH_REDIRECT_MESSAGES[code] ?? "";
+  }, [searchParams]);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -53,6 +66,12 @@ export default function LoginPage() {
           </h2>
 
           <form onSubmit={handleLogin} className="space-y-4">
+            {systemNotice ? (
+              <div className="text-sm text-harley-warning bg-harley-warning/10 rounded-lg p-3 border border-harley-warning/30">
+                {systemNotice}
+              </div>
+            ) : null}
+
             <div>
               <label className="block text-sm text-harley-text-muted mb-1.5">
                 Email
@@ -99,5 +118,19 @@ export default function LoginPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-harley-black px-4">
+          <Loader2 className="w-8 h-8 animate-spin text-harley-orange" />
+        </div>
+      }
+    >
+      <LoginPageInner />
+    </Suspense>
   );
 }
