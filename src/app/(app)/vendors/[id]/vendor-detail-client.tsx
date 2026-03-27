@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input, Textarea } from "@/components/ui/input";
 import { useAppRole } from "@/contexts/app-role-context";
+import { apiFetchJson } from "@/lib/api/api-fetch-json";
 import {
   ArrowLeft,
   Loader2,
@@ -68,7 +69,7 @@ export function VendorDetailClient({
     const fd = new FormData(e.currentTarget);
     setSaving(true);
     try {
-      const res = await fetch(`/api/vendors/${vendor.id}`, {
+      const updated = await apiFetchJson<Vendor>(`/api/vendors/${vendor.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -81,17 +82,7 @@ export function VendorDetailClient({
           notes: String(fd.get("notes") ?? ""),
         }),
       });
-      const data = (await res.json().catch(() => ({}))) as
-        | Vendor
-        | { error?: string };
-      if (!res.ok || !("id" in data)) {
-        throw new Error(
-          typeof data === "object" && data && "error" in data && data.error
-            ? String(data.error)
-            : "Failed to update vendor"
-        );
-      }
-      setVendor(data as Vendor);
+      setVendor(updated);
       router.refresh();
     } catch (err) {
       console.error(err);
@@ -106,11 +97,7 @@ export function VendorDetailClient({
     }
     if (!vendor) return;
     try {
-      const res = await fetch(`/api/vendors/${vendor.id}`, { method: "DELETE" });
-      if (!res.ok) {
-        const data = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(data.error ?? "Failed to delete vendor");
-      }
+      await apiFetchJson(`/api/vendors/${vendor.id}`, { method: "DELETE" });
       router.push("/vendors");
       router.refresh();
     } catch (err) {

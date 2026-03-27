@@ -2,6 +2,11 @@
 
 import { useLayoutEffect, useState } from "react";
 import type { ManagedUserDto } from "@/lib/admin/managed-users";
+import {
+  apiFetchJson,
+  apiFetchJsonOrNull,
+  isApiError,
+} from "@/lib/api/api-fetch-json";
 import { UserRole } from "@/types/database";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,9 +28,7 @@ type AdminUsersPayload = {
 };
 
 async function fetchManagedUsers(): Promise<AdminUsersPayload | null> {
-  const res = await fetch("/api/admin/users");
-  if (!res.ok) return null;
-  return res.json() as Promise<AdminUsersPayload>;
+  return apiFetchJsonOrNull<AdminUsersPayload>("/api/admin/users");
 }
 
 export function UserManagementClient({
@@ -70,7 +73,7 @@ export function UserManagementClient({
 
     setCreating(true);
     try {
-      const res = await fetch("/api/admin/users", {
+      await apiFetchJson("/api/admin/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -79,12 +82,6 @@ export function UserManagementClient({
           role: newRole,
         }),
       });
-      const data = (await res.json().catch(() => ({}))) as { error?: string };
-
-      if (!res.ok) {
-        setCreateError(data.error ?? "Failed to create user.");
-        return;
-      }
 
       setCreateSuccess(`User "${newEmail}" created as ${newRole}.`);
       setNewEmail("");
@@ -97,7 +94,11 @@ export function UserManagementClient({
         setCurrentUserId(fresh.currentUserId);
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to create user";
+      const message = isApiError(err)
+        ? err.message
+        : err instanceof Error
+          ? err.message
+          : "Failed to create user";
       setCreateError(message);
     } finally {
       setCreating(false);
@@ -106,21 +107,19 @@ export function UserManagementClient({
 
   async function handleRoleChange(userId: string, role: UserRole) {
     try {
-      const res = await fetch(`/api/admin/users/${userId}/role`, {
+      await apiFetchJson(`/api/admin/users/${userId}/role`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role }),
       });
-      const data = (await res.json().catch(() => ({}))) as { error?: string };
-      if (!res.ok) {
-        console.error("Failed to update role:", data.error ?? res.status);
-        return;
-      }
       setUsers((old) =>
         old.map((u) => (u.id === userId ? { ...u, role } : u))
       );
     } catch (err) {
-      console.error("Failed to update role:", err);
+      console.error(
+        "Failed to update role:",
+        isApiError(err) ? err.message : err
+      );
     }
   }
 
@@ -128,21 +127,19 @@ export function UserManagementClient({
     if (!confirm(`Remove role for "${email}"? This won't delete their auth account.`))
       return;
     try {
-      const res = await fetch(`/api/admin/users/${userId}/role`, {
+      await apiFetchJson(`/api/admin/users/${userId}/role`, {
         method: "DELETE",
       });
-      if (!res.ok) {
-        const data = (await res.json().catch(() => ({}))) as { error?: string };
-        console.error("Failed to delete role:", data.error ?? res.status);
-        return;
-      }
       const fresh = await fetchManagedUsers();
       if (fresh) {
         setUsers(fresh.users);
         setCurrentUserId(fresh.currentUserId);
       }
     } catch (err) {
-      console.error("Failed to delete role:", err);
+      console.error(
+        "Failed to delete role:",
+        isApiError(err) ? err.message : err
+      );
     }
   }
 

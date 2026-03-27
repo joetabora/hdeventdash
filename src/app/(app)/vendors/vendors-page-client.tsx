@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { Input, Textarea } from "@/components/ui/input";
 import { useAppRole } from "@/contexts/app-role-context";
+import { apiFetchJson } from "@/lib/api/api-fetch-json";
 import { Loader2, PlusCircle, Store, Search, ChevronRight } from "lucide-react";
 
 export function VendorsPageClient({ initialVendors }: { initialVendors: Vendor[] }) {
@@ -49,7 +50,7 @@ export function VendorsPageClient({ initialVendors }: { initialVendors: Vendor[]
     if (!name.trim()) return;
     setSaving(true);
     try {
-      const res = await fetch("/api/vendors", {
+      const created = await apiFetchJson<Vendor>("/api/vendors", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -62,17 +63,6 @@ export function VendorsPageClient({ initialVendors }: { initialVendors: Vendor[]
           notes,
         }),
       });
-      const data = (await res.json().catch(() => ({}))) as
-        | Vendor
-        | { error?: string };
-      if (!res.ok || !("id" in data)) {
-        throw new Error(
-          typeof data === "object" && data && "error" in data && data.error
-            ? String(data.error)
-            : "Failed to create vendor"
-        );
-      }
-      const created = data as Vendor;
       setVendors((prev) =>
         [...prev, created].sort((a, b) => a.name.localeCompare(b.name))
       );

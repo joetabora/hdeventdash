@@ -9,6 +9,7 @@ import {
   budgetCardStatus,
   type BudgetCardStatus,
 } from "@/lib/budgets";
+import { apiFetchJson } from "@/lib/api/api-fetch-json";
 import { Event, MonthlyBudget } from "@/types/database";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -111,7 +112,7 @@ export function BudgetSummaryCard({
     if (!newLocation.trim() || Number.isNaN(amt) || amt < 0) return;
     setSaving(true);
     try {
-      const res = await fetch("/api/budgets", {
+      await apiFetchJson("/api/budgets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -120,10 +121,6 @@ export function BudgetSummaryCard({
           budget_amount: amt,
         }),
       });
-      if (!res.ok) {
-        const err = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(err.error ?? res.statusText);
-      }
       setNewLocation("");
       setNewAmount("");
       onBudgetsUpdated();
@@ -138,13 +135,9 @@ export function BudgetSummaryCard({
     if (!confirm("Remove this monthly budget row?")) return;
     setBusyId(id);
     try {
-      const res = await fetch(`/api/budgets/${encodeURIComponent(id)}`, {
+      await apiFetchJson(`/api/budgets/${encodeURIComponent(id)}`, {
         method: "DELETE",
       });
-      if (!res.ok) {
-        const err = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(err.error ?? res.statusText);
-      }
       onBudgetsUpdated();
     } catch (err) {
       console.error(err);
@@ -158,7 +151,7 @@ export function BudgetSummaryCard({
     if (Number.isNaN(amt) || amt < 0 || amt === Number(row.budget_amount)) return;
     setBusyId(row.id);
     try {
-      const res = await fetch("/api/budgets", {
+      await apiFetchJson("/api/budgets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -167,10 +160,6 @@ export function BudgetSummaryCard({
           budget_amount: amt,
         }),
       });
-      if (!res.ok) {
-        const err = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(err.error ?? res.statusText);
-      }
       onBudgetsUpdated();
     } catch (err) {
       console.error(err);

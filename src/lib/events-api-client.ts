@@ -1,3 +1,4 @@
+import { apiFetchJson } from "@/lib/api/api-fetch-json";
 import type {
   Event,
   ChecklistItem,
@@ -10,25 +11,6 @@ import type {
   DocumentTag,
   MediaTag,
 } from "@/types/database";
-
-function errorFromBody(data: unknown, status: number): string {
-  if (
-    data &&
-    typeof data === "object" &&
-    "error" in data &&
-    typeof (data as { error: unknown }).error === "string"
-  ) {
-    return (data as { error: string }).error;
-  }
-  return `Request failed (${status})`;
-}
-
-async function jsonFetch<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, { ...init, credentials: "include" });
-  const data: unknown = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(errorFromBody(data, res.status));
-  return data as T;
-}
 
 export type CreateEventApiBody = {
   name: string;
@@ -44,7 +26,7 @@ export type CreateEventApiBody = {
 };
 
 export async function apiCreateEvent(body: CreateEventApiBody): Promise<Event> {
-  return jsonFetch("/api/events", {
+  return apiFetchJson<Event>("/api/events", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -55,7 +37,7 @@ export async function apiPatchEvent(
   eventId: string,
   body: Record<string, unknown>
 ): Promise<Event> {
-  return jsonFetch(`/api/events/${eventId}`, {
+  return apiFetchJson<Event>(`/api/events/${eventId}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -63,7 +45,7 @@ export async function apiPatchEvent(
 }
 
 export async function apiDeleteEvent(eventId: string): Promise<void> {
-  await jsonFetch<{ ok: boolean }>(`/api/events/${eventId}`, {
+  await apiFetchJson<{ ok: boolean }>(`/api/events/${eventId}`, {
     method: "DELETE",
   });
 }
@@ -76,7 +58,7 @@ export async function apiAddChecklistItem(
     sort_order: number;
   }
 ): Promise<ChecklistItem> {
-  return jsonFetch(`/api/events/${eventId}/checklist`, {
+  return apiFetchJson<ChecklistItem>(`/api/events/${eventId}/checklist`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -88,18 +70,21 @@ export async function apiPatchChecklistItem(
   itemId: string,
   body: Record<string, unknown>
 ): Promise<ChecklistItem> {
-  return jsonFetch(`/api/events/${eventId}/checklist/${itemId}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  return apiFetchJson<ChecklistItem>(
+    `/api/events/${eventId}/checklist/${itemId}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }
+  );
 }
 
 export async function apiDeleteChecklistItem(
   eventId: string,
   itemId: string
 ): Promise<void> {
-  await jsonFetch<{ ok: boolean }>(
+  await apiFetchJson<{ ok: boolean }>(
     `/api/events/${eventId}/checklist/${itemId}`,
     { method: "DELETE" }
   );
@@ -109,7 +94,7 @@ export async function apiAddComment(
   eventId: string,
   content: string
 ): Promise<EventComment> {
-  return jsonFetch(`/api/events/${eventId}/comments`, {
+  return apiFetchJson<EventComment>(`/api/events/${eventId}/comments`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ content }),
@@ -120,7 +105,7 @@ export async function apiDeleteComment(
   eventId: string,
   commentId: string
 ): Promise<void> {
-  await jsonFetch<{ ok: boolean }>(
+  await apiFetchJson<{ ok: boolean }>(
     `/api/events/${eventId}/comments/${commentId}`,
     { method: "DELETE" }
   );
@@ -134,21 +119,20 @@ export async function apiUploadDocument(
   const fd = new FormData();
   fd.append("file", file);
   fd.append("tag", tag);
-  const res = await fetch(`/api/events/${eventId}/documents`, {
-    method: "POST",
-    body: fd,
-    credentials: "include",
-  });
-  const data: unknown = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(errorFromBody(data, res.status));
-  return data as EventDocument;
+  return apiFetchJson<EventDocument>(
+    `/api/events/${eventId}/documents`,
+    {
+      method: "POST",
+      body: fd,
+    }
+  );
 }
 
 export async function apiDeleteDocument(
   eventId: string,
   documentId: string
 ): Promise<void> {
-  await jsonFetch<{ ok: boolean }>(
+  await apiFetchJson<{ ok: boolean }>(
     `/api/events/${eventId}/documents/${documentId}`,
     { method: "DELETE" }
   );
@@ -162,21 +146,17 @@ export async function apiUploadMedia(
   const fd = new FormData();
   fd.append("file", file);
   fd.append("tag", tag);
-  const res = await fetch(`/api/events/${eventId}/media`, {
+  return apiFetchJson<EventMedia>(`/api/events/${eventId}/media`, {
     method: "POST",
     body: fd,
-    credentials: "include",
   });
-  const data: unknown = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(errorFromBody(data, res.status));
-  return data as EventMedia;
 }
 
 export async function apiDeleteMedia(
   eventId: string,
   mediaId: string
 ): Promise<void> {
-  await jsonFetch<{ ok: boolean }>(
+  await apiFetchJson<{ ok: boolean }>(
     `/api/events/${eventId}/media/${mediaId}`,
     { method: "DELETE" }
   );

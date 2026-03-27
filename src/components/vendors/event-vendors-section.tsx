@@ -8,6 +8,7 @@ import {
   VENDOR_PARTICIPATION_STATUSES,
   VendorParticipationStatus,
 } from "@/types/database";
+import { apiFetchJson } from "@/lib/api/api-fetch-json";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -71,7 +72,7 @@ export function EventVendorsSection({
     if (!vendorId) return;
     setAttaching(true);
     try {
-      const res = await fetch(`/api/events/${eventId}/vendors`, {
+      await apiFetchJson(`/api/events/${eventId}/vendors`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -80,10 +81,6 @@ export function EventVendorsSection({
           notes: attachNotes,
         }),
       });
-      const data = (await res.json().catch(() => ({}))) as { error?: string };
-      if (!res.ok) {
-        throw new Error(data.error ?? "Failed to attach vendor");
-      }
       setVendorId("");
       setAttachRole("");
       setAttachNotes("");
@@ -101,15 +98,11 @@ export function EventVendorsSection({
   ) {
     setBusyLinkId(linkId);
     try {
-      const res = await fetch(`/api/events/${eventId}/vendors/${linkId}`, {
+      await apiFetchJson(`/api/events/${eventId}/vendors/${linkId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(patch),
       });
-      const data = (await res.json().catch(() => ({}))) as { error?: string };
-      if (!res.ok) {
-        throw new Error(data.error ?? "Failed to update vendor link");
-      }
       onUpdate();
     } catch (err) {
       console.error(err);
@@ -124,13 +117,9 @@ export function EventVendorsSection({
     }
     setBusyLinkId(linkId);
     try {
-      const res = await fetch(`/api/events/${eventId}/vendors/${linkId}`, {
+      await apiFetchJson(`/api/events/${eventId}/vendors/${linkId}`, {
         method: "DELETE",
       });
-      if (!res.ok) {
-        const data = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(data.error ?? "Failed to remove vendor");
-      }
       onUpdate();
     } catch (err) {
       console.error(err);
