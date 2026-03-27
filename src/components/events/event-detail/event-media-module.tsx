@@ -1,10 +1,9 @@
 "use client";
 
-import { DocumentManager } from "@/components/events/document-manager";
-import { MediaGallery } from "@/components/events/media-gallery";
 import { EventDocument, EventMedia } from "@/types/database";
 import { Image as ImageIcon } from "lucide-react";
 import { CollapsibleSection } from "./collapsible-section";
+import { DynamicEventMediaModuleInner } from "./lazy-event-detail-components";
 
 export function EventMediaModule({
   eventId,
@@ -23,26 +22,22 @@ export function EventMediaModule({
 }) {
   return (
     <CollapsibleSection
+      key={`media-${eventId}`}
       icon={<ImageIcon className="w-4.5 h-4.5" />}
       title="Files & Media"
       count={(media?.length ?? 0) + (documents?.length ?? 0)}
       autoOpenOnDesktop
       mobileCollapsed
+      deferHeavyContent
     >
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <MediaGallery
-          eventId={eventId}
-          media={media}
-          onUpdate={onMediaInvalidate}
-          canMutate={canMutate}
-        />
-        <DocumentManager
-          eventId={eventId}
-          documents={documents}
-          onUpdate={onDocumentsInvalidate}
-          canMutate={canMutate}
-        />
-      </div>
+      <DynamicEventMediaModuleInner
+        eventId={eventId}
+        media={media}
+        documents={documents}
+        canMutate={canMutate}
+        onMediaInvalidate={onMediaInvalidate}
+        onDocumentsInvalidate={onDocumentsInvalidate}
+      />
     </CollapsibleSection>
   );
 }

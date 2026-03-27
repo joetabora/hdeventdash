@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useLayoutEffect, useRef } from "react";
+import { useState, useLayoutEffect, useRef, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 
 const MD_MIN = "(min-width: 768px)";
@@ -17,6 +17,13 @@ export function CollapsibleSection({
    */
   autoOpenOnDesktop = false,
   mobileCollapsed = false,
+  /**
+   * When true, body content mounts only after the section intersects the viewport (with margin)
+   * or the user taps the header. Use with `next/dynamic` children to defer JS and network.
+   */
+  deferHeavyContent = false,
+  /** Passed to IntersectionObserver `rootMargin` when `deferHeavyContent` is set. */
+  heavyActivationMargin = "200px",
   children,
 }: {
   icon: React.ReactNode;
@@ -25,12 +32,16 @@ export function CollapsibleSection({
   defaultOpen?: boolean;
   autoOpenOnDesktop?: boolean;
   mobileCollapsed?: boolean;
+  deferHeavyContent?: boolean;
+  heavyActivationMargin?: string;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(
     autoOpenOnDesktop ? false : defaultOpen
   );
+  const [heavyReady, setHeavyReady] = useState(!deferHeavyContent);
   const userToggled = useRef(false);
+  const sectionRef = useRef<HTMLElement>(null);
 
   useLayoutEffect(() => {
     if (!autoOpenOnDesktop) return;
@@ -45,12 +56,34 @@ export function CollapsibleSection({
     return () => mq.removeEventListener("change", apply);
   }, [autoOpenOnDesktop]);
 
+  useEffect(() => {
+    if (!deferHeavyContent) return;
+    if (!open) return;
+    const el = sectionRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setHeavyReady(true);
+        }
+      },
+      { root: null, rootMargin: heavyActivationMargin, threshold: 0.01 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [deferHeavyContent, open, heavyActivationMargin]);
+
+  const showBody = open && (!deferHeavyContent || heavyReady);
+
   return (
-    <section className="mb-8 md:mb-10">
+    <section ref={sectionRef} className="mb-8 md:mb-10">
       <button
         type="button"
         onClick={() => {
           userToggled.current = true;
+          if (deferHeavyContent) {
+            setHeavyReady(true);
+          }
           setOpen((o) => !o);
         }}
         className="flex items-center gap-2.5 mb-4 w-full group"
@@ -71,7 +104,18 @@ export function CollapsibleSection({
           } ${mobileCollapsed ? "md:hidden" : ""}`}
         />
       </button>
-      {open && <div className="animate-fade-in-up">{children}</div>}
+      {open && (
+        <div className="animate-fade-in-up">
+          {showBody ? (
+            children
+          ) : deferHeavyContent ? (
+            <div
+              className="rounded-xl border border-harley-gray/40 bg-harley-gray/10 min-h-[7rem] animate-pulse"
+              aria-hidden
+            />
+          ) : null}
+        </div>
+      )}
     </section>
   );
 }

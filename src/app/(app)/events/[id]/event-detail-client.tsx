@@ -22,9 +22,11 @@ import { Button, buttonStyles } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Modal } from "@/components/ui/modal";
 import { EventForm } from "@/components/events/event-form";
-import { AiAssistant } from "@/components/events/ai-assistant";
 import { EventRecap } from "@/components/events/event-recap";
-import { EventRoiSection } from "@/components/events/event-roi-section";
+import {
+  DynamicAiAssistant,
+  DynamicEventRoiSection,
+} from "@/components/events/event-detail/lazy-event-detail-components";
 import { EventMobileActionBar } from "@/components/events/event-mobile-action-bar";
 import { DaysUntilEvent } from "@/components/events/days-until";
 import { isEventAtRisk } from "@/lib/at-risk";
@@ -515,12 +517,14 @@ export function EventDetailClient({
         />
 
         <CollapsibleSection
+          key={`ai-${event.id}`}
           icon={<Sparkles className="w-4.5 h-4.5" />}
           title="AI Assistant"
           autoOpenOnDesktop
           mobileCollapsed
+          deferHeavyContent
         >
-          <AiAssistant event={event} />
+          <DynamicAiAssistant event={event} />
         </CollapsibleSection>
 
         <EventCommentsModule
@@ -531,12 +535,14 @@ export function EventDetailClient({
         />
 
         <CollapsibleSection
+          key={`roi-${event.id}`}
           icon={<DollarSign className="w-4.5 h-4.5" />}
           title="ROI & outcomes"
           autoOpenOnDesktop
           mobileCollapsed
+          deferHeavyContent
         >
-          <EventRoiSection
+          <DynamicEventRoiSection
             event={event}
             onUpdate={() => void refetch.event()}
             canEdit={canManageEvents}
