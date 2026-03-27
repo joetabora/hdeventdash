@@ -7,7 +7,6 @@ import {
   EventDocument,
   EventComment,
   EventMedia,
-  DEFAULT_CHECKLIST_ITEMS,
   ChecklistSection,
   DocumentTag,
   MediaTag,
@@ -83,30 +82,25 @@ export async function createEvent(
     actual_budget?: number | null;
   }
 ) {
-  const { data, error } = await supabase
-    .from("events")
-    .insert(event)
-    .select()
-    .single();
+  const { data, error } = await supabase.rpc("create_event_with_checklist", {
+    p_name: event.name,
+    p_date: event.date,
+    p_location: event.location,
+    p_owner: event.owner,
+    p_status: event.status,
+    p_description: event.description,
+    p_onedrive_link: event.onedrive_link ?? null,
+    p_user_id: event.user_id,
+    p_event_type: event.event_type ?? null,
+    p_planned_budget: event.planned_budget ?? null,
+    p_actual_budget: event.actual_budget ?? null,
+  });
   if (error) throw error;
-
-  // Create default checklist items
-  const checklistItems = Object.entries(DEFAULT_CHECKLIST_ITEMS).flatMap(
-    ([section, items]) =>
-      items.map((label, idx) => ({
-        event_id: data.id,
-        section,
-        label,
-        sort_order: idx,
-      }))
-  );
-
-  const { error: checklistError } = await supabase
-    .from("checklist_items")
-    .insert(checklistItems);
-  if (checklistError) throw checklistError;
-
-  return data as Event;
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row || typeof row !== "object") {
+    throw new Error("create_event_with_checklist returned no row");
+  }
+  return row as Event;
 }
 
 export async function updateEvent(
