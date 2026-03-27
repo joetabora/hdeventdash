@@ -1,10 +1,14 @@
 import { timingSafeEqual } from "crypto";
+import type { Message } from "firebase-admin/messaging";
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getFirebaseAdminMessaging } from "@/lib/firebase/admin-app";
 import {
   evaluateEventNotifications,
+  getNotificationCandidateDateRange,
+  PUSH_REMINDER_EVENT_STATUSES,
   type EventRow,
+  type EvaluatedNotification,
 } from "@/lib/push/cron-evaluate";
 
 export const runtime = "nodejs";
@@ -42,6 +46,10 @@ function appBaseUrl(): string {
   return "";
 }
 
+function sentKey(eventId: string, notificationKey: string): string {
+  return `${eventId}\u0000${notificationKey}`;
+}
+
 export async function POST(request: NextRequest) {
   if (!authorizeCron(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -49,8 +57,12 @@ export async function POST(request: NextRequest) {
   return runCron();
 }
 
-async function runCron() {
+type PendingSend = {
+  event: EventRow;
+  n: EvaluatedNotification;
+};
 
+async function runCron() {
   const supabase = createAdminClient();
   const messaging = getFirebaseAdminMessaging();
 
@@ -67,10 +79,15 @@ async function runCron() {
     );
   }
 
+  const { start, end } = getNotificationCandidateDateRange();
+
   const { data: events, error: evErr } = await supabase
     .from("events")
     .select("id, name, date, status, user_id")
-    .eq("is_archived", false);
+    .eq("is_archived", false)
+    .in("status", PUSH_REMINDER_EVENT_STATUSES)
+    .gte("date", start)
+    .lte("date", end);
 
   if (evErr) {
     return NextResponse.json({ error: evErr.message }, { status: 500 });
@@ -78,7 +95,13 @@ async function runCron() {
 
   const eventList = (events ?? []) as EventRow[];
   if (eventList.length === 0) {
-    return NextResponse.json({ sent: 0, skipped: 0, message: "No events" });
+    return NextResponse.json({
+      ok: true,
+      sent: 0,
+      skipped: 0,
+      events: 0,
+      message: "No events in notification window",
+    });
   }
 
   const eventIds = eventList.map((e) => e.id);
@@ -100,85 +123,161 @@ async function runCron() {
     stats.set(id, s);
   }
 
-  let sent = 0;
-  let skipped = 0;
-  const base = appBaseUrl();
-
+  const pending: PendingSend[] = [];
   for (const event of eventList) {
     const s = stats.get(event.id) ?? { total: 0, done: 0 };
-    const pending = evaluateEventNotifications(event, s.total, s.done);
+    for (const n of evaluateEventNotifications(event, s.total, s.done)) {
+      pending.push({ event, n });
+    }
+  }
 
-    for (const n of pending) {
-      const { data: existing } = await supabase
-        .from("notification_sent")
-        .select("id")
-        .eq("event_id", event.id)
-        .eq("notification_key", n.notificationKey)
-        .maybeSingle();
+  if (pending.length === 0) {
+    return NextResponse.json({
+      ok: true,
+      sent: 0,
+      skipped: 0,
+      events: eventList.length,
+      message: "No notifications due",
+    });
+  }
 
-      if (existing) {
-        skipped += 1;
-        continue;
-      }
+  const pendingEventIds = [...new Set(pending.map((p) => p.event.id))];
+  const { data: sentRows, error: sentErr } = await supabase
+    .from("notification_sent")
+    .select("event_id, notification_key")
+    .in("event_id", pendingEventIds);
 
-      const { data: tokenRow } = await supabase
-        .from("push_tokens")
-        .select("token")
-        .eq("user_id", event.user_id)
-        .maybeSingle();
+  if (sentErr) {
+    return NextResponse.json({ error: sentErr.message }, { status: 500 });
+  }
 
-      const token = tokenRow?.token as string | undefined;
-      if (!token) {
-        skipped += 1;
-        continue;
-      }
+  const alreadySent = new Set(
+    (sentRows ?? []).map((r) =>
+      sentKey(r.event_id as string, r.notification_key as string)
+    )
+  );
 
-      const link = base ? `${base}/events/${event.id}` : undefined;
+  const notYetSent = pending.filter(
+    (p) => !alreadySent.has(sentKey(p.event.id, p.n.notificationKey))
+  );
+  const skippedAlreadySent = pending.length - notYetSent.length;
 
-      try {
-        const message: Parameters<typeof messaging.send>[0] = {
-          token,
-          notification: { title: n.title, body: n.body },
-          data: {
-            eventId: event.id,
-            kind: n.kind,
-            link: link || "",
-          },
-          webpush: link
-            ? {
-                fcmOptions: { link },
-              }
-            : undefined,
-        };
+  const userIds = [...new Set(notYetSent.map((p) => p.event.user_id))];
+  const { data: tokenRows, error: tokErr } = await supabase
+    .from("push_tokens")
+    .select("user_id, token")
+    .in("user_id", userIds);
 
-        await messaging.send(message);
+  if (tokErr) {
+    return NextResponse.json({ error: tokErr.message }, { status: 500 });
+  }
 
-        await supabase.from("notification_sent").insert({
-          event_id: event.id,
-          notification_key: n.notificationKey,
-        });
+  const tokenByUser = new Map<string, string>();
+  for (const row of tokenRows ?? []) {
+    const uid = row.user_id as string;
+    const t = row.token as string;
+    if (t) tokenByUser.set(uid, t);
+  }
 
+  const base = appBaseUrl();
+  const messages: Message[] = [];
+  const sendMeta: { eventId: string; notificationKey: string; userId: string }[] =
+    [];
+
+  let skippedNoToken = 0;
+  for (const { event, n } of notYetSent) {
+    const token = tokenByUser.get(event.user_id);
+    if (!token) {
+      skippedNoToken += 1;
+      continue;
+    }
+    const link = base ? `${base}/events/${event.id}` : undefined;
+    messages.push({
+      token,
+      notification: { title: n.title, body: n.body },
+      data: {
+        eventId: event.id,
+        kind: n.kind,
+        link: link || "",
+      },
+      webpush: link
+        ? {
+            fcmOptions: { link },
+          }
+        : undefined,
+    });
+    sendMeta.push({
+      eventId: event.id,
+      notificationKey: n.notificationKey,
+      userId: event.user_id,
+    });
+  }
+
+  if (messages.length === 0) {
+    return NextResponse.json({
+      ok: true,
+      sent: 0,
+      skipped: skippedAlreadySent + skippedNoToken,
+      events: eventList.length,
+    });
+  }
+
+  /** FCM sendEach allows up to 500 messages per call. */
+  const FCM_BATCH = 500;
+  const inserts: { event_id: string; notification_key: string }[] = [];
+  const invalidUserIds = new Set<string>();
+  let sent = 0;
+  let skippedSend = 0;
+
+  for (let off = 0; off < messages.length; off += FCM_BATCH) {
+    const slice = messages.slice(off, off + FCM_BATCH);
+    const metaSlice = sendMeta.slice(off, off + FCM_BATCH);
+    const batch = await messaging.sendEach(slice);
+
+    for (let i = 0; i < batch.responses.length; i++) {
+      const r = batch.responses[i];
+      const m = metaSlice[i];
+      if (r.success) {
         sent += 1;
-      } catch (e: unknown) {
+        inserts.push({
+          event_id: m.eventId,
+          notification_key: m.notificationKey,
+        });
+      } else {
+        skippedSend += 1;
         const code =
-          e && typeof e === "object" && "code" in e
-            ? String((e as { code?: string }).code)
-            : "";
+          r.error?.code != null ? String(r.error.code) : "";
         if (
           code.includes("registration-token-not-registered") ||
           code.includes("invalid-registration-token")
         ) {
-          await supabase.from("push_tokens").delete().eq("user_id", event.user_id);
+          invalidUserIds.add(m.userId);
         }
-        skipped += 1;
       }
+    }
+  }
+
+  if (inserts.length > 0) {
+    const { error: insErr } = await supabase.from("notification_sent").insert(inserts);
+    if (insErr) {
+      console.error("notification_sent batch insert:", insErr);
+    }
+  }
+
+  if (invalidUserIds.size > 0) {
+    const { error: delErr } = await supabase
+      .from("push_tokens")
+      .delete()
+      .in("user_id", [...invalidUserIds]);
+    if (delErr) {
+      console.error("push_tokens cleanup:", delErr);
     }
   }
 
   return NextResponse.json({
     ok: true,
     sent,
-    skipped,
+    skipped: skippedAlreadySent + skippedNoToken + skippedSend,
     events: eventList.length,
   });
 }

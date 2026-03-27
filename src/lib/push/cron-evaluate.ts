@@ -1,5 +1,38 @@
-import { differenceInCalendarDays, format, parseISO, startOfDay } from "date-fns";
+import {
+  addDays,
+  differenceInCalendarDays,
+  format,
+  parseISO,
+  startOfDay,
+} from "date-fns";
+import type { EventStatus } from "@/types/database";
 import { isEventAtRisk } from "@/lib/at-risk";
+
+/** Statuses that can receive 3-day / 1-day / at-risk pushes (excludes terminal states). */
+export const PUSH_REMINDER_EVENT_STATUSES: EventStatus[] = [
+  "idea",
+  "planning",
+  "in_progress",
+  "ready_for_execution",
+];
+
+const NOTIFICATION_LOOKAHEAD_DAYS = 5;
+
+/**
+ * Inclusive `YYYY-MM-DD` bounds for events that might need a notification on this run.
+ * Matches {@link evaluateEventNotifications} (at-risk uses 0–5 calendar days ahead).
+ */
+export function getNotificationCandidateDateRange(now: Date = new Date()): {
+  start: string;
+  end: string;
+} {
+  const today = startOfDay(now);
+  const last = addDays(today, NOTIFICATION_LOOKAHEAD_DAYS);
+  return {
+    start: format(today, "yyyy-MM-dd"),
+    end: format(last, "yyyy-MM-dd"),
+  };
+}
 
 export type PushNotificationKind = "three_day" | "one_day" | "at_risk";
 
