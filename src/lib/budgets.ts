@@ -1,6 +1,98 @@
+import { addMonths, format, parseISO, subMonths } from "date-fns";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Event, MonthlyBudget } from "@/types/database";
 import { normalizeLocationKey } from "@/lib/location-key";
+
+/** Months shown on the Budget page planning strip (including current). */
+export const BUDGET_PLANNING_MONTH_COUNT = 24;
+
+export type MonthCapRollup = {
+  /** `YYYY-MM` */
+  yearMonth: string;
+  totalCap: number;
+  venueCount: number;
+};
+
+export function planningRangeFromCurrentMonth(now: Date = new Date()): {
+  startYm: string;
+  startFirstDay: string;
+  endFirstDay: string;
+} {
+  const d = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startYm = format(d, "yyyy-MM");
+  const startFirstDay = format(d, "yyyy-MM-dd");
+  const endD = addMonths(d, BUDGET_PLANNING_MONTH_COUNT - 1);
+  const endFirstDay = format(endD, "yyyy-MM-dd");
+  return { startYm, startFirstDay, endFirstDay };
+}
+
+/** Aggregate DB rows by calendar month (`YYYY-MM`). */
+export function rollupBudgetAmountsByMonth(
+  rows: readonly { month: string; budget_amount: number | string | null }[]
+): Map<string, { totalCap: number; venueCount: number }> {
+  const map = new Map<string, { totalCap: number; venueCount: number }>();
+  for (const row of rows) {
+    const ym = String(row.month).slice(0, 7);
+    const cur = map.get(ym) ?? { totalCap: 0, venueCount: 0 };
+    cur.totalCap += Number(row.budget_amount) || 0;
+    cur.venueCount += 1;
+    map.set(ym, cur);
+  }
+  return map;
+}
+
+export function buildMonthCapTimeline(
+  startYearMonth: string,
+  monthCount: number,
+  rollup: Map<string, { totalCap: number; venueCount: number }>
+): MonthCapRollup[] {
+  const start = parseISO(`${startYearMonth.slice(0, 7)}-01`);
+  const out: MonthCapRollup[] = [];
+  for (let i = 0; i < monthCount; i++) {
+    const d = addMonths(start, i);
+    const ym = format(d, "yyyy-MM");
+    const r = rollup.get(ym);
+    out.push({
+      yearMonth: ym,
+      totalCap: r?.totalCap ?? 0,
+      venueCount: r?.venueCount ?? 0,
+    });
+  }
+  return out;
+}
+
+export async function fetchMonthlyBudgetAmountRowsInRange(
+  supabase: SupabaseClient,
+  startFirstDay: string,
+  endFirstDay: string
+): Promise<{ month: string; budget_amount: number }[]> {
+  const { data, error } = await supabase
+    .from("monthly_budgets")
+    .select("month, budget_amount")
+    .gte("month", startFirstDay)
+    .lte("month", endFirstDay);
+  if (error) throw error;
+  return (data ?? []) as { month: string; budget_amount: number }[];
+}
+
+export async function loadMonthCapTimeline(
+  supabase: SupabaseClient,
+  now?: Date
+): Promise<MonthCapRollup[]> {
+  const { startYm, startFirstDay, endFirstDay } = planningRangeFromCurrentMonth(now);
+  /** Include prior month so "copy from previous" eligibility works for the first chip. */
+  const rangeStart = format(subMonths(parseISO(startFirstDay), 1), "yyyy-MM-dd");
+  const rows = await fetchMonthlyBudgetAmountRowsInRange(
+    supabase,
+    rangeStart,
+    endFirstDay
+  );
+  return buildMonthCapTimeline(
+    startYm,
+    BUDGET_PLANNING_MONTH_COUNT,
+    rollupBudgetAmountsByMonth(rows)
+  );
+}
 
 /** Minimal event row for monthly planned-budget aggregation (same org, one calendar month). */
 export type EventBudgetPeer = Pick<
@@ -71,6 +163,40 @@ export async function upsertMonthlyBudget(
     .single();
   if (error) throw error;
   return data as MonthlyBudget;
+}
+
+/**
+ * Copy all venue caps from the calendar month before `targetMonthFirstDay` into the target month (upsert).
+ * @returns number of rows written
+ */
+export async function copyPreviousMonthBudgets(
+  supabase: SupabaseClient,
+  targetMonthFirstDay: string
+): Promise<number> {
+  const normalized = budgetMonthToDbDate(targetMonthFirstDay.slice(0, 7));
+  const target = parseISO(normalized);
+  if (Number.isNaN(target.getTime())) {
+    throw new Error("Invalid target month");
+  }
+  const prev = addMonths(target, -1);
+  const prevStr = format(prev, "yyyy-MM-dd");
+  const { data: rows, error } = await supabase
+    .from("monthly_budgets")
+    .select("location, budget_amount")
+    .eq("month", prevStr);
+  if (error) throw error;
+  let n = 0;
+  for (const r of rows ?? []) {
+    const loc = String(r.location ?? "").trim();
+    if (!loc) continue;
+    await upsertMonthlyBudget(supabase, {
+      month: normalized,
+      location: loc,
+      budget_amount: Number(r.budget_amount) || 0,
+    });
+    n += 1;
+  }
+  return n;
 }
 
 export async function deleteMonthlyBudget(

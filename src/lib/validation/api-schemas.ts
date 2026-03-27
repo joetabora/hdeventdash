@@ -37,6 +37,18 @@ const optionalHttpsWebsite = trimmed(VENDOR_WEBSITE_MAX).default("").refine(
   "Website must be empty or a valid https:// URL"
 );
 
+/** First day of calendar month for copy-previous API */
+export const budgetCopyPreviousSchema = z
+  .object({
+    targetMonth: trimmed(10)
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "targetMonth must be YYYY-MM-DD")
+      .refine(
+        (s) => s.endsWith("-01"),
+        "targetMonth must be the first day of a month (YYYY-MM-01)"
+      ),
+  })
+  .strict();
+
 export const budgetUpsertSchema = z
   .object({
     month: trimmed(10)

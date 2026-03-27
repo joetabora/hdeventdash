@@ -10,6 +10,7 @@ import {
 import {
   getMonthlyBudgetsForMonth,
   budgetMonthToDbDate,
+  loadMonthCapTimeline,
 } from "@/lib/budgets";
 import { BudgetPageClient } from "./budget-page-client";
 import { Loader2 } from "lucide-react";
@@ -23,7 +24,8 @@ export default async function BudgetPage() {
   const supabase = await createClient();
   const budgetMonth = currentYearMonth();
   const active = await getEventsForDashboard(supabase);
-  const [initialMonthlyBudgets, initialAggregates] = await Promise.all([
+  const [initialMonthlyBudgets, initialAggregates, initialMonthTimeline] =
+    await Promise.all([
     getMonthlyBudgetsForMonth(supabase, budgetMonthToDbDate(budgetMonth)),
     fetchDashboardAggregates(supabase, {
       budgetMonth,
@@ -38,6 +40,7 @@ export default async function BudgetPage() {
       );
       return parseDashboardAggregatesJson({});
     }),
+    loadMonthCapTimeline(supabase),
   ]);
 
   const budgetClientKey = [
@@ -60,6 +63,7 @@ export default async function BudgetPage() {
         initialMonthlyBudgets={initialMonthlyBudgets}
         initialBudgetMonth={budgetMonth}
         initialAggregates={initialAggregates}
+        initialMonthTimeline={initialMonthTimeline}
       />
     </Suspense>
   );

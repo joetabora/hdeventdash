@@ -62,6 +62,8 @@ interface BudgetSummaryCardProps {
   locationKeyFilter: string;
   canManageBudgets: boolean;
   onBudgetsUpdated: () => void;
+  /** Extra planning copy on the Budget page (timeline + preset months). */
+  planningMode?: boolean;
 }
 
 export function BudgetSummaryCard({
@@ -73,6 +75,7 @@ export function BudgetSummaryCard({
   locationKeyFilter,
   canManageBudgets,
   onBudgetsUpdated,
+  planningMode = false,
 }: BudgetSummaryCardProps) {
   const [newLocation, setNewLocation] = useState("");
   const [newAmount, setNewAmount] = useState("");
@@ -168,6 +171,13 @@ export function BudgetSummaryCard({
               Budget overview
             </p>
             <p className="text-xs text-harley-text-muted mt-1 max-w-xl leading-relaxed">
+              {planningMode && (
+                <span className="block mb-1.5">
+                  The timeline above lists upcoming months; each month stores its
+                  own caps. Use the period control or timeline to switch months and
+                  preset budgets before events are scheduled.
+                </span>
+              )}
               {locationKeyFilter ? (
                 <>
                   Events at &quot;{filterLocationLabel}&quot; · month {budgetMonth}
@@ -271,10 +281,16 @@ export function BudgetSummaryCard({
           <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-harley-text-muted">
             Manage caps
           </p>
+          {planningMode && (
+            <p className="text-[11px] font-medium text-harley-orange mt-1 mb-1 tabular-nums">
+              New rows apply to {budgetMonth}
+            </p>
+          )}
           <p className="text-xs text-harley-text-muted mt-1 mb-4">
             Use the same venue label as on events. Caps are matched by a
             normalized key (spacing and punctuation don&apos;t matter). One cap
-            per venue per month.
+            per venue per month
+            {planningMode ? " (for the selected calendar month only)." : "."}
           </p>
           {monthlyBudgets.length > 0 && (
             <ul className="space-y-2 mb-4">

@@ -4,10 +4,17 @@ import { useMemo, useState, useRef, useEffect, useCallback } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Event, MonthlyBudget } from "@/types/database";
 import { BudgetSummaryCard } from "@/components/dashboard/budget-summary-card";
+import { BudgetMonthTimeline } from "@/components/budget/budget-month-timeline";
 import { normalizeLocationKey } from "@/lib/location-key";
-import { getMonthlyBudgetsForMonth, budgetMonthToDbDate } from "@/lib/budgets";
+import {
+  getMonthlyBudgetsForMonth,
+  budgetMonthToDbDate,
+  loadMonthCapTimeline,
+  type MonthCapRollup,
+} from "@/lib/budgets";
 import type { DashboardAggregates } from "@/lib/dashboard-aggregates";
 import { useAppRole } from "@/contexts/app-role-context";
+import { apiFetchJson } from "@/lib/api/api-fetch-json";
 import { Filter, Wallet } from "lucide-react";
 
 export function BudgetPageClient({
@@ -15,17 +22,22 @@ export function BudgetPageClient({
   initialMonthlyBudgets,
   initialBudgetMonth,
   initialAggregates,
+  initialMonthTimeline,
 }: {
   initialEvents: Event[];
   initialMonthlyBudgets: MonthlyBudget[];
   initialBudgetMonth: string;
   initialAggregates: DashboardAggregates;
+  initialMonthTimeline: MonthCapRollup[];
 }) {
   const [events] = useState(initialEvents);
   const [budgetMonth, setBudgetMonth] = useState(initialBudgetMonth);
   const [monthlyBudgets, setMonthlyBudgets] = useState(initialMonthlyBudgets);
   const [locationKeyFilter, setLocationKeyFilter] = useState("");
   const [aggregates, setAggregates] = useState(initialAggregates);
+  const [monthTimeline, setMonthTimeline] =
+    useState<MonthCapRollup[]>(initialMonthTimeline);
+  const [copying, setCopying] = useState(false);
   const skipInitialAgg = useRef(true);
   const skipInitialBudgetMonth = useRef(true);
   const { canManageEvents } = useAppRole();
@@ -41,6 +53,15 @@ export function BudgetPageClient({
       a[1].localeCompare(b[1], undefined, { sensitivity: "base" })
     );
   }, [events]);
+
+  const refreshTimeline = useCallback(async () => {
+    const supabase = getSupabaseBrowserClient();
+    try {
+      setMonthTimeline(await loadMonthCapTimeline(supabase));
+    } catch {
+      /* keep previous */
+    }
+  }, []);
 
   const refetchAggregates = useCallback(async () => {
     const params = new URLSearchParams({
@@ -101,6 +122,33 @@ export function BudgetPageClient({
     }
   }
 
+  async function handleBudgetsChanged() {
+    await reloadMonthlyBudgetsForPickerMonth();
+    await refreshTimeline();
+  }
+
+  async function handleCopyPrevious() {
+    setCopying(true);
+    try {
+      await apiFetchJson<{ ok: boolean; copied: number }>(
+        "/api/budgets/copy-previous",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            targetMonth: budgetMonthToDbDate(budgetMonth),
+          }),
+        }
+      );
+      await handleBudgetsChanged();
+      void refetchAggregates();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setCopying(false);
+    }
+  }
+
   return (
     <div className="space-y-6 max-w-4xl">
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
@@ -114,6 +162,15 @@ export function BudgetPageClient({
           </div>
         </div>
       </div>
+
+      <BudgetMonthTimeline
+        timeline={monthTimeline}
+        selectedYearMonth={budgetMonth}
+        onSelectMonth={setBudgetMonth}
+        canManage={canManageEvents}
+        copying={copying}
+        onCopyPrevious={handleCopyPrevious}
+      />
 
       {locationOptions.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
@@ -144,7 +201,8 @@ export function BudgetPageClient({
         onBudgetMonthChange={setBudgetMonth}
         locationKeyFilter={locationKeyFilter}
         canManageBudgets={canManageEvents}
-        onBudgetsUpdated={() => void reloadMonthlyBudgetsForPickerMonth()}
+        onBudgetsUpdated={() => void handleBudgetsChanged()}
+        planningMode
       />
     </div>
   );
