@@ -49,7 +49,8 @@ npm install
 5. For monthly budgets and event planned/actual amounts, run `supabase-migration-budgets.sql` after ROI and event-type migrations (it replaces `events_enforce_staff_update` and must include `event_type` and ROI columns in that function)
 6. Run `supabase-migration-create-event-with-checklist-rpc.sql` after budgets (atomic `create_event_with_checklist` RPC used by the app when creating events)
 7. Run `supabase-migration-location-key.sql` after step 6 (`location_key` on events and monthly budgets for matching; `location` is display-only)
-8. Copy your project URL and anon key from **Settings > API**
+8. Run `supabase-migration-event-nonnegative-checks.sql` after ROI and budgets migrations (CHECK: budgets, revenue fields, and attendance on `events` are ≥ 0 when set; monthly cap amounts are already constrained in step 5)
+9. Copy your project URL and anon key from **Settings > API**
 
 ### 3. Configure environment variables
 
