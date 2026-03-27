@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getSessionOrganizationId } from "@/lib/organization-server";
 import { getUserRole, canManageEventsRole } from "@/lib/roles";
 import type { User } from "@supabase/supabase-js";
 
 export type OrgManagerContext = {
   supabase: Awaited<ReturnType<typeof createClient>>;
   user: User;
+  /** Active org for this request (cookie + membership). */
+  organizationId: string;
 };
 
 export async function getOrgManagerContext(): Promise<
@@ -24,7 +27,18 @@ export async function getOrgManagerContext(): Promise<
     };
   }
 
-  const role = await getUserRole(supabase, user.id);
+  const organizationId = await getSessionOrganizationId(supabase);
+  if (!organizationId) {
+    return {
+      ok: false,
+      response: NextResponse.json(
+        { error: "No organization membership." },
+        { status: 400 }
+      ),
+    };
+  }
+
+  const role = await getUserRole(supabase, user.id, organizationId);
   if (!canManageEventsRole(role)) {
     return {
       ok: false,
@@ -32,5 +46,5 @@ export async function getOrgManagerContext(): Promise<
     };
   }
 
-  return { ok: true, supabase, user };
+  return { ok: true, supabase, user, organizationId };
 }

@@ -29,7 +29,7 @@ interface EventFormProps {
   event?: Partial<Event>;
   /** Managers/admins only — staff cannot edit budget fields (DB-enforced). */
   canEditBudget?: boolean;
-  /** Other org events (non-archived) for planned-vs-cap check; omit to skip validation. */
+  /** Other events in the same organization (non-archived) for planned-vs-cap check; omit to skip validation. */
   allEvents?: Event[];
   onSubmit: (data: {
     name: string;

@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getOrgManagerContext } from "@/lib/admin/require-org-manager";
-import { getCurrentOrganizationId } from "@/lib/organization";
 import { updateEventVendor, detachVendorFromEvent } from "@/lib/vendors";
 import { eventVendorPatchSchema } from "@/lib/validation/api-schemas";
 import {
@@ -68,12 +67,12 @@ export async function PATCH(
   if (!linkCheck.ok) return linkCheck.response;
   const linkId = linkCheck.id;
 
-  const orgId = await getCurrentOrganizationId(ctx.supabase);
-  if (!orgId) {
-    return NextResponse.json({ error: "No organization." }, { status: 400 });
-  }
-
-  const gate = await assertLinkInOrgEvent(ctx.supabase, eventId, linkId, orgId);
+  const gate = await assertLinkInOrgEvent(
+    ctx.supabase,
+    eventId,
+    linkId,
+    ctx.organizationId
+  );
   if (!gate.ok) return gate.response;
 
   const raw = await readJsonBody(request);
@@ -110,12 +109,12 @@ export async function DELETE(
   if (!linkCheck.ok) return linkCheck.response;
   const linkId = linkCheck.id;
 
-  const orgId = await getCurrentOrganizationId(ctx.supabase);
-  if (!orgId) {
-    return NextResponse.json({ error: "No organization." }, { status: 400 });
-  }
-
-  const gate = await assertLinkInOrgEvent(ctx.supabase, eventId, linkId, orgId);
+  const gate = await assertLinkInOrgEvent(
+    ctx.supabase,
+    eventId,
+    linkId,
+    ctx.organizationId
+  );
   if (!gate.ok) return gate.response;
 
   try {

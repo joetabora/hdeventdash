@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { getOrgManagerContext } from "@/lib/admin/require-org-manager";
-import { getCurrentOrganizationId } from "@/lib/organization";
 import { attachVendorToEvent } from "@/lib/vendors";
 import { attachEventVendorSchema } from "@/lib/validation/api-schemas";
 import { parseUuidParam, parseWithSchema, readJsonBody } from "@/lib/validation/request-json";
@@ -17,10 +16,7 @@ export async function POST(
   if (!eventCheck.ok) return eventCheck.response;
   const eventId = eventCheck.id;
 
-  const orgId = await getCurrentOrganizationId(ctx.supabase);
-  if (!orgId) {
-    return NextResponse.json({ error: "No organization." }, { status: 400 });
-  }
+  const orgId = ctx.organizationId;
 
   const { data: ev, error: evError } = await ctx.supabase
     .from("events")

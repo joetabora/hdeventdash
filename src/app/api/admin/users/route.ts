@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getOrgAdminContext } from "@/lib/admin/require-org-admin";
 import { listManagedUsersForAdmin } from "@/lib/admin/managed-users";
 import { setUserRole } from "@/lib/roles";
-import { addMemberToCurrentOrganization } from "@/lib/organization";
+import { addMemberToOrganization } from "@/lib/organization";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { adminCreateUserSchema } from "@/lib/validation/api-schemas";
 import { parseWithSchema, readJsonBody } from "@/lib/validation/request-json";
@@ -14,7 +14,7 @@ export async function GET() {
   const { supabase, user } = ctx;
 
   try {
-    const users = await listManagedUsersForAdmin(supabase);
+    const users = await listManagedUsersForAdmin(supabase, ctx.organizationId);
     return NextResponse.json({
       users,
       currentUserId: user.id,
@@ -70,8 +70,8 @@ export async function POST(request: Request) {
   const newId = data.user.id;
 
   try {
-    await addMemberToCurrentOrganization(ctx.supabase, newId);
-    await setUserRole(ctx.supabase, newId, role);
+    await addMemberToOrganization(ctx.supabase, newId, ctx.organizationId);
+    await setUserRole(ctx.supabase, newId, role, ctx.organizationId);
   } catch (e) {
     const message =
       e instanceof Error ? e.message : "Failed to assign organization or role";

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getSessionOrganizationId } from "@/lib/organization-server";
 import { isAdmin } from "@/lib/roles";
 import {
   listManagedUsersForAdmin,
@@ -25,7 +26,19 @@ export default async function AdminUsersPage() {
     );
   }
 
-  const allowed = await isAdmin(supabase, user.id);
+  const organizationId = await getSessionOrganizationId(supabase);
+  if (!organizationId) {
+    return (
+      <UserManagementClient
+        key={deniedKey}
+        initialAuthorized={false}
+        initialUsers={[]}
+        initialCurrentUserId={null}
+      />
+    );
+  }
+
+  const allowed = await isAdmin(supabase, user.id, organizationId);
   if (!allowed) {
     return (
       <UserManagementClient
@@ -39,7 +52,7 @@ export default async function AdminUsersPage() {
 
   let initialUsers: ManagedUserDto[];
   try {
-    initialUsers = await listManagedUsersForAdmin(supabase);
+    initialUsers = await listManagedUsersForAdmin(supabase, organizationId);
   } catch (e) {
     console.error("Admin users list:", e);
     initialUsers = [];

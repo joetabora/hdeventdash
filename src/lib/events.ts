@@ -190,14 +190,17 @@ export async function uploadDocument(
   eventId: string,
   file: File,
   tag: DocumentTag,
-  uploadedBy: string
+  uploadedBy: string,
+  /** When omitted, resolved from the Supabase session (first membership / client). */
+  organizationId?: string | null
 ) {
   validateEventUploadFile(file);
 
-  const organizationId = await getCurrentOrganizationId(supabase);
-  if (!organizationId) throw new Error("No organization");
+  const orgId =
+    organizationId ?? (await getCurrentOrganizationId(supabase));
+  if (!orgId) throw new Error("No organization");
 
-  const filePath = `${organizationId}/${eventId}/${Date.now()}-${file.name}`;
+  const filePath = `${orgId}/${eventId}/${Date.now()}-${file.name}`;
 
   const { error: uploadError } = await supabase.storage
     .from(EVENT_DOCUMENTS_BUCKET)
@@ -332,14 +335,16 @@ export async function uploadMedia(
   eventId: string,
   file: File,
   tag: MediaTag,
-  uploadedBy: string
+  uploadedBy: string,
+  organizationId?: string | null
 ) {
   validateEventUploadFile(file);
 
-  const organizationId = await getCurrentOrganizationId(supabase);
-  if (!organizationId) throw new Error("No organization");
+  const orgId =
+    organizationId ?? (await getCurrentOrganizationId(supabase));
+  if (!orgId) throw new Error("No organization");
 
-  const filePath = `${organizationId}/${eventId}/media/${Date.now()}-${file.name}`;
+  const filePath = `${orgId}/${eventId}/media/${Date.now()}-${file.name}`;
 
   const { error: uploadError } = await supabase.storage
     .from(EVENT_DOCUMENTS_BUCKET)

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getSessionOrganizationId } from "@/lib/organization-server";
 import { getEvents } from "@/lib/events";
 import { getUserRole, canManageEventsRole } from "@/lib/roles";
 import { NewEventClient } from "./new-event-client";
@@ -14,7 +15,12 @@ export default async function NewEventPage() {
     redirect("/auth/login");
   }
 
-  const role = await getUserRole(supabase, user.id);
+  const organizationId = await getSessionOrganizationId(supabase);
+  if (!organizationId) {
+    redirect("/dashboard");
+  }
+
+  const role = await getUserRole(supabase, user.id, organizationId);
   if (!canManageEventsRole(role)) {
     redirect("/dashboard");
   }

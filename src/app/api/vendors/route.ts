@@ -15,7 +15,10 @@ export async function POST(request: Request) {
   if (!parsed.ok) return parsed.response;
 
   try {
-    const vendor = await createVendor(ctx.supabase, parsed.data);
+    const vendor = await createVendor(ctx.supabase, {
+      ...parsed.data,
+      organization_id: ctx.organizationId,
+    });
     return NextResponse.json(vendor);
   } catch (e) {
     console.error("POST /api/vendors:", e);

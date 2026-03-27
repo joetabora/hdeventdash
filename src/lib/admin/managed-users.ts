@@ -12,12 +12,14 @@ export interface ManagedUserDto {
 
 /** Org-scoped member list with roles; enriches emails via Auth Admin when service role is configured. */
 export async function listManagedUsersForAdmin(
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
+  organizationId: string
 ): Promise<ManagedUserDto[]> {
-  const roles = await getAllUserRoles(supabase);
+  const roles = await getAllUserRoles(supabase, organizationId);
   const { data: memberRows, error: membersError } = await supabase
     .from("organization_members")
-    .select("user_id");
+    .select("user_id")
+    .eq("organization_id", organizationId);
   if (membersError) throw membersError;
 
   const memberIds = new Set(

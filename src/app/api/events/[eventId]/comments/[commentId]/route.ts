@@ -20,7 +20,8 @@ export async function DELETE(
   const belongs = await assertCommentForEvent(
     ctx.supabase,
     eventCheck.id,
-    commentCheck.id
+    commentCheck.id,
+    ctx.organizationId
   );
   if (!belongs.ok) return belongs.response;
 

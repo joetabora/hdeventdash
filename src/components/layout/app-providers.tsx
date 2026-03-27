@@ -1,15 +1,29 @@
 "use client";
 
 import { AppRoleProvider } from "@/contexts/app-role-context";
-import type { UserRole } from "@/types/database";
+import { CurrentOrganizationProvider } from "@/contexts/current-organization-context";
+import type { Organization, UserRole } from "@/types/database";
 
-/** Client root: role from RSC layout (no client auth bootstrap on mount). */
+/** Client root: role and org scope from RSC layout (no client auth bootstrap on mount). */
 export function AppProviders({
   children,
   role,
+  currentOrganization,
+  memberships,
 }: {
   children: React.ReactNode;
   role: UserRole | null;
+  currentOrganization: Organization | null;
+  memberships: Organization[];
 }) {
-  return <AppRoleProvider role={role}>{children}</AppRoleProvider>;
+  return (
+    <AppRoleProvider role={role}>
+      <CurrentOrganizationProvider
+        currentOrganization={currentOrganization}
+        memberships={memberships}
+      >
+        {children}
+      </CurrentOrganizationProvider>
+    </AppRoleProvider>
+  );
 }

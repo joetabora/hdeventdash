@@ -20,7 +20,8 @@ export async function DELETE(
   const loaded = await loadEventDocumentForEvent(
     ctx.supabase,
     eventCheck.id,
-    docCheck.id
+    docCheck.id,
+    ctx.organizationId
   );
   if (!loaded.ok) return loaded.response;
 

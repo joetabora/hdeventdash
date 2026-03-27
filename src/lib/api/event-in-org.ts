@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getCurrentOrganizationId } from "@/lib/organization";
+import { getSessionOrganizationId } from "@/lib/organization-server";
 
 export async function assertEventInOrganization(
   supabase: SupabaseClient,
-  eventId: string
+  eventId: string,
+  /** When set (including `null`), skip re-resolving; `null` means no active org. */
+  resolvedOrganizationId?: string | null
 ): Promise<{ ok: true } | { ok: false; response: NextResponse }> {
-  const orgId = await getCurrentOrganizationId(supabase);
+  const orgId =
+    resolvedOrganizationId !== undefined
+      ? resolvedOrganizationId
+      : await getSessionOrganizationId(supabase);
   if (!orgId) {
     return {
       ok: false,
@@ -41,12 +46,17 @@ export async function assertEventInOrganization(
 export async function assertChecklistItemForEvent(
   supabase: SupabaseClient,
   eventId: string,
-  itemId: string
+  itemId: string,
+  resolvedOrganizationId?: string | null
 ): Promise<
   | { ok: true; item: { id: string; event_id: string } }
   | { ok: false; response: NextResponse }
 > {
-  const orgCheck = await assertEventInOrganization(supabase, eventId);
+  const orgCheck = await assertEventInOrganization(
+    supabase,
+    eventId,
+    resolvedOrganizationId
+  );
   if (!orgCheck.ok) return orgCheck;
 
   const { data: row, error } = await supabase
@@ -76,12 +86,17 @@ export async function assertChecklistItemForEvent(
 export async function assertCommentForEvent(
   supabase: SupabaseClient,
   eventId: string,
-  commentId: string
+  commentId: string,
+  resolvedOrganizationId?: string | null
 ): Promise<
   | { ok: true; comment: { id: string; event_id: string } }
   | { ok: false; response: NextResponse }
 > {
-  const orgCheck = await assertEventInOrganization(supabase, eventId);
+  const orgCheck = await assertEventInOrganization(
+    supabase,
+    eventId,
+    resolvedOrganizationId
+  );
   if (!orgCheck.ok) return orgCheck;
 
   const { data: row, error } = await supabase
@@ -111,9 +126,14 @@ export async function assertCommentForEvent(
 export async function loadEventDocumentForEvent(
   supabase: SupabaseClient,
   eventId: string,
-  documentId: string
+  documentId: string,
+  resolvedOrganizationId?: string | null
 ) {
-  const orgCheck = await assertEventInOrganization(supabase, eventId);
+  const orgCheck = await assertEventInOrganization(
+    supabase,
+    eventId,
+    resolvedOrganizationId
+  );
   if (!orgCheck.ok) return orgCheck;
 
   const { data: doc, error } = await supabase
@@ -143,9 +163,14 @@ export async function loadEventDocumentForEvent(
 export async function loadEventMediaForEvent(
   supabase: SupabaseClient,
   eventId: string,
-  mediaId: string
+  mediaId: string,
+  resolvedOrganizationId?: string | null
 ) {
-  const orgCheck = await assertEventInOrganization(supabase, eventId);
+  const orgCheck = await assertEventInOrganization(
+    supabase,
+    eventId,
+    resolvedOrganizationId
+  );
   if (!orgCheck.ok) return orgCheck;
 
   const { data: row, error } = await supabase

@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getSessionOrganizationId } from "@/lib/organization-server";
 import type { User } from "@supabase/supabase-js";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type SessionContext = {
   supabase: SupabaseClient;
   user: User;
+  /** Resolved org for this request; null if the user has no membership. */
+  organizationId: string | null;
 };
 
 export async function requireSession(): Promise<
@@ -24,5 +27,7 @@ export async function requireSession(): Promise<
     };
   }
 
-  return { ok: true, supabase, user };
+  const organizationId = await getSessionOrganizationId(supabase);
+
+  return { ok: true, supabase, user, organizationId };
 }

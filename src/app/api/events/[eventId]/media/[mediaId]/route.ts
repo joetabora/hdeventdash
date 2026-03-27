@@ -20,7 +20,8 @@ export async function DELETE(
   const loaded = await loadEventMediaForEvent(
     ctx.supabase,
     eventCheck.id,
-    mediaCheck.id
+    mediaCheck.id,
+    ctx.organizationId
   );
   if (!loaded.ok) return loaded.response;
 

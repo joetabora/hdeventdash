@@ -28,13 +28,21 @@ export async function PATCH(
   const idCheck = parseUuidParam(rawEventId, "event id");
   if (!idCheck.ok) return idCheck.response;
 
-  const inOrg = await assertEventInOrganization(session.supabase, idCheck.id);
+  const inOrg = await assertEventInOrganization(
+    session.supabase,
+    idCheck.id,
+    session.organizationId
+  );
   if (!inOrg.ok) return inOrg.response;
 
   const raw = await readJsonBody(request);
   if (!raw.ok) return raw.response;
 
-  const role = await getUserRole(session.supabase, session.user.id);
+  const role = await getUserRole(
+    session.supabase,
+    session.user.id,
+    session.organizationId
+  );
   const manager = canManageEventsRole(role);
 
   try {
@@ -69,10 +77,18 @@ export async function DELETE(
   const idCheck = parseUuidParam(rawEventId, "event id");
   if (!idCheck.ok) return idCheck.response;
 
-  const inOrg = await assertEventInOrganization(session.supabase, idCheck.id);
+  const inOrg = await assertEventInOrganization(
+    session.supabase,
+    idCheck.id,
+    session.organizationId
+  );
   if (!inOrg.ok) return inOrg.response;
 
-  const admin = await isAdmin(session.supabase, session.user.id);
+  const admin = await isAdmin(
+    session.supabase,
+    session.user.id,
+    session.organizationId
+  );
   if (!admin) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }

@@ -26,14 +26,19 @@ export async function PATCH(
   const belongs = await assertChecklistItemForEvent(
     session.supabase,
     eventCheck.id,
-    itemCheck.id
+    itemCheck.id,
+    session.organizationId
   );
   if (!belongs.ok) return belongs.response;
 
   const raw = await readJsonBody(request);
   if (!raw.ok) return raw.response;
 
-  const role = await getUserRole(session.supabase, session.user.id);
+  const role = await getUserRole(
+    session.supabase,
+    session.user.id,
+    session.organizationId
+  );
   const manager = canManageEventsRole(role);
 
   try {
@@ -81,7 +86,8 @@ export async function DELETE(
   const belongs = await assertChecklistItemForEvent(
     ctx.supabase,
     eventCheck.id,
-    itemCheck.id
+    itemCheck.id,
+    ctx.organizationId
   );
   if (!belongs.ok) return belongs.response;
 

@@ -17,7 +17,11 @@ export async function POST(
   const idCheck = parseUuidParam(rawEventId, "event id");
   if (!idCheck.ok) return idCheck.response;
 
-  const inOrg = await assertEventInOrganization(ctx.supabase, idCheck.id);
+  const inOrg = await assertEventInOrganization(
+    ctx.supabase,
+    idCheck.id,
+    ctx.organizationId
+  );
   if (!inOrg.ok) return inOrg.response;
 
   let form: FormData;
@@ -54,7 +58,8 @@ export async function POST(
       idCheck.id,
       file,
       tagParsed.data,
-      ctx.user.email ?? "unknown"
+      ctx.user.email ?? "unknown",
+      ctx.organizationId
     );
     return NextResponse.json(row);
   } catch (e) {

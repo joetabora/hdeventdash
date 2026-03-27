@@ -16,7 +16,11 @@ export async function POST(
   const idCheck = parseUuidParam(rawEventId, "event id");
   if (!idCheck.ok) return idCheck.response;
 
-  const inOrg = await assertEventInOrganization(ctx.supabase, idCheck.id);
+  const inOrg = await assertEventInOrganization(
+    ctx.supabase,
+    idCheck.id,
+    ctx.organizationId
+  );
   if (!inOrg.ok) return inOrg.response;
 
   const raw = await readJsonBody(request);

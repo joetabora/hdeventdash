@@ -28,7 +28,7 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (!parsed.ok) return parsed.response;
 
   try {
-    await setUserRole(ctx.supabase, userId, parsed.data.role);
+    await setUserRole(ctx.supabase, userId, parsed.data.role, ctx.organizationId);
     return NextResponse.json({ ok: true });
   } catch (e) {
     const message =
