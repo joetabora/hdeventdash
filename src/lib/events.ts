@@ -94,7 +94,27 @@ export async function getEventBudgetSummariesForMonth(
     .gte("date", monthStart)
     .lt("date", nextStart);
   if (error) throw error;
-  return (data ?? []) as EventBudgetPeer[];
+  const peers = (data ?? []) as Omit<EventBudgetPeer, "checklist_estimated_total">[];
+  const ids = peers.map((p) => p.id);
+  if (ids.length === 0) return [];
+
+  const { data: costRows, error: costErr } = await supabase
+    .from("checklist_items")
+    .select("event_id, estimated_cost")
+    .in("event_id", ids);
+  if (costErr) throw costErr;
+
+  const byEvent = new Map<string, number>();
+  for (const row of costRows ?? []) {
+    const r = row as { event_id: string; estimated_cost?: unknown };
+    const add = Number(r.estimated_cost) || 0;
+    byEvent.set(r.event_id, (byEvent.get(r.event_id) ?? 0) + add);
+  }
+
+  return peers.map((p) => ({
+    ...p,
+    checklist_estimated_total: byEvent.get(p.id) ?? 0,
+  }));
 }
 
 export type { EventBudgetPeer };
@@ -204,7 +224,11 @@ export async function getChecklistItems(supabase: SupabaseClient, eventId: strin
     .eq("event_id", eventId)
     .order("sort_order", { ascending: true });
   if (error) throw error;
-  return data as ChecklistItem[];
+  return (data ?? []).map((row) => ({
+    ...row,
+    estimated_cost:
+      (row as { estimated_cost?: number | null }).estimated_cost ?? null,
+  })) as ChecklistItem[];
 }
 
 export async function updateChecklistItem(
@@ -219,7 +243,11 @@ export async function updateChecklistItem(
     .select()
     .single();
   if (error) throw error;
-  return data as ChecklistItem;
+  return {
+    ...data,
+    estimated_cost:
+      (data as { estimated_cost?: number | null }).estimated_cost ?? null,
+  } as ChecklistItem;
 }
 
 export async function addChecklistItem(
@@ -229,15 +257,23 @@ export async function addChecklistItem(
     section: ChecklistSection;
     label: string;
     sort_order: number;
+    estimated_cost?: number | null;
   }
 ) {
   const { data, error } = await supabase
     .from("checklist_items")
-    .insert(item)
+    .insert({
+      ...item,
+      estimated_cost: item.estimated_cost ?? null,
+    })
     .select()
     .single();
   if (error) throw error;
-  return data as ChecklistItem;
+  return {
+    ...data,
+    estimated_cost:
+      (data as { estimated_cost?: number | null }).estimated_cost ?? null,
+  } as ChecklistItem;
 }
 
 export async function deleteChecklistItem(supabase: SupabaseClient, id: string) {

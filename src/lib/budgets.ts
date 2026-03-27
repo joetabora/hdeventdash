@@ -3,6 +3,18 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { Event, MonthlyBudget } from "@/types/database";
 import { normalizeLocationKey } from "@/lib/location-key";
 
+/** Sum optional checklist line estimates for one event (live checklist state). */
+export function sumChecklistEstimatedCost(
+  items: readonly { estimated_cost?: number | null }[]
+): number {
+  let s = 0;
+  for (const i of items) {
+    if (i.estimated_cost == null) continue;
+    s += Number(i.estimated_cost) || 0;
+  }
+  return s;
+}
+
 /** Months shown on the Budget page planning strip (including current). */
 export const BUDGET_PLANNING_MONTH_COUNT = 24;
 
@@ -98,7 +110,18 @@ export async function loadMonthCapTimeline(
 export type EventBudgetPeer = Pick<
   Event,
   "id" | "date" | "location" | "location_key" | "planned_budget" | "is_archived"
->;
+> & {
+  /** Sum of checklist item estimated_cost for this event (from DB). */
+  checklist_estimated_total: number;
+};
+
+/** Planned budget + optional checklist line-item estimates (monthly cap math). */
+export function eventBudgetPeerCommittedSpend(e: EventBudgetPeer): number {
+  return (
+    (Number(e.planned_budget) || 0) +
+    (Number(e.checklist_estimated_total) || 0)
+  );
+}
 
 /** First calendar day of the month after `yearMonth` (`YYYY-MM`). */
 export function firstDayOfNextCalendarMonth(yearMonth: string): string {
@@ -207,7 +230,7 @@ export async function deleteMonthlyBudget(
   if (error) throw error;
 }
 
-/** Sum planned_budget for events whose date falls in yearMonth, optional location_key match. */
+/** Sum planned_budget + checklist estimated_cost for events in yearMonth, optional location_key match. */
 export function sumPlannedBudgetForMonth(
   events: readonly EventBudgetPeer[],
   yearMonth: string,
@@ -219,7 +242,7 @@ export function sumPlannedBudgetForMonth(
     if (eventDateToYearMonth(e.date) !== yearMonth) continue;
     const key = e.location_key ?? normalizeLocationKey(e.location);
     if (locationKeyFilter && key !== locationKeyFilter) continue;
-    sum += Number(e.planned_budget) || 0;
+    sum += eventBudgetPeerCommittedSpend(e);
   }
   return sum;
 }
@@ -252,7 +275,7 @@ export function sumOthersPlannedForMonth(
     if (excludeEventId && e.id === excludeEventId) continue;
     const key = e.location_key ?? normalizeLocationKey(e.location);
     if (eventLocationKey && key !== eventLocationKey) continue;
-    sum += Number(e.planned_budget) || 0;
+    sum += eventBudgetPeerCommittedSpend(e);
   }
   return sum;
 }

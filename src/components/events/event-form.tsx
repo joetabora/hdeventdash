@@ -37,6 +37,8 @@ interface EventFormProps {
   /** When this matches `yearMonth` from the date field, caps come from the parent (SSR / refetch) instead of a separate client query. */
   prefetchedMonthlyBudgets?: MonthlyBudget[];
   prefetchedForYearMonth?: string | null;
+  /** Sum of checklist line estimated costs for this event (edit flow); included in cap math with planned budget. */
+  checklistEstimatedTotalForEvent?: number;
   onSubmit: (data: {
     name: string;
     date: string;
@@ -66,6 +68,7 @@ export function EventForm({
   allEvents = [],
   prefetchedMonthlyBudgets,
   prefetchedForYearMonth = null,
+  checklistEstimatedTotalForEvent = 0,
   onBudgetPeersMonthChange,
   onSubmit,
   onCancel,
@@ -148,11 +151,14 @@ export function EventForm({
         cap: 0,
         othersPlanned: 0,
         thisPlanned: 0,
+        checklistLineSpend: 0,
         total: 0,
         exceeds: false,
       };
     }
     const thisPlanned = numOrNull(plannedBudget) ?? 0;
+    const checklistLineSpend = Math.max(0, checklistEstimatedTotalForEvent);
+    const thisCommitted = thisPlanned + checklistLineSpend;
     const cap = totalMonthlyBudgetCapacity(capBudgetRows, locationKey);
     const othersPlanned = sumOthersPlannedForMonth(
       allEvents,
@@ -160,12 +166,13 @@ export function EventForm({
       locationKey,
       event?.id
     );
-    const total = othersPlanned + thisPlanned;
+    const total = othersPlanned + thisCommitted;
     const exceeds = cap > 0 && total > cap;
     return {
       cap,
       othersPlanned,
       thisPlanned,
+      checklistLineSpend,
       total,
       exceeds,
     };
@@ -176,12 +183,13 @@ export function EventForm({
     capBudgetRows,
     locationKey,
     plannedBudget,
+    checklistEstimatedTotalForEvent,
     event?.id,
   ]);
 
   useEffect(() => {
     void Promise.resolve().then(() => setBudgetOverrideConfirmed(false));
-  }, [date, location, plannedBudget, yearMonth]);
+  }, [date, location, plannedBudget, yearMonth, checklistEstimatedTotalForEvent]);
 
   useEffect(() => {
     if (!canEditBudget || !onBudgetPeersMonthChange) return;
@@ -315,7 +323,7 @@ export function EventForm({
               {budgetsLoadingEffective
                 ? "Loading monthly cap…"
                 : budgetCheck.cap > 0
-                  ? `Monthly cap for ${yearMonth}${locationTrimmed ? ` · ${locationTrimmed}` : " (all locations combined)"}: ${formatUsd(budgetCheck.cap)} · Other events this month: ${formatUsd(budgetCheck.othersPlanned)}`
+                  ? `Monthly cap for ${yearMonth}${locationTrimmed ? ` · ${locationTrimmed}` : " (all locations combined)"}: ${formatUsd(budgetCheck.cap)} · Other events this month: ${formatUsd(budgetCheck.othersPlanned)}${budgetCheck.checklistLineSpend > 0 ? ` · Checklist estimates (this event): ${formatUsd(budgetCheck.checklistLineSpend)}` : ""}`
                   : `No monthly cap set for ${yearMonth}${locationTrimmed ? ` at "${locationTrimmed}"` : ""}. Add caps on the Budget page if you want warnings.`}
             </p>
           )}
@@ -328,14 +336,22 @@ export function EventForm({
                       Planned total would exceed the monthly budget
                     </p>
                     <p className="text-harley-text-muted mt-1 leading-relaxed">
-                      With this event, planned spend for{" "}
+                      With this event, committed spend for{" "}
                       <strong>{yearMonth}</strong>
                       {locationTrimmed
                         ? <> at <strong>{locationTrimmed}</strong></>
                         : <> (all locations)</>}{" "}
                       would be{" "}
-                      <strong>{formatUsd(budgetCheck.total)}</strong>,
-                      over the cap of{" "}
+                      <strong>{formatUsd(budgetCheck.total)}</strong>
+                      {budgetCheck.checklistLineSpend > 0 ? (
+                        <>
+                          {" "}
+                          (including{" "}
+                          {formatUsd(budgetCheck.checklistLineSpend)} from
+                          checklist line items)
+                        </>
+                      ) : null}
+                      , over the cap of{" "}
                       <strong>{formatUsd(budgetCheck.cap)}</strong> (
                       {formatUsd(budgetCheck.total - budgetCheck.cap)}{" "}
                       over).

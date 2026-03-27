@@ -12,6 +12,7 @@ import {
   eventDateToYearMonth,
   totalMonthlyBudgetCapacity,
   sumOthersPlannedForMonth,
+  sumChecklistEstimatedCost,
 } from "@/lib/budgets";
 import { normalizeLocationKey } from "@/lib/location-key";
 import {
@@ -47,6 +48,15 @@ export function useEventController(
     if (!event?.date || event.date.length < 7) return null;
     return eventDateToYearMonth(event.date);
   }, [event]);
+
+  const checklistEstimatedTotal = useMemo(
+    () => sumChecklistEstimatedCost(checklist),
+    [checklist]
+  );
+
+  const onBudgetContextInvalidate = useCallback(() => {
+    if (eventMonthYearMonth) void refetch.budgetContextForMonth(eventMonthYearMonth);
+  }, [eventMonthYearMonth, refetch]);
 
   const budgetSummaryForEventMonth = useMemo(() => {
     if (!event || !canManageEvents || !eventMonthYearMonth) return null;
@@ -196,6 +206,8 @@ export function useEventController(
     totalCount,
     percentage,
     onChecklistInvalidate,
+    onBudgetContextInvalidate,
+    checklistEstimatedTotal,
     handleToggleLiveMode,
     handleStatusChange,
     handleEditSubmit,

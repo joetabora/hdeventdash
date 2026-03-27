@@ -56,6 +56,7 @@ export async function apiAddChecklistItem(
     section: ChecklistSection;
     label: string;
     sort_order: number;
+    estimated_cost?: number | null;
   }
 ): Promise<ChecklistItem> {
   return apiFetchJson<ChecklistItem>(`/api/events/${eventId}/checklist`, {

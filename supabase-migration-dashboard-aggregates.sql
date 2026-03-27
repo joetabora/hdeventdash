@@ -197,8 +197,21 @@ AS $$
     FROM roi_base r
   ),
   budget_planned AS (
-    SELECT coalesce(sum(e.planned_budget), 0)::numeric AS v
+    SELECT coalesce(
+      sum(
+        coalesce(e.planned_budget, 0)
+        + coalesce(cl.checklist_estimated, 0)
+      ),
+      0
+    )::numeric AS v
     FROM public.events e
+    LEFT JOIN (
+      SELECT
+        c.event_id,
+        coalesce(sum(coalesce(c.estimated_cost, 0)), 0)::numeric AS checklist_estimated
+      FROM public.checklist_items c
+      GROUP BY c.event_id
+    ) cl ON cl.event_id = e.id
     WHERE e.organization_id = public.current_organization_id()
       AND e.is_archived = false
       AND e.date >= p_window_start

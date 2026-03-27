@@ -12,6 +12,7 @@ export function EventChecklistModule({
   checklist,
   canManageEvents,
   onChecklistInvalidate,
+  onBudgetContextInvalidate,
   atRisk,
   allChecklistComplete,
 }: {
@@ -20,6 +21,7 @@ export function EventChecklistModule({
   checklist: ChecklistItem[];
   canManageEvents: boolean;
   onChecklistInvalidate: () => void;
+  onBudgetContextInvalidate?: () => void;
   atRisk?: boolean;
   allChecklistComplete?: boolean;
 }) {
@@ -32,6 +34,7 @@ export function EventChecklistModule({
         items={items}
         eventId={eventId}
         onUpdate={onChecklistInvalidate}
+        onBudgetContextInvalidate={onBudgetContextInvalidate}
         liveMode={mode === "live"}
         allowStructureEdit={canManageEvents}
       />
@@ -69,6 +72,13 @@ export function EventChecklistModule({
       title="Checklist"
       defaultOpen={true}
     >
+      {canManageEvents && (
+        <p className="text-xs text-harley-text-muted mb-3 leading-relaxed">
+          Open item details to set an optional estimated cost per line. Those
+          amounts roll into the monthly venue budget with this event&apos;s
+          planned budget.
+        </p>
+      )}
       <div className="space-y-3">{sections}</div>
     </CollapsibleSection>
   );

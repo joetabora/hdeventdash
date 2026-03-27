@@ -35,6 +35,7 @@ export async function POST(
       section: parsed.data.section,
       label: parsed.data.label,
       sort_order: parsed.data.sort_order,
+      estimated_cost: parsed.data.estimated_cost ?? null,
     });
     return NextResponse.json(row);
   } catch (e) {

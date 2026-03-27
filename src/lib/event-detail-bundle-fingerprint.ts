@@ -50,6 +50,7 @@ export function eventDetailBundleFingerprint(input: {
         sc: c.section,
         a: c.assignee,
         cm: c.comment,
+        ec: c.estimated_cost ?? null,
       }))
     ),
     JSON.stringify(
@@ -85,7 +86,11 @@ export function eventDetailBundleFingerprint(input: {
       ])
     ),
     JSON.stringify(
-      sortById(budgetPeers).map((e) => [e.id, e.planned_budget])
+      sortById(budgetPeers).map((e) => [
+        e.id,
+        e.planned_budget,
+        e.checklist_estimated_total,
+      ])
     ),
     JSON.stringify(
       sortById(monthlyBudgetsForEventMonth).map((b) => [

@@ -90,6 +90,7 @@ export function EventDetailClient({
             checklist={c.checklist}
             canManageEvents={c.canManageEvents}
             onChecklistInvalidate={c.onChecklistInvalidate}
+            onBudgetContextInvalidate={c.onBudgetContextInvalidate}
             atRisk={c.atRisk}
             allChecklistComplete={c.allChecklistComplete}
           />
@@ -134,6 +135,7 @@ export function EventDetailClient({
           checklist={c.checklist}
           canManageEvents={c.canManageEvents}
           onChecklistInvalidate={c.onChecklistInvalidate}
+          onBudgetContextInvalidate={c.onBudgetContextInvalidate}
         />
 
         <EventDetailVendors
@@ -214,6 +216,7 @@ export function EventDetailClient({
             allEvents={c.budgetPeers}
             prefetchedMonthlyBudgets={c.monthlyBudgetsForEventMonth}
             prefetchedForYearMonth={c.eventMonthYearMonth}
+            checklistEstimatedTotalForEvent={c.checklistEstimatedTotal}
             onBudgetPeersMonthChange={c.onBudgetPeersMonthChange}
             onSubmit={c.handleEditSubmit}
             onCancel={() => c.setEditModalOpen(false)}

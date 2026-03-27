@@ -1,12 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { ChecklistItem, ChecklistSection as ChecklistSectionType } from "@/types/database";
+import { useEffect, useState } from "react";
+import {
+  ChecklistItem,
+  ChecklistSection as ChecklistSectionType,
+} from "@/types/database";
 import {
   apiAddChecklistItem,
   apiDeleteChecklistItem,
   apiPatchChecklistItem,
 } from "@/lib/events-api-client";
+import { formatUsd } from "@/lib/format-currency";
 import {
   Check,
   Plus,
@@ -14,6 +18,7 @@ import {
   User,
   MessageSquare,
   ChevronRight,
+  DollarSign,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -23,6 +28,8 @@ interface ChecklistSectionProps {
   items: ChecklistItem[];
   eventId: string;
   onUpdate: () => void;
+  /** Refetch monthly budget peers when line-item costs change (managers). */
+  onBudgetContextInvalidate?: () => void;
   /** Event Live Mode: larger touch targets, no add/delete/details */
   liveMode?: boolean;
   /** When false (staff): add/remove rows and per-row delete hidden; progress fields still editable. */
@@ -34,6 +41,7 @@ export function ChecklistSectionComponent({
   items,
   eventId,
   onUpdate,
+  onBudgetContextInvalidate,
   liveMode = false,
   allowStructureEdit = true,
 }: ChecklistSectionProps) {
@@ -42,6 +50,7 @@ export function ChecklistSectionComponent({
   const [addingItem, setAddingItem] = useState(false);
   const checkedCount = items.filter((i) => i.is_checked).length;
   const progress = items.length > 0 ? (checkedCount / items.length) * 100 : 0;
+  const allowCostEdit = allowStructureEdit && !liveMode;
 
   async function handleToggle(item: ChecklistItem) {
     await apiPatchChecklistItem(eventId, item.id, {
@@ -65,6 +74,7 @@ export function ChecklistSectionComponent({
   async function handleDelete(id: string) {
     await apiDeleteChecklistItem(eventId, id);
     onUpdate();
+    onBudgetContextInvalidate?.();
   }
 
   async function handleAssigneeChange(item: ChecklistItem, assignee: string) {
@@ -79,6 +89,25 @@ export function ChecklistSectionComponent({
       comment: comment || null,
     });
     onUpdate();
+  }
+
+  async function commitEstimatedCost(item: ChecklistItem, raw: string) {
+    const trimmed = raw.trim();
+    if (trimmed === "") {
+      if (item.estimated_cost == null) return;
+      await apiPatchChecklistItem(eventId, item.id, { estimated_cost: null });
+      onUpdate();
+      onBudgetContextInvalidate?.();
+      return;
+    }
+    const n = Number(trimmed);
+    if (!Number.isFinite(n) || n < 0) return;
+    const toStore = n === 0 ? null : n;
+    const prev = item.estimated_cost ?? null;
+    if (prev === toStore) return;
+    await apiPatchChecklistItem(eventId, item.id, { estimated_cost: toStore });
+    onUpdate();
+    onBudgetContextInvalidate?.();
   }
 
   return (
@@ -141,10 +170,12 @@ export function ChecklistSectionComponent({
               item={item}
               liveMode={liveMode}
               allowDelete={allowStructureEdit}
+              allowCostEdit={allowCostEdit}
               onToggle={() => handleToggle(item)}
               onDelete={() => handleDelete(item.id)}
               onAssigneeChange={(val) => handleAssigneeChange(item, val)}
               onCommentChange={(val) => handleCommentChange(item, val)}
+              onEstimatedCostBlur={(raw) => commitEstimatedCost(item, raw)}
             />
           ))}
 
@@ -195,23 +226,42 @@ function ChecklistItemRow({
   item,
   liveMode,
   allowDelete,
+  allowCostEdit,
   onToggle,
   onDelete,
   onAssigneeChange,
   onCommentChange,
+  onEstimatedCostBlur,
 }: {
   item: ChecklistItem;
   liveMode: boolean;
   allowDelete: boolean;
+  allowCostEdit: boolean;
   onToggle: () => void;
   onDelete: () => void;
   onAssigneeChange: (val: string) => void;
   onCommentChange: (val: string) => void;
+  onEstimatedCostBlur: (raw: string) => void | Promise<void>;
 }) {
   const [showDetails, setShowDetails] = useState(false);
   const [justChecked, setJustChecked] = useState(false);
   const [assigneeInput, setAssigneeInput] = useState(item.assignee || "");
   const [commentInput, setCommentInput] = useState(item.comment || "");
+  const [costInput, setCostInput] = useState(
+    item.estimated_cost != null ? String(item.estimated_cost) : ""
+  );
+
+  useEffect(() => {
+    setAssigneeInput(item.assignee || "");
+  }, [item.assignee, item.id]);
+
+  useEffect(() => {
+    setCommentInput(item.comment || "");
+  }, [item.comment, item.id]);
+
+  useEffect(() => {
+    setCostInput(item.estimated_cost != null ? String(item.estimated_cost) : "");
+  }, [item.estimated_cost, item.id]);
 
   function handleToggle() {
     if (!item.is_checked) {
@@ -220,6 +270,11 @@ function ChecklistItemRow({
     }
     onToggle();
   }
+
+  const costDisplay =
+    item.estimated_cost != null && Number(item.estimated_cost) > 0
+      ? formatUsd(Number(item.estimated_cost))
+      : null;
 
   if (liveMode) {
     return (
@@ -252,6 +307,12 @@ function ChecklistItemRow({
             >
               {item.label}
             </span>
+            {costDisplay && (
+              <span className="mt-1 flex items-center gap-1.5 text-sm text-harley-orange tabular-nums">
+                <DollarSign className="w-4 h-4 shrink-0" />
+                {costDisplay}
+              </span>
+            )}
             {item.assignee && (
               <span className="mt-1 flex items-center gap-1.5 text-sm text-harley-text-muted">
                 <User className="w-4 h-4 shrink-0" />
@@ -285,15 +346,28 @@ function ChecklistItemRow({
           />
         </button>
 
-        <span
-          className={`flex-1 text-sm transition-all duration-200 ${
-            item.is_checked
-              ? "line-through text-harley-text-muted/60"
-              : "text-harley-text"
-          }`}
-        >
-          {item.label}
-        </span>
+        <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+          <span
+            className={`text-sm transition-all duration-200 ${
+              item.is_checked
+                ? "line-through text-harley-text-muted/60"
+                : "text-harley-text"
+            }`}
+          >
+            {item.label}
+          </span>
+          {costDisplay && (
+            <span className="text-[11px] text-harley-orange tabular-nums md:hidden">
+              {costDisplay}
+            </span>
+          )}
+        </div>
+
+        {costDisplay && (
+          <span className="hidden md:inline text-xs text-harley-orange tabular-nums shrink-0">
+            {costDisplay}
+          </span>
+        )}
 
         {item.assignee && (
           <span className="hidden sm:flex text-xs text-harley-text-muted items-center gap-1">
@@ -353,6 +427,36 @@ function ChecklistItemRow({
               placeholder="Add a note..."
               className="flex-1 px-3 py-2 md:px-2 md:py-1 rounded-lg md:rounded bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-sm md:text-xs placeholder-harley-text-muted/60 focus:outline-none focus:border-harley-orange/70 transition-all duration-150"
             />
+          </div>
+          <div className="flex items-start gap-2">
+            <DollarSign className="w-4 h-4 md:w-3.5 md:h-3.5 text-harley-text-muted shrink-0 mt-2 md:mt-1" />
+            {allowCostEdit ? (
+              <div className="flex-1 space-y-1">
+                <input
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  inputMode="decimal"
+                  value={costInput}
+                  onChange={(e) => setCostInput(e.target.value)}
+                  onBlur={() => void onEstimatedCostBlur(costInput)}
+                  placeholder="Estimated cost ($)"
+                  className="w-full px-3 py-2 md:px-2 md:py-1 rounded-lg md:rounded bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-sm md:text-xs placeholder-harley-text-muted/60 focus:outline-none focus:border-harley-orange/70 transition-all duration-150"
+                />
+                <p className="text-[10px] text-harley-text-muted/80 leading-snug">
+                  Counts toward this event&apos;s month venue budget with planned
+                  budget.
+                </p>
+              </div>
+            ) : (
+              <p className="flex-1 text-xs text-harley-text-muted pt-1.5 md:pt-1">
+                {costDisplay ? (
+                  <>Estimated cost: {costDisplay}</>
+                ) : (
+                  <>No estimated cost set.</>
+                )}
+              </p>
+            )}
           </div>
         </div>
       )}

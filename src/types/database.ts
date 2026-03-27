@@ -115,6 +115,8 @@ export interface ChecklistItem {
   is_checked: boolean;
   assignee: string | null;
   comment: string | null;
+  /** Optional estimated spend for this line item (managers); counts toward monthly venue cap with planned_budget. */
+  estimated_cost: number | null;
   sort_order: number;
   created_at: string;
 }

@@ -101,6 +101,7 @@ export const checklistItemCreateSchema = z
     section: checklistSectionSchema,
     label: z.string().trim().min(1).max(2000),
     sort_order: z.number().int().min(0).max(1_000_000),
+    estimated_cost: z.union([moneyNonneg, z.null()]).optional(),
   })
   .strict();
 
@@ -134,6 +135,7 @@ export const checklistManagerPatchSchema = z
     section: checklistSectionSchema.optional(),
     label: z.string().trim().min(1).max(2000).optional(),
     sort_order: z.number().int().min(0).max(1_000_000).optional(),
+    estimated_cost: z.union([moneyNonneg, z.null()]).optional(),
   })
   .strict()
   .refine(

@@ -35,6 +35,7 @@ create table public.checklist_items (
   is_checked boolean not null default false,
   assignee text,
   comment text,
+  estimated_cost numeric,
   sort_order integer not null default 0,
   created_at timestamptz default now() not null
 );
