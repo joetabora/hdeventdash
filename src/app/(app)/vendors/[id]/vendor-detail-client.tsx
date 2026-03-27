@@ -3,14 +3,8 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
-import {
-  getVendor,
-  updateVendor,
-  deleteVendor,
-  getVendorParticipationHistory,
-} from "@/lib/vendors";
+import { updateVendor, deleteVendor } from "@/lib/vendors";
 import {
   Vendor,
   EventVendorWithEvent,
@@ -29,7 +23,6 @@ import {
   MapPin,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
-import { vendorKeys, eventKeys } from "@/lib/query-keys";
 
 function participationVariant(
   s: string
@@ -59,34 +52,18 @@ export function VendorDetailClient({
   initialHistory: EventVendorWithEvent[];
 }) {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const supabaseRef = useRef(
     typeof window !== "undefined" ? createClient() : null
   );
   const { canManageEvents } = useAppRole();
 
-  const vendorQuery = useQuery({
-    queryKey: vendorKeys.detail(vendorId),
-    queryFn: () => getVendor(createClient(), vendorId),
-    initialData: initialVendor,
-  });
-
-  const historyQuery = useQuery({
-    queryKey: vendorKeys.participationHistory(vendorId),
-    queryFn: () => getVendorParticipationHistory(createClient(), vendorId),
-    initialData: initialHistory,
-  });
-
-  const vendor = vendorQuery.data ?? null;
-  const history = historyQuery.data ?? [];
+  const [vendor, setVendor] = useState<Vendor | null>(initialVendor);
+  const [history, setHistory] = useState(initialHistory);
 
   useLayoutEffect(() => {
-    queryClient.setQueryData(vendorKeys.detail(vendorId), initialVendor);
-    queryClient.setQueryData(
-      vendorKeys.participationHistory(vendorId),
-      initialHistory
-    );
-  }, [vendorId, initialVendor, initialHistory, queryClient]);
+    setVendor(initialVendor);
+    setHistory(initialHistory);
+  }, [vendorId, initialVendor, initialHistory]);
 
   const [saving, setSaving] = useState(false);
 
@@ -106,8 +83,8 @@ export function VendorDetailClient({
         category: String(fd.get("category") ?? ""),
         notes: String(fd.get("notes") ?? ""),
       });
-      queryClient.setQueryData(vendorKeys.detail(vendorId), updated);
-      void queryClient.invalidateQueries({ queryKey: vendorKeys.list() });
+      setVendor(updated);
+      router.refresh();
     } catch (err) {
       console.error(err);
     } finally {
@@ -123,9 +100,8 @@ export function VendorDetailClient({
     if (!supabase || !vendor) return;
     try {
       await deleteVendor(supabase, vendor.id);
-      void queryClient.invalidateQueries({ queryKey: vendorKeys.list() });
-      void queryClient.invalidateQueries({ queryKey: eventKeys.orgVendors() });
       router.push("/vendors");
+      router.refresh();
     } catch (err) {
       console.error(err);
     }
@@ -134,14 +110,6 @@ export function VendorDetailClient({
   if (!canManageEvents) {
     return (
       <p className="text-sm text-harley-text-muted">You don&apos;t have access to this page.</p>
-    );
-  }
-
-  if (vendorQuery.isPending && !vendor) {
-    return (
-      <div className="flex justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-harley-orange" />
-      </div>
     );
   }
 

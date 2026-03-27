@@ -1,15 +1,9 @@
 "use client";
 
-import { useMemo, useState, useLayoutEffect, useRef } from "react";
+import { useMemo, useState, useLayoutEffect, useRef, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
-import {
-  getEvents,
-  updateEvent,
-  getChecklistStatsForEvents,
-  ChecklistStats,
-} from "@/lib/events";
+import { updateEvent, ChecklistStats } from "@/lib/events";
 import { Event, EventStatus, MonthlyBudget } from "@/types/database";
 import { isEventAtRisk } from "@/lib/at-risk";
 import { KanbanBoard } from "@/components/dashboard/kanban-board";
@@ -21,20 +15,12 @@ import { BudgetSummaryCard } from "@/components/dashboard/budget-summary-card";
 import { RoiTrendsCard } from "@/components/dashboard/roi-trends-card";
 import { AnalyticsDashboard } from "@/components/dashboard/analytics-dashboard";
 import { Card } from "@/components/ui/card";
-import { LayoutGrid, Calendar, List, BarChart3, Loader2 } from "lucide-react";
+import { LayoutGrid, Calendar, List, BarChart3 } from "lucide-react";
 import { parseISO, isBefore, startOfDay } from "date-fns";
 import { useAppRole } from "@/contexts/app-role-context";
 import { getMonthlyBudgetsForMonth, budgetMonthToDbDate } from "@/lib/budgets";
-import { dashboardKeys } from "@/lib/query-keys";
 
 type ViewType = "kanban" | "calendar" | "list" | "analytics";
-
-function eventIdsKeyFor(events: Event[]): string {
-  return [...events]
-    .map((e) => e.id)
-    .sort()
-    .join("\0");
-}
 
 export function DashboardContent({
   initialEvents,
@@ -49,7 +35,6 @@ export function DashboardContent({
 }) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const queryClient = useQueryClient();
   const supabaseRef = useRef(
     typeof window !== "undefined" ? createClient() : null
   );
@@ -66,73 +51,45 @@ export function DashboardContent({
   const [locationFilter, setLocationFilter] = useState("");
   const [ownerFilter, setOwnerFilter] = useState("");
   const [budgetMonth, setBudgetMonth] = useState(initialBudgetMonth);
+  const [events, setEvents] = useState(initialEvents);
+  const [checklistStats, setChecklistStats] = useState(initialChecklistStats);
+  const [monthlyBudgets, setMonthlyBudgets] = useState(initialMonthlyBudgets);
+  const skipNextBudgetFetch = useRef(false);
   const { canManageEvents } = useAppRole();
 
-  const eventsQuery = useQuery({
-    queryKey: dashboardKeys.eventsActive(),
-    queryFn: async () => {
-      const data = await getEvents(createClient());
-      return data.filter((e) => !e.is_archived);
-    },
-    initialData: initialEvents,
-  });
-
-  const events = useMemo(
-    () => eventsQuery.data ?? [],
-    [eventsQuery.data]
-  );
-
-  const statsIdsKey = useMemo(() => eventIdsKeyFor(events), [events]);
-
-  const checklistStatsQuery = useQuery({
-    queryKey: dashboardKeys.checklistStats(statsIdsKey),
-    queryFn: () =>
-      getChecklistStatsForEvents(
-        createClient(),
-        events.map((e) => e.id)
-      ),
-    initialData: initialChecklistStats,
-  });
-
-  const checklistStats = useMemo(
-    () => checklistStatsQuery.data ?? {},
-    [checklistStatsQuery.data]
-  );
-
-  const monthlyBudgetsQuery = useQuery({
-    queryKey: dashboardKeys.monthlyBudgets(budgetMonth),
-    queryFn: () =>
-      getMonthlyBudgetsForMonth(
-        createClient(),
-        budgetMonthToDbDate(budgetMonth)
-      ),
-    initialData:
-      budgetMonth === initialBudgetMonth ? initialMonthlyBudgets : undefined,
-  });
-
-  const monthlyBudgets = monthlyBudgetsQuery.data ?? [];
-
+  /* eslint-disable react-hooks/set-state-in-effect -- RSC props → client state on navigation/refresh */
   useLayoutEffect(() => {
-    queryClient.setQueryData(dashboardKeys.eventsActive(), initialEvents);
-    const idsKey = eventIdsKeyFor(initialEvents);
-    queryClient.setQueryData(
-      dashboardKeys.checklistStats(idsKey),
-      initialChecklistStats
-    );
-    queryClient.setQueryData(
-      dashboardKeys.monthlyBudgets(initialBudgetMonth),
-      initialMonthlyBudgets
-    );
-    // Align picker when server props refresh (e.g. soft navigation with new RSC payload).
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional sync with RSC payload
+    setEvents(initialEvents);
+    setChecklistStats(initialChecklistStats);
+    setMonthlyBudgets(initialMonthlyBudgets);
     setBudgetMonth(initialBudgetMonth);
+    skipNextBudgetFetch.current = true;
   }, [
     initialEvents,
     initialChecklistStats,
     initialMonthlyBudgets,
     initialBudgetMonth,
-    queryClient,
   ]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  useEffect(() => {
+    if (skipNextBudgetFetch.current) {
+      skipNextBudgetFetch.current = false;
+      return;
+    }
+    const supabase = createClient();
+    void (async () => {
+      try {
+        const rows = await getMonthlyBudgetsForMonth(
+          supabase,
+          budgetMonthToDbDate(budgetMonth)
+        );
+        setMonthlyBudgets(rows);
+      } catch {
+        setMonthlyBudgets([]);
+      }
+    })();
+  }, [budgetMonth]);
 
   const atRiskIds = useMemo(() => {
     const ids = new Set<string>();
@@ -210,25 +167,35 @@ export function DashboardContent({
     });
   }, [events, search, locationFilter, ownerFilter]);
 
+  async function reloadMonthlyBudgetsForPickerMonth() {
+    const supabase = supabaseRef.current;
+    if (!supabase) return;
+    try {
+      setMonthlyBudgets(
+        await getMonthlyBudgetsForMonth(
+          supabase,
+          budgetMonthToDbDate(budgetMonth)
+        )
+      );
+    } catch {
+      setMonthlyBudgets([]);
+    }
+  }
+
   async function handleStatusChange(eventId: string, newStatus: EventStatus) {
     if (!canManageEvents) return;
     const supabase = supabaseRef.current;
     if (!supabase) return;
-    const key = dashboardKeys.eventsActive();
-    const previous = queryClient.getQueryData<Event[]>(key);
-    queryClient.setQueryData<Event[]>(key, (old) =>
-      (old ?? []).map((e) =>
+    const previous = events;
+    setEvents((old) =>
+      old.map((e) =>
         e.id === eventId ? { ...e, status: newStatus } : e
       )
     );
     try {
       await updateEvent(supabase, eventId, { status: newStatus });
     } catch {
-      if (previous) {
-        queryClient.setQueryData(key, previous);
-      } else {
-        void queryClient.invalidateQueries({ queryKey: dashboardKeys.all() });
-      }
+      setEvents(previous);
     }
   }
 
@@ -246,17 +213,6 @@ export function DashboardContent({
     { id: "list", label: "List", icon: List },
     { id: "analytics", label: "Analytics", icon: BarChart3 },
   ];
-
-  const dashboardLoading =
-    eventsQuery.isPending && !eventsQuery.data;
-
-  if (dashboardLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-8 h-8 text-harley-orange animate-spin" />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -299,11 +255,7 @@ export function DashboardContent({
         onBudgetMonthChange={setBudgetMonth}
         locationFilter={locationFilter}
         canManageBudgets={canManageEvents}
-        onBudgetsUpdated={() =>
-          void queryClient.invalidateQueries({
-            queryKey: dashboardKeys.monthlyBudgets(budgetMonth),
-          })
-        }
+        onBudgetsUpdated={() => void reloadMonthlyBudgetsForPickerMonth()}
       />
 
       <Filters

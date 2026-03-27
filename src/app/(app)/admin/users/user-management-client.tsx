@@ -1,9 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ManagedUserDto } from "@/lib/admin/managed-users";
-import { adminKeys } from "@/lib/query-keys";
 import { UserRole } from "@/types/database";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,6 +17,17 @@ import {
   Briefcase,
 } from "lucide-react";
 
+type AdminUsersPayload = {
+  users: ManagedUserDto[];
+  currentUserId: string;
+};
+
+async function fetchManagedUsers(): Promise<AdminUsersPayload | null> {
+  const res = await fetch("/api/admin/users");
+  if (!res.ok) return null;
+  return res.json() as Promise<AdminUsersPayload>;
+}
+
 export function UserManagementClient({
   initialAuthorized,
   initialUsers,
@@ -28,36 +37,15 @@ export function UserManagementClient({
   initialUsers: ManagedUserDto[];
   initialCurrentUserId: string | null;
 }) {
-  const queryClient = useQueryClient();
+  const [users, setUsers] = useState(initialUsers);
+  const [currentUserId, setCurrentUserId] = useState(
+    initialCurrentUserId ?? ""
+  );
 
-  type AdminUsersPayload = {
-    users: ManagedUserDto[];
-    currentUserId: string;
-  };
-
-  const usersQuery = useQuery({
-    queryKey: adminKeys.managedUsers(),
-    queryFn: async (): Promise<AdminUsersPayload> => {
-      const res = await fetch("/api/admin/users");
-      if (res.status === 401 || res.status === 403) {
-        throw new Error("forbidden");
-      }
-      if (!res.ok) {
-        throw new Error(await res.text());
-      }
-      return res.json() as Promise<AdminUsersPayload>;
-    },
-    initialData: initialAuthorized
-      ? {
-          users: initialUsers,
-          currentUserId: initialCurrentUserId ?? "",
-        }
-      : undefined,
-    enabled: initialAuthorized,
-  });
-
-  const users = usersQuery.data?.users ?? [];
-  const currentUserId = usersQuery.data?.currentUserId ?? null;
+  useLayoutEffect(() => {
+    setUsers(initialUsers);
+    setCurrentUserId(initialCurrentUserId ?? "");
+  }, [initialUsers, initialCurrentUserId]);
 
   const [showCreate, setShowCreate] = useState(false);
   const [newEmail, setNewEmail] = useState("");
@@ -66,22 +54,6 @@ export function UserManagementClient({
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
   const [createSuccess, setCreateSuccess] = useState("");
-
-  useLayoutEffect(() => {
-    if (initialAuthorized) {
-      queryClient.setQueryData<AdminUsersPayload>(adminKeys.managedUsers(), {
-        users: initialUsers,
-        currentUserId: initialCurrentUserId ?? "",
-      });
-    } else {
-      queryClient.removeQueries({ queryKey: adminKeys.managedUsers() });
-    }
-  }, [
-    initialAuthorized,
-    initialUsers,
-    initialCurrentUserId,
-    queryClient,
-  ]);
 
   async function handleCreateUser() {
     setCreateError("");
@@ -119,7 +91,11 @@ export function UserManagementClient({
       setNewPassword("");
       setNewRole("staff");
       setShowCreate(false);
-      void queryClient.invalidateQueries({ queryKey: adminKeys.managedUsers() });
+      const fresh = await fetchManagedUsers();
+      if (fresh) {
+        setUsers(fresh.users);
+        setCurrentUserId(fresh.currentUserId);
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to create user";
       setCreateError(message);
@@ -140,17 +116,8 @@ export function UserManagementClient({
         console.error("Failed to update role:", data.error ?? res.status);
         return;
       }
-      queryClient.setQueryData<AdminUsersPayload>(
-        adminKeys.managedUsers(),
-        (old) =>
-          old
-            ? {
-                ...old,
-                users: old.users.map((u) =>
-                  u.id === userId ? { ...u, role } : u
-                ),
-              }
-            : old
+      setUsers((old) =>
+        old.map((u) => (u.id === userId ? { ...u, role } : u))
       );
     } catch (err) {
       console.error("Failed to update role:", err);
@@ -169,7 +136,11 @@ export function UserManagementClient({
         console.error("Failed to delete role:", data.error ?? res.status);
         return;
       }
-      void queryClient.invalidateQueries({ queryKey: adminKeys.managedUsers() });
+      const fresh = await fetchManagedUsers();
+      if (fresh) {
+        setUsers(fresh.users);
+        setCurrentUserId(fresh.currentUserId);
+      }
     } catch (err) {
       console.error("Failed to delete role:", err);
     }

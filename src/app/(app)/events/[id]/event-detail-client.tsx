@@ -4,8 +4,7 @@ import { useEffect, useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { updateEvent, deleteEvent } from "@/lib/events";
-import { eventKeys } from "@/lib/query-keys";
-import { useEventDetailQueries } from "@/hooks/use-event-detail-queries";
+import { useEventDetailData } from "@/hooks/use-event-detail-data";
 import {
   Event,
   ChecklistItem,
@@ -95,8 +94,8 @@ export function EventDetailClient({
   );
 
   const {
-    queryClient,
     event,
+    setEvent,
     checklist,
     documents,
     comments,
@@ -104,8 +103,8 @@ export function EventDetailClient({
     allVendors,
     eventVendors,
     allEventsForBudget,
-    invalidate,
-  } = useEventDetailQueries(eventId, {
+    refetch,
+  } = useEventDetailData(eventId, {
     event: initialEvent,
     checklist: initialChecklist,
     documents: initialDocuments,
@@ -141,14 +140,14 @@ export function EventDetailClient({
 
   const isLiveMode = event?.is_live_mode ?? false;
 
-  const onChecklistInvalidate = () => void invalidate.checklist();
+  const onChecklistInvalidate = () => void refetch.checklist();
 
   async function handleToggleLiveMode() {
     if (!event || !supabaseRef.current) return;
     const updated = await updateEvent(supabaseRef.current, event.id, {
       is_live_mode: !event.is_live_mode,
     });
-    queryClient.setQueryData(eventKeys.detail(event.id), updated);
+    setEvent(updated);
   }
 
   async function handleStatusChange(newStatus: EventStatus) {
@@ -156,7 +155,7 @@ export function EventDetailClient({
     const updated = await updateEvent(supabaseRef.current, event.id, {
       status: newStatus,
     });
-    queryClient.setQueryData(eventKeys.detail(event.id), updated);
+    setEvent(updated);
   }
 
   async function handleEditSubmit(data: {
@@ -181,8 +180,8 @@ export function EventDetailClient({
       actual_budget: data.actual_budget,
     });
     setEditModalOpen(false);
-    queryClient.setQueryData(eventKeys.detail(event.id), updated);
-    void invalidate.orgEventsActive();
+    setEvent(updated);
+    void refetch.orgEventsActive();
   }
 
   async function handleDelete() {
@@ -278,8 +277,8 @@ export function EventDetailClient({
           eventId={event.id}
           checklist={checklist}
           onAfterChecklistChange={onChecklistInvalidate}
-          onAfterMediaChange={() => void invalidate.media()}
-          onAfterCommentChange={() => void invalidate.comments()}
+          onAfterMediaChange={() => void refetch.media()}
+          onAfterCommentChange={() => void refetch.comments()}
           canManageExtras={canManageEvents}
         />
       </>
@@ -503,7 +502,7 @@ export function EventDetailClient({
           eventVendors={eventVendors}
           allVendors={allVendors}
           canMutate={canManageEvents}
-          onEventVendorsInvalidate={() => void invalidate.eventVendors()}
+          onEventVendorsInvalidate={() => void refetch.eventVendors()}
         />
 
         <EventMediaModule
@@ -511,8 +510,8 @@ export function EventDetailClient({
           media={media}
           documents={documents}
           canMutate={canManageEvents}
-          onMediaInvalidate={() => void invalidate.media()}
-          onDocumentsInvalidate={() => void invalidate.documents()}
+          onMediaInvalidate={() => void refetch.media()}
+          onDocumentsInvalidate={() => void refetch.documents()}
         />
 
         <CollapsibleSection
@@ -528,7 +527,7 @@ export function EventDetailClient({
           eventId={event.id}
           comments={comments}
           canManageEvents={canManageEvents}
-          onCommentsInvalidate={() => void invalidate.comments()}
+          onCommentsInvalidate={() => void refetch.comments()}
         />
 
         <CollapsibleSection
@@ -539,7 +538,7 @@ export function EventDetailClient({
         >
           <EventRoiSection
             event={event}
-            onUpdate={() => void invalidate.event()}
+            onUpdate={() => void refetch.event()}
             canEdit={canManageEvents}
           />
         </CollapsibleSection>
@@ -553,7 +552,7 @@ export function EventDetailClient({
           >
             <EventRecap
               event={event}
-              onUpdate={() => void invalidate.event()}
+              onUpdate={() => void refetch.event()}
               canEdit={canManageEvents}
             />
           </CollapsibleSection>
@@ -582,8 +581,8 @@ export function EventDetailClient({
         eventId={event.id}
         checklist={checklist}
         onAfterChecklistChange={onChecklistInvalidate}
-        onAfterMediaChange={() => void invalidate.media()}
-        onAfterCommentChange={() => void invalidate.comments()}
+        onAfterMediaChange={() => void refetch.media()}
+        onAfterCommentChange={() => void refetch.comments()}
         canManageExtras={canManageEvents}
       />
     </>

@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useLayoutEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
-import { getVendors, createVendor } from "@/lib/vendors";
+import { createVendor } from "@/lib/vendors";
 import { Vendor } from "@/types/database";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,26 +12,19 @@ import { Modal } from "@/components/ui/modal";
 import { Input, Textarea } from "@/components/ui/input";
 import { useAppRole } from "@/contexts/app-role-context";
 import { Loader2, PlusCircle, Store, Search, ChevronRight } from "lucide-react";
-import { vendorKeys, eventKeys } from "@/lib/query-keys";
 
 export function VendorsPageClient({ initialVendors }: { initialVendors: Vendor[] }) {
-  const queryClient = useQueryClient();
+  const router = useRouter();
   const supabaseRef = useRef(
     typeof window !== "undefined" ? createClient() : null
   );
   const { canManageEvents } = useAppRole();
 
-  const vendorsQuery = useQuery({
-    queryKey: vendorKeys.list(),
-    queryFn: () => getVendors(createClient()),
-    initialData: initialVendors,
-  });
-
-  const vendors = vendorsQuery.data ?? [];
+  const [vendors, setVendors] = useState(initialVendors);
 
   useLayoutEffect(() => {
-    queryClient.setQueryData(vendorKeys.list(), initialVendors);
-  }, [initialVendors, queryClient]);
+    setVendors(initialVendors);
+  }, [initialVendors]);
 
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
@@ -62,7 +55,7 @@ export function VendorsPageClient({ initialVendors }: { initialVendors: Vendor[]
     if (!supabase || !name.trim()) return;
     setSaving(true);
     try {
-      await createVendor(supabase, {
+      const created = await createVendor(supabase, {
         name: name.trim(),
         contact_name: contactName,
         email,
@@ -71,6 +64,9 @@ export function VendorsPageClient({ initialVendors }: { initialVendors: Vendor[]
         category,
         notes,
       });
+      setVendors((prev) =>
+        [...prev, created].sort((a, b) => a.name.localeCompare(b.name))
+      );
       setModalOpen(false);
       setName("");
       setContactName("");
@@ -79,8 +75,7 @@ export function VendorsPageClient({ initialVendors }: { initialVendors: Vendor[]
       setWebsite("");
       setCategory("");
       setNotes("");
-      void queryClient.invalidateQueries({ queryKey: vendorKeys.list() });
-      void queryClient.invalidateQueries({ queryKey: eventKeys.orgVendors() });
+      router.refresh();
     } catch (err) {
       console.error(err);
     } finally {
