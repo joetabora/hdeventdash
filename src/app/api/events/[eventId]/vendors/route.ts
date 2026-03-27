@@ -1,8 +1,43 @@
 import { NextResponse } from "next/server";
 import { getOrgManagerContext } from "@/lib/admin/require-org-manager";
-import { attachVendorToEvent } from "@/lib/vendors";
+import { requireSession } from "@/lib/api/require-session";
+import { assertEventInOrganization } from "@/lib/api/event-in-org";
+import { attachVendorToEvent, getActiveEventVendors } from "@/lib/vendors";
 import { attachEventVendorSchema } from "@/lib/validation/api-schemas";
 import { parseUuidParam, parseWithSchema, readJsonBody } from "@/lib/validation/request-json";
+
+export async function GET(
+  _request: Request,
+  context: { params: Promise<{ eventId: string }> }
+) {
+  const session = await requireSession();
+  if (!session.ok) return session.response;
+
+  const { eventId: rawEventId } = await context.params;
+  const eventCheck = parseUuidParam(rawEventId, "event id");
+  if (!eventCheck.ok) return eventCheck.response;
+
+  const inOrg = await assertEventInOrganization(
+    session.supabase,
+    eventCheck.id,
+    session.organizationId
+  );
+  if (!inOrg.ok) return inOrg.response;
+
+  try {
+    const eventVendors = await getActiveEventVendors(
+      session.supabase,
+      eventCheck.id
+    );
+    return NextResponse.json({ eventVendors });
+  } catch (e) {
+    console.error("GET /api/events/[eventId]/vendors:", e);
+    return NextResponse.json(
+      { error: "Failed to load event vendors." },
+      { status: 500 }
+    );
+  }
+}
 
 export async function POST(
   request: Request,

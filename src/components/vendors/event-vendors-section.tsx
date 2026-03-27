@@ -19,14 +19,6 @@ import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/input";
 import { Loader2, UserMinus, ExternalLink } from "lucide-react";
 
-type VendorsApiPage = {
-  vendors: Vendor[];
-  total: number;
-  page: number;
-  pageSize: number;
-  hasMore: boolean;
-};
-
 interface EventVendorsSectionProps {
   eventId: string;
   eventVendors: EventVendorWithVendor[];
@@ -62,8 +54,8 @@ export function EventVendorsSection({
     void (async () => {
       setSearchLoading(true);
       try {
-        const res = await apiFetchJson<VendorsApiPage>(
-          `/api/vendors?q=${encodeURIComponent(debouncedSearch)}&pageSize=40&page=1`
+        const res = await apiFetchJson<{ vendors: Vendor[] }>(
+          `/api/vendors/search?q=${encodeURIComponent(debouncedSearch)}&limit=40`
         );
         if (!cancelled) setSearchResults(res.vendors);
       } catch {

@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * Client refetch for event detail: vendor links and monthly budget peers use API routes
+ * (`/api/events/[eventId]/vendors`, `/api/events/[eventId]/budget-context`) so the browser
+ * never runs org-wide vendor/event queries. Other slices still use scoped Supabase reads.
+ */
 import { useMemo, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
@@ -9,7 +14,6 @@ import {
   getEventComments,
   getEventMedia,
 } from "@/lib/events";
-import { getActiveEventVendors } from "@/lib/vendors";
 import { apiFetchJson } from "@/lib/api/api-fetch-json";
 import type { EventBudgetPeer } from "@/lib/budgets";
 import type {
@@ -64,9 +68,10 @@ export function useEventDetailData(
       },
       eventVendors: async () => {
         try {
-          setEventVendors(
-            await getActiveEventVendors(getSupabaseBrowserClient(), eventId)
-          );
+          const data = await apiFetchJson<{
+            eventVendors: EventVendorWithVendor[];
+          }>(`/api/events/${eventId}/vendors`);
+          setEventVendors(data.eventVendors);
         } catch {
           setEventVendors([]);
         }
@@ -74,7 +79,7 @@ export function useEventDetailData(
       budgetPeersForMonth: async (yearMonth: string) => {
         try {
           const data = await apiFetchJson<{ events: EventBudgetPeer[] }>(
-            `/api/events/budget-context?month=${encodeURIComponent(yearMonth)}`
+            `/api/events/${eventId}/budget-context?month=${encodeURIComponent(yearMonth)}`
           );
           setBudgetPeers(data.events);
         } catch {

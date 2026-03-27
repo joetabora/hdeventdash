@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getOrgManagerContext } from "@/lib/admin/require-org-manager";
 import { getEventBudgetSummariesForMonth } from "@/lib/events";
 
+/** Month-only budget peers (e.g. new-event form). For an existing event use GET /api/events/[eventId]/budget-context. */
 export async function GET(request: Request) {
   const ctx = await getOrgManagerContext();
   if (!ctx.ok) return ctx.response;
