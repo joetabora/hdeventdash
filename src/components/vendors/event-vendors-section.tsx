@@ -2,12 +2,6 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import {
-  attachVendorToEvent,
-  updateEventVendor,
-  detachVendorFromEvent,
-} from "@/lib/vendors";
 import {
   Vendor,
   EventVendorWithVendor,
@@ -75,15 +69,21 @@ export function EventVendorsSection({
   async function handleAttach(e: React.FormEvent) {
     e.preventDefault();
     if (!vendorId) return;
-    const supabase = getSupabaseBrowserClient();
     setAttaching(true);
     try {
-      await attachVendorToEvent(supabase, {
-        event_id: eventId,
-        vendor_id: vendorId,
-        role: attachRole,
-        notes: attachNotes,
+      const res = await fetch(`/api/events/${eventId}/vendors`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          vendor_id: vendorId,
+          role: attachRole,
+          notes: attachNotes,
+        }),
       });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        throw new Error(data.error ?? "Failed to attach vendor");
+      }
       setVendorId("");
       setAttachRole("");
       setAttachNotes("");
@@ -99,10 +99,17 @@ export function EventVendorsSection({
     linkId: string,
     patch: Partial<{ role: string; notes: string; participation_status: VendorParticipationStatus }>
   ) {
-    const supabase = getSupabaseBrowserClient();
     setBusyLinkId(linkId);
     try {
-      await updateEventVendor(supabase, linkId, patch);
+      const res = await fetch(`/api/events/${eventId}/vendors/${linkId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        throw new Error(data.error ?? "Failed to update vendor link");
+      }
       onUpdate();
     } catch (err) {
       console.error(err);
@@ -115,10 +122,15 @@ export function EventVendorsSection({
     if (!confirm("Remove this vendor from the event? Their participation stays in history on their profile.")) {
       return;
     }
-    const supabase = getSupabaseBrowserClient();
     setBusyLinkId(linkId);
     try {
-      await detachVendorFromEvent(supabase, linkId);
+      const res = await fetch(`/api/events/${eventId}/vendors/${linkId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error ?? "Failed to remove vendor");
+      }
       onUpdate();
     } catch (err) {
       console.error(err);

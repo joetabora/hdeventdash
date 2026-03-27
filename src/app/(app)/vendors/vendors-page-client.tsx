@@ -1,10 +1,8 @@
 "use client";
 
-import { useState, useLayoutEffect, useRef } from "react";
+import { useState, useLayoutEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { createVendor } from "@/lib/vendors";
 import { Vendor } from "@/types/database";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,9 +13,6 @@ import { Loader2, PlusCircle, Store, Search, ChevronRight } from "lucide-react";
 
 export function VendorsPageClient({ initialVendors }: { initialVendors: Vendor[] }) {
   const router = useRouter();
-  const supabaseRef = useRef(
-    typeof window !== "undefined" ? getSupabaseBrowserClient() : null
-  );
   const { canManageEvents } = useAppRole();
 
   const [vendors, setVendors] = useState(initialVendors);
@@ -51,19 +46,33 @@ export function VendorsPageClient({ initialVendors }: { initialVendors: Vendor[]
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    const supabase = supabaseRef.current;
-    if (!supabase || !name.trim()) return;
+    if (!name.trim()) return;
     setSaving(true);
     try {
-      const created = await createVendor(supabase, {
-        name: name.trim(),
-        contact_name: contactName,
-        email,
-        phone,
-        website,
-        category,
-        notes,
+      const res = await fetch("/api/vendors", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          contact_name: contactName,
+          email,
+          phone,
+          website,
+          category,
+          notes,
+        }),
       });
+      const data = (await res.json().catch(() => ({}))) as
+        | Vendor
+        | { error?: string };
+      if (!res.ok || !("id" in data)) {
+        throw new Error(
+          typeof data === "object" && data && "error" in data && data.error
+            ? String(data.error)
+            : "Failed to create vendor"
+        );
+      }
+      const created = data as Vendor;
       setVendors((prev) =>
         [...prev, created].sort((a, b) => a.name.localeCompare(b.name))
       );

@@ -1,15 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
   budgetMonthToDbDate,
   sumPlannedBudgetForMonth,
   totalMonthlyBudgetCapacity,
   budgetPercentUsed,
   budgetCardStatus,
-  upsertMonthlyBudget,
-  deleteMonthlyBudget,
   type BudgetCardStatus,
 } from "@/lib/budgets";
 import { Event, MonthlyBudget } from "@/types/database";
@@ -97,14 +94,21 @@ export function BudgetSummaryCard({
     e.preventDefault();
     const amt = parseFloat(newAmount);
     if (!newLocation.trim() || Number.isNaN(amt) || amt < 0) return;
-    const supabase = getSupabaseBrowserClient();
     setSaving(true);
     try {
-      await upsertMonthlyBudget(supabase, {
-        month: budgetMonthToDbDate(budgetMonth),
-        location: newLocation.trim(),
-        budget_amount: amt,
+      const res = await fetch("/api/budgets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          month: budgetMonthToDbDate(budgetMonth),
+          location: newLocation.trim(),
+          budget_amount: amt,
+        }),
       });
+      if (!res.ok) {
+        const err = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(err.error ?? res.statusText);
+      }
       setNewLocation("");
       setNewAmount("");
       onBudgetsUpdated();
@@ -117,10 +121,15 @@ export function BudgetSummaryCard({
 
   async function handleDeleteRow(id: string) {
     if (!confirm("Remove this monthly budget row?")) return;
-    const supabase = getSupabaseBrowserClient();
     setBusyId(id);
     try {
-      await deleteMonthlyBudget(supabase, id);
+      const res = await fetch(`/api/budgets/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const err = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(err.error ?? res.statusText);
+      }
       onBudgetsUpdated();
     } catch (err) {
       console.error(err);
@@ -132,14 +141,21 @@ export function BudgetSummaryCard({
   async function handleAmountBlur(row: MonthlyBudget, raw: string) {
     const amt = parseFloat(raw);
     if (Number.isNaN(amt) || amt < 0 || amt === Number(row.budget_amount)) return;
-    const supabase = getSupabaseBrowserClient();
     setBusyId(row.id);
     try {
-      await upsertMonthlyBudget(supabase, {
-        month: budgetMonthToDbDate(budgetMonth),
-        location: row.location,
-        budget_amount: amt,
+      const res = await fetch("/api/budgets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          month: budgetMonthToDbDate(budgetMonth),
+          location: row.location,
+          budget_amount: amt,
+        }),
       });
+      if (!res.ok) {
+        const err = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(err.error ?? res.statusText);
+      }
       onBudgetsUpdated();
     } catch (err) {
       console.error(err);

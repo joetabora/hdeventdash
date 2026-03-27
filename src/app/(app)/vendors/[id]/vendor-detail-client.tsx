@@ -1,10 +1,8 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { updateVendor, deleteVendor } from "@/lib/vendors";
 import {
   Vendor,
   EventVendorWithEvent,
@@ -52,9 +50,6 @@ export function VendorDetailClient({
   initialHistory: EventVendorWithEvent[];
 }) {
   const router = useRouter();
-  const supabaseRef = useRef(
-    typeof window !== "undefined" ? getSupabaseBrowserClient() : null
-  );
   const { canManageEvents } = useAppRole();
 
   const [vendor, setVendor] = useState<Vendor | null>(initialVendor);
@@ -69,21 +64,34 @@ export function VendorDetailClient({
 
   async function handleSave(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const supabase = supabaseRef.current;
-    if (!supabase || !vendor) return;
+    if (!vendor) return;
     const fd = new FormData(e.currentTarget);
     setSaving(true);
     try {
-      const updated = await updateVendor(supabase, vendor.id, {
-        name: String(fd.get("name") ?? "").trim(),
-        contact_name: String(fd.get("contact_name") ?? ""),
-        email: String(fd.get("email") ?? ""),
-        phone: String(fd.get("phone") ?? ""),
-        website: String(fd.get("website") ?? ""),
-        category: String(fd.get("category") ?? ""),
-        notes: String(fd.get("notes") ?? ""),
+      const res = await fetch(`/api/vendors/${vendor.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: String(fd.get("name") ?? "").trim(),
+          contact_name: String(fd.get("contact_name") ?? ""),
+          email: String(fd.get("email") ?? ""),
+          phone: String(fd.get("phone") ?? ""),
+          website: String(fd.get("website") ?? ""),
+          category: String(fd.get("category") ?? ""),
+          notes: String(fd.get("notes") ?? ""),
+        }),
       });
-      setVendor(updated);
+      const data = (await res.json().catch(() => ({}))) as
+        | Vendor
+        | { error?: string };
+      if (!res.ok || !("id" in data)) {
+        throw new Error(
+          typeof data === "object" && data && "error" in data && data.error
+            ? String(data.error)
+            : "Failed to update vendor"
+        );
+      }
+      setVendor(data as Vendor);
       router.refresh();
     } catch (err) {
       console.error(err);
@@ -96,10 +104,13 @@ export function VendorDetailClient({
     if (!confirm("Delete this vendor permanently? Event participation rows will be removed.")) {
       return;
     }
-    const supabase = supabaseRef.current;
-    if (!supabase || !vendor) return;
+    if (!vendor) return;
     try {
-      await deleteVendor(supabase, vendor.id);
+      const res = await fetch(`/api/vendors/${vendor.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error ?? "Failed to delete vendor");
+      }
       router.push("/vendors");
       router.refresh();
     } catch (err) {
