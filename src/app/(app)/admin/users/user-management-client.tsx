@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useState } from "react";
+import { useState } from "react";
 import type { ManagedUserDto } from "@/lib/admin/managed-users";
 import {
   apiFetchJson,
@@ -44,11 +44,6 @@ export function UserManagementClient({
   const [currentUserId, setCurrentUserId] = useState(
     initialCurrentUserId ?? ""
   );
-
-  useLayoutEffect(() => {
-    setUsers(initialUsers);
-    setCurrentUserId(initialCurrentUserId ?? "");
-  }, [initialUsers, initialCurrentUserId]);
 
   const [showCreate, setShowCreate] = useState(false);
   const [newEmail, setNewEmail] = useState("");

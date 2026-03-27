@@ -10,6 +10,7 @@ import {
 } from "@/lib/events";
 import { getVendors, getActiveEventVendors } from "@/lib/vendors";
 import type { Event, Vendor, EventVendorWithVendor } from "@/types/database";
+import { eventDetailBundleFingerprint } from "@/lib/event-detail-bundle-fingerprint";
 import { EventDetailClient } from "./event-detail-client";
 
 export default async function EventDetailPage({
@@ -49,8 +50,20 @@ export default async function EventDetailPage({
 
   const initialAllEventsForBudget = orgEvents.filter((e) => !e.is_archived);
 
+  const eventDetailClientKey = eventDetailBundleFingerprint({
+    event: initialEvent,
+    checklist: initialChecklist,
+    documents: initialDocuments,
+    comments: initialComments,
+    media: initialMedia,
+    allVendors: initialAllVendors,
+    eventVendors: initialEventVendors,
+    allEventsForBudget: initialAllEventsForBudget,
+  });
+
   return (
     <EventDetailClient
+      key={eventDetailClientKey}
       eventId={id}
       initialEvent={initialEvent}
       initialChecklist={initialChecklist}

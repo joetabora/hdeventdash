@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -42,11 +42,9 @@ function participationVariant(
 }
 
 export function VendorDetailClient({
-  vendorId,
   initialVendor,
   initialHistory,
 }: {
-  vendorId: string;
   initialVendor: Vendor;
   initialHistory: EventVendorWithEvent[];
 }) {
@@ -54,12 +52,6 @@ export function VendorDetailClient({
   const { canManageEvents } = useAppRole();
 
   const [vendor, setVendor] = useState<Vendor | null>(initialVendor);
-  const [history, setHistory] = useState(initialHistory);
-
-  useLayoutEffect(() => {
-    setVendor(initialVendor);
-    setHistory(initialHistory);
-  }, [vendorId, initialVendor, initialHistory]);
 
   const [saving, setSaving] = useState(false);
 
@@ -179,7 +171,7 @@ export function VendorDetailClient({
           Every event this vendor was linked to, including events they were removed from (still listed for
           history). Active assignments have no &quot;Removed&quot; badge.
         </p>
-        {history.length === 0 ? (
+        {initialHistory.length === 0 ? (
           <Card className="!p-6 text-sm text-harley-text-muted">
             No events yet. Attach this vendor from an event&apos;s Vendors section.
           </Card>
@@ -196,7 +188,7 @@ export function VendorDetailClient({
                 </tr>
               </thead>
               <tbody>
-                {history.map((row) => {
+                {initialHistory.map((row) => {
                   const ev = row.event;
                   if (!ev) return null;
                   return (

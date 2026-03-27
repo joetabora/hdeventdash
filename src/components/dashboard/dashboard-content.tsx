@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useLayoutEffect, useRef, useEffect } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { ChecklistStats } from "@/lib/events";
@@ -53,29 +53,15 @@ export function DashboardContent({
   const [ownerFilter, setOwnerFilter] = useState("");
   const [budgetMonth, setBudgetMonth] = useState(initialBudgetMonth);
   const [events, setEvents] = useState(initialEvents);
-  const [checklistStats, setChecklistStats] = useState(initialChecklistStats);
+  const [checklistStats] = useState(initialChecklistStats);
   const [monthlyBudgets, setMonthlyBudgets] = useState(initialMonthlyBudgets);
-  const skipNextBudgetFetch = useRef(false);
+  /** Skip first run: props already match `budgetMonth`; only refetch when user changes month. */
+  const skipInitialBudgetMonthEffect = useRef(true);
   const { canManageEvents } = useAppRole();
 
-  /* eslint-disable react-hooks/set-state-in-effect -- RSC props → client state on navigation/refresh */
-  useLayoutEffect(() => {
-    setEvents(initialEvents);
-    setChecklistStats(initialChecklistStats);
-    setMonthlyBudgets(initialMonthlyBudgets);
-    setBudgetMonth(initialBudgetMonth);
-    skipNextBudgetFetch.current = true;
-  }, [
-    initialEvents,
-    initialChecklistStats,
-    initialMonthlyBudgets,
-    initialBudgetMonth,
-  ]);
-  /* eslint-enable react-hooks/set-state-in-effect */
-
   useEffect(() => {
-    if (skipNextBudgetFetch.current) {
-      skipNextBudgetFetch.current = false;
+    if (skipInitialBudgetMonthEffect.current) {
+      skipInitialBudgetMonthEffect.current = false;
       return;
     }
     const supabase = getSupabaseBrowserClient();

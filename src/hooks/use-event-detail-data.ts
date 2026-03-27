@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
   getEvent,
@@ -46,29 +46,6 @@ export function useEventDetailData(
   const [allEventsForBudget, setAllEventsForBudget] = useState(
     initial.allEventsForBudget
   );
-
-  /* eslint-disable react-hooks/set-state-in-effect -- mirror RSC bundle when eventId or server data changes */
-  useLayoutEffect(() => {
-    setEvent(initial.event);
-    setChecklist(initial.checklist);
-    setDocuments(initial.documents);
-    setComments(initial.comments);
-    setMedia(initial.media);
-    setAllVendors(initial.allVendors);
-    setEventVendors(initial.eventVendors);
-    setAllEventsForBudget(initial.allEventsForBudget);
-  }, [
-    eventId,
-    initial.event,
-    initial.checklist,
-    initial.documents,
-    initial.comments,
-    initial.media,
-    initial.allVendors,
-    initial.eventVendors,
-    initial.allEventsForBudget,
-  ]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   const refetch = useMemo(
     () => ({

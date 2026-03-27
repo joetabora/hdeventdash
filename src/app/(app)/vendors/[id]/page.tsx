@@ -26,9 +26,22 @@ export default async function VendorDetailPage({
     notFound();
   }
 
+  const historyFingerprint = JSON.stringify(
+    [...initialHistory]
+      .sort((a, b) => a.id.localeCompare(b.id))
+      .map((h) => [
+        h.id,
+        h.updated_at,
+        h.detached_at,
+        h.participation_status,
+        h.event?.id,
+        h.event?.date,
+      ])
+  );
+
   return (
     <VendorDetailClient
-      vendorId={id}
+      key={`${id}:${initialVendor.updated_at}:${historyFingerprint}`}
       initialVendor={initialVendor}
       initialHistory={initialHistory}
     />

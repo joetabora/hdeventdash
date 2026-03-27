@@ -30,6 +30,22 @@ export default async function DashboardPage() {
     budgetMonthToDbDate(budgetMonth)
   );
 
+  const checklistStatsKey = active
+    .map((e) => {
+      const s = initialChecklistStats[e.id];
+      return `${e.id}:${s?.completed ?? 0}/${s?.total ?? 0}`;
+    })
+    .sort()
+    .join("|");
+
+  /** Remount client when server snapshot changes (e.g. router.refresh) without prop→state effects. */
+  const dashboardClientKey = [
+    budgetMonth,
+    checklistStatsKey,
+    ...active.map((e) => `${e.id}:${e.updated_at}`),
+    ...initialMonthlyBudgets.map((b) => `${b.id}:${b.updated_at}`),
+  ].join("\u0001");
+
   return (
     <Suspense
       fallback={
@@ -39,6 +55,7 @@ export default async function DashboardPage() {
       }
     >
       <DashboardContent
+        key={dashboardClientKey}
         initialEvents={active}
         initialChecklistStats={initialChecklistStats}
         initialMonthlyBudgets={initialMonthlyBudgets}

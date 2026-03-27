@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useLayoutEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Vendor } from "@/types/database";
@@ -17,10 +17,6 @@ export function VendorsPageClient({ initialVendors }: { initialVendors: Vendor[]
   const { canManageEvents } = useAppRole();
 
   const [vendors, setVendors] = useState(initialVendors);
-
-  useLayoutEffect(() => {
-    setVendors(initialVendors);
-  }, [initialVendors]);
 
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);

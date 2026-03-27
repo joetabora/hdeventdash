@@ -5,5 +5,10 @@ import { VendorsPageClient } from "./vendors-page-client";
 export default async function VendorsPage() {
   const supabase = await createClient();
   const initialVendors = await getVendors(supabase);
-  return <VendorsPageClient initialVendors={initialVendors} />;
+  const vendorsClientKey = initialVendors
+    .map((v) => `${v.id}:${v.updated_at}`)
+    .join("\u0001");
+  return (
+    <VendorsPageClient key={vendorsClientKey} initialVendors={initialVendors} />
+  );
 }

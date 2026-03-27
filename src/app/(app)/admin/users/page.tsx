@@ -12,9 +12,12 @@ export default async function AdminUsersPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const deniedKey = "admin-users:denied" as const;
+
   if (!user) {
     return (
       <UserManagementClient
+        key={deniedKey}
         initialAuthorized={false}
         initialUsers={[]}
         initialCurrentUserId={null}
@@ -26,6 +29,7 @@ export default async function AdminUsersPage() {
   if (!allowed) {
     return (
       <UserManagementClient
+        key={deniedKey}
         initialAuthorized={false}
         initialUsers={[]}
         initialCurrentUserId={null}
@@ -41,8 +45,13 @@ export default async function AdminUsersPage() {
     initialUsers = [];
   }
 
+  const usersClientKey = initialUsers
+    .map((u) => `${u.id}:${u.role}:${u.created_at}`)
+    .join("|");
+
   return (
     <UserManagementClient
+      key={usersClientKey}
       initialAuthorized={true}
       initialUsers={initialUsers}
       initialCurrentUserId={user.id}
