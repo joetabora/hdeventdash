@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useState, Suspense } from "react";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Menu, ChevronDown, LogOut } from "lucide-react";
 
 interface TopHeaderProps {
   onMenuToggle: () => void;
+  userEmail: string | null;
 }
 
 const pageTitles: Record<string, string> = {
@@ -15,19 +16,11 @@ const pageTitles: Record<string, string> = {
   "/admin/users": "User Management",
 };
 
-function TopHeaderInner({ onMenuToggle }: TopHeaderProps) {
+function TopHeaderInner({ onMenuToggle, userEmail }: TopHeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [email, setEmail] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-
-  useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      setEmail(data.user?.email ?? null);
-    });
-  }, []);
 
   const dashboardView = pathname === "/dashboard" ? searchParams.get("view") : null;
   const title =
@@ -64,11 +57,11 @@ function TopHeaderInner({ onMenuToggle }: TopHeaderProps) {
         >
           <div className="w-8 h-8 rounded-full bg-harley-orange/20 flex items-center justify-center">
             <span className="text-sm font-semibold text-harley-orange">
-              {email ? email.charAt(0).toUpperCase() : "?"}
+              {userEmail ? userEmail.charAt(0).toUpperCase() : "?"}
             </span>
           </div>
           <span className="text-sm text-harley-text hidden sm:block max-w-[150px] truncate">
-            {email || "Loading..."}
+            {userEmail ?? "—"}
           </span>
           <ChevronDown className="w-4 h-4 text-harley-text-muted" />
         </button>
@@ -83,7 +76,7 @@ function TopHeaderInner({ onMenuToggle }: TopHeaderProps) {
               <div className="px-4 py-3 border-b border-harley-gray">
                 <p className="text-xs text-harley-text-muted">Signed in as</p>
                 <p className="text-sm text-harley-text font-medium truncate">
-                  {email}
+                  {userEmail ?? "—"}
                 </p>
               </div>
               <button

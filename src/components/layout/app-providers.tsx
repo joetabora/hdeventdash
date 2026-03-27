@@ -1,8 +1,15 @@
 "use client";
 
 import { AppRoleProvider } from "@/contexts/app-role-context";
+import type { UserRole } from "@/types/database";
 
-/** Minimal client root: role context. Keeps hydration limited to provider context. */
-export function AppProviders({ children }: { children: React.ReactNode }) {
-  return <AppRoleProvider>{children}</AppRoleProvider>;
+/** Client root: role from RSC layout (no client auth bootstrap on mount). */
+export function AppProviders({
+  children,
+  role,
+}: {
+  children: React.ReactNode;
+  role: UserRole | null;
+}) {
+  return <AppRoleProvider role={role}>{children}</AppRoleProvider>;
 }

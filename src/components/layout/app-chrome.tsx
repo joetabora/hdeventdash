@@ -17,7 +17,13 @@ const PushNotificationPrompt = dynamic(
  * Interactive app chrome: mobile sidebar state, nav, header, user menu.
  * Server routes render as `children` inside `<main>` (RSC composition).
  */
-export function AppChrome({ children }: { children: React.ReactNode }) {
+export function AppChrome({
+  children,
+  userEmail,
+}: {
+  children: React.ReactNode;
+  userEmail: string | null;
+}) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -25,7 +31,10 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
       <Sidebar mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
 
       <div id="app-shell-main" className="lg:pl-64 flex flex-col min-h-screen">
-        <TopHeader onMenuToggle={() => setMobileOpen((v) => !v)} />
+        <TopHeader
+          onMenuToggle={() => setMobileOpen((v) => !v)}
+          userEmail={userEmail}
+        />
         <PushNotificationPrompt />
 
         <main className="flex-1 overflow-y-auto">

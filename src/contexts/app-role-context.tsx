@@ -4,13 +4,10 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
-  useState,
 } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 import {
-  getUserRole,
   canManageEventsRole,
   isStaffOnlyRole,
 } from "@/lib/roles";
@@ -18,7 +15,9 @@ import type { UserRole } from "@/types/database";
 
 export interface AppRoleContextValue {
   role: UserRole | null;
+  /** Always false: role comes from the server layout. */
   loading: boolean;
+  /** Revalidates the server layout so role props update (e.g. after admin changes your role). */
   refresh: () => Promise<void>;
   canManageEvents: boolean;
   isAdmin: boolean;
@@ -27,41 +26,29 @@ export interface AppRoleContextValue {
 
 const AppRoleContext = createContext<AppRoleContextValue | null>(null);
 
-export function AppRoleProvider({ children }: { children: React.ReactNode }) {
-  const [role, setRole] = useState<UserRole | null>(null);
-  const [loading, setLoading] = useState(true);
+export function AppRoleProvider({
+  role,
+  children,
+}: {
+  role: UserRole | null;
+  children: React.ReactNode;
+}) {
+  const router = useRouter();
 
   const refresh = useCallback(async () => {
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      setRole(null);
-      setLoading(false);
-      return;
-    }
-    const r = await getUserRole(supabase, user.id);
-    setRole(r);
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    // Bootstrap role from Supabase on mount (async setState inside refresh).
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional client-only auth hydration
-    void refresh();
-  }, [refresh]);
+    router.refresh();
+  }, [router]);
 
   const value = useMemo<AppRoleContextValue>(
     () => ({
       role,
-      loading,
+      loading: false,
       refresh,
       canManageEvents: canManageEventsRole(role),
       isAdmin: role === "admin",
       isStaffOnly: isStaffOnlyRole(role),
     }),
-    [role, loading, refresh]
+    [role, refresh]
   );
 
   return (
