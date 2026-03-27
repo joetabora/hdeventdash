@@ -8,6 +8,10 @@ import {
   createSignedEventDocumentUrl,
   createSignedEventDocumentUrls,
 } from "@/lib/events";
+import {
+  EVENT_FILE_UPLOAD_MAX_BYTES,
+  EVENT_UPLOAD_ACCEPT_ATTR,
+} from "@/lib/validation/upload-file";
 import { EventMedia, MediaTag, MEDIA_TAGS } from "@/types/database";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +22,7 @@ import {
   Loader2,
   Image as ImageIcon,
   Film,
+  FileText,
   X,
 } from "lucide-react";
 
@@ -96,6 +101,9 @@ export function MediaGallery({
       onUpdate();
     } catch (err) {
       console.error("Media upload failed:", err);
+      window.alert(
+        err instanceof Error ? err.message : "Upload failed."
+      );
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -121,11 +129,17 @@ export function MediaGallery({
   }
 
   function isImage(fileType: string) {
-    return fileType.startsWith("image/");
+    return (
+      fileType.startsWith("image/") && fileType !== "image/svg+xml"
+    );
   }
 
   function isVideo(fileType: string) {
     return fileType.startsWith("video/");
+  }
+
+  function isPdf(fileType: string) {
+    return fileType === "application/pdf";
   }
 
   return (
@@ -150,7 +164,7 @@ export function MediaGallery({
             ref={fileInputRef}
             type="file"
             onChange={handleUpload}
-            accept="image/*,video/*"
+            accept={EVENT_UPLOAD_ACCEPT_ATTR}
             className="hidden"
             multiple
           />
@@ -167,6 +181,10 @@ export function MediaGallery({
             )}
             Upload Media
           </Button>
+          <p className="text-[11px] text-harley-text-muted sm:ml-1">
+            Images and PDF only, up to{" "}
+            {Math.round(EVENT_FILE_UPLOAD_MAX_BYTES / (1024 * 1024))} MB each.
+          </p>
         </div>
       )}
 
@@ -237,6 +255,17 @@ export function MediaGallery({
                   <div className="w-full h-full flex items-center justify-center bg-harley-gray/40">
                     <ImageIcon className="w-8 h-8 text-harley-text-muted" />
                   </div>
+                ) : isPdf(item.file_type) && url ? (
+                  <button
+                    type="button"
+                    className="w-full h-full flex flex-col items-center justify-center cursor-pointer bg-harley-gray/50 p-2"
+                    onClick={() => void openPreview(item)}
+                  >
+                    <FileText className="w-8 h-8 text-harley-orange mb-2 shrink-0" />
+                    <span className="text-xs text-harley-text-muted text-center truncate max-w-full">
+                      {item.file_name}
+                    </span>
+                  </button>
                 ) : isVideo(item.file_type) ? (
                   <div
                     className="w-full h-full flex flex-col items-center justify-center cursor-pointer bg-harley-gray/50"
@@ -313,6 +342,12 @@ export function MediaGallery({
                 src={previewUrl}
                 alt="Preview"
                 className="w-full h-full object-contain rounded-lg"
+              />
+            ) : isPdf(previewType) ? (
+              <iframe
+                src={previewUrl}
+                title="PDF preview"
+                className="w-full min-h-[70vh] rounded-lg bg-harley-gray-light border border-harley-gray"
               />
             ) : isVideo(previewType) ? (
               <video

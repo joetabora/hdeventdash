@@ -13,6 +13,7 @@ import {
   MediaTag,
 } from "@/types/database";
 import { getCurrentOrganizationId } from "@/lib/organization";
+import { validateEventUploadFile } from "@/lib/validation/upload-file";
 
 export const EVENT_DOCUMENTS_BUCKET = "event-documents" as const;
 
@@ -195,6 +196,8 @@ export async function uploadDocument(
   tag: DocumentTag,
   uploadedBy: string
 ) {
+  validateEventUploadFile(file);
+
   const organizationId = await getCurrentOrganizationId(supabase);
   if (!organizationId) throw new Error("No organization");
 
@@ -335,6 +338,8 @@ export async function uploadMedia(
   tag: MediaTag,
   uploadedBy: string
 ) {
+  validateEventUploadFile(file);
+
   const organizationId = await getCurrentOrganizationId(supabase);
   if (!organizationId) throw new Error("No organization");
 

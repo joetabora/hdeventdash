@@ -9,6 +9,10 @@ import {
   EVENT_DOCUMENTS_SIGNED_URL_TTL_SECONDS,
 } from "@/lib/events";
 import {
+  EVENT_FILE_UPLOAD_MAX_BYTES,
+  EVENT_UPLOAD_ACCEPT_ATTR,
+} from "@/lib/validation/upload-file";
+import {
   EventDocument,
   DocumentTag,
   DOCUMENT_TAGS,
@@ -61,6 +65,9 @@ export function DocumentManager({
       onUpdate();
     } catch (err) {
       console.error("Upload failed:", err);
+      window.alert(
+        err instanceof Error ? err.message : "Upload failed."
+      );
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -133,6 +140,7 @@ export function DocumentManager({
           <input
             ref={fileInputRef}
             type="file"
+            accept={EVENT_UPLOAD_ACCEPT_ATTR}
             onChange={handleUpload}
             className="hidden"
             multiple
@@ -150,6 +158,10 @@ export function DocumentManager({
             )}
             Upload File
           </Button>
+          <p className="text-[11px] text-harley-text-muted sm:ml-1">
+            Images and PDF only, up to{" "}
+            {Math.round(EVENT_FILE_UPLOAD_MAX_BYTES / (1024 * 1024))} MB each.
+          </p>
         </div>
       )}
 

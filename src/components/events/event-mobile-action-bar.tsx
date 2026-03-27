@@ -7,6 +7,7 @@ import {
   addComment,
   uploadMedia,
 } from "@/lib/events";
+import { EVENT_UPLOAD_ACCEPT_ATTR } from "@/lib/validation/upload-file";
 import type { ChecklistItem } from "@/types/database";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
@@ -78,6 +79,9 @@ export function EventMobileActionBar({
       onAfterMediaChange?.();
     } catch (err) {
       console.error("Upload failed:", err);
+      window.alert(
+        err instanceof Error ? err.message : "Upload failed."
+      );
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -172,7 +176,7 @@ export function EventMobileActionBar({
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*,video/*"
+            accept={EVENT_UPLOAD_ACCEPT_ATTR}
             multiple
             className="hidden"
             onChange={handleUpload}
