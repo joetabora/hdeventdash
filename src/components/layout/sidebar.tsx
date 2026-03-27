@@ -19,6 +19,7 @@ import {
   X,
   ShieldCheck,
   Store,
+  Wallet,
 } from "lucide-react";
 
 const navItems = [
@@ -93,6 +94,18 @@ function SidebarNav({
           </Link>
         );
       })}
+      <Link
+        href="/budget"
+        onClick={onClose}
+        className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${
+          pathname === "/budget"
+            ? "bg-harley-orange/15 text-harley-orange"
+            : "text-harley-text-muted hover:bg-harley-gray-light/30 hover:text-harley-text hover:translate-x-0.5"
+        }`}
+      >
+        <Wallet className="w-4 h-4" />
+        Budget
+      </Link>
       {canManageEvents && (
         <Link
           href="/vendors"

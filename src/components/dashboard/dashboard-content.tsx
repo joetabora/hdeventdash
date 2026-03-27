@@ -5,35 +5,34 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { ChecklistStats } from "@/lib/events";
 import { apiPatchEvent } from "@/lib/events-api-client";
-import { Event, EventStatus, MonthlyBudget } from "@/types/database";
+import { Event, EventStatus } from "@/types/database";
 import { isEventAtRisk } from "@/lib/at-risk";
 import { KanbanBoard } from "@/components/dashboard/kanban-board";
 import { CalendarView } from "@/components/dashboard/calendar-view";
 import { ListView } from "@/components/dashboard/list-view";
 import { Filters } from "@/components/dashboard/filters";
 import { DashboardMetrics } from "@/components/dashboard/metrics";
-import { BudgetSummaryCard } from "@/components/dashboard/budget-summary-card";
 import { RoiTrendsCard } from "@/components/dashboard/roi-trends-card";
 import { AnalyticsDashboard } from "@/components/dashboard/analytics-dashboard";
 import { Card } from "@/components/ui/card";
 import { LayoutGrid, Calendar, List, BarChart3 } from "lucide-react";
 import { useAppRole } from "@/contexts/app-role-context";
-import { getMonthlyBudgetsForMonth, budgetMonthToDbDate } from "@/lib/budgets";
 import type { DashboardAggregates } from "@/lib/dashboard-aggregates";
 
 type ViewType = "kanban" | "calendar" | "list" | "analytics";
 
+function currentYearMonth(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
 export function DashboardContent({
   initialEvents,
   initialChecklistStats,
-  initialMonthlyBudgets,
-  initialBudgetMonth,
   initialAggregates,
 }: {
   initialEvents: Event[];
   initialChecklistStats: ChecklistStats;
-  initialMonthlyBudgets: MonthlyBudget[];
-  initialBudgetMonth: string;
   initialAggregates: DashboardAggregates;
 }) {
   const searchParams = useSearchParams();
@@ -53,20 +52,16 @@ export function DashboardContent({
   const [search, setSearch] = useState("");
   const [locationKeyFilter, setLocationKeyFilter] = useState("");
   const [ownerFilter, setOwnerFilter] = useState("");
-  const [budgetMonth, setBudgetMonth] = useState(initialBudgetMonth);
   const [events, setEvents] = useState(initialEvents);
   const [checklistStats] = useState(initialChecklistStats);
-  const [monthlyBudgets, setMonthlyBudgets] = useState(initialMonthlyBudgets);
   const [aggregates, setAggregates] = useState(initialAggregates);
-  /** Skip first run: props already match `budgetMonth`; only refetch when user changes month. */
-  const skipInitialBudgetMonthEffect = useRef(true);
   /** Avoid duplicate RPC right after SSR (initialAggregates already matches first filters). */
   const skipInitialAggregatesEffect = useRef(true);
   const { canManageEvents } = useAppRole();
 
   const refetchAggregates = useCallback(async () => {
     const params = new URLSearchParams({
-      budgetMonth,
+      budgetMonth: currentYearMonth(),
       budgetLocationKey: locationKeyFilter,
       search: search.trim(),
       locationKey: locationKeyFilter,
@@ -80,7 +75,7 @@ export function DashboardContent({
     } catch {
       /* keep previous aggregates */
     }
-  }, [budgetMonth, locationKeyFilter, search, ownerFilter]);
+  }, [locationKeyFilter, search, ownerFilter]);
 
   useEffect(() => {
     if (skipInitialAggregatesEffect.current) {
@@ -92,26 +87,7 @@ export function DashboardContent({
       void refetchAggregates();
     }, delay);
     return () => clearTimeout(t);
-  }, [budgetMonth, locationKeyFilter, search, ownerFilter, refetchAggregates]);
-
-  useEffect(() => {
-    if (skipInitialBudgetMonthEffect.current) {
-      skipInitialBudgetMonthEffect.current = false;
-      return;
-    }
-    const supabase = getSupabaseBrowserClient();
-    void (async () => {
-      try {
-        const rows = await getMonthlyBudgetsForMonth(
-          supabase,
-          budgetMonthToDbDate(budgetMonth)
-        );
-        setMonthlyBudgets(rows);
-      } catch {
-        setMonthlyBudgets([]);
-      }
-    })();
-  }, [budgetMonth]);
+  }, [locationKeyFilter, search, ownerFilter, refetchAggregates]);
 
   const atRiskIds = useMemo(() => {
     const ids = new Set<string>();
@@ -139,21 +115,6 @@ export function DashboardContent({
       return matchesSearch && matchesLocation && matchesOwner;
     });
   }, [events, search, locationKeyFilter, ownerFilter]);
-
-  async function reloadMonthlyBudgetsForPickerMonth() {
-    const supabase = supabaseRef.current;
-    if (!supabase) return;
-    try {
-      setMonthlyBudgets(
-        await getMonthlyBudgetsForMonth(
-          supabase,
-          budgetMonthToDbDate(budgetMonth)
-        )
-      );
-    } catch {
-      setMonthlyBudgets([]);
-    }
-  }
 
   async function handleStatusChange(eventId: string, newStatus: EventStatus) {
     if (!canManageEvents) return;
@@ -221,17 +182,6 @@ export function DashboardContent({
           totalEvents={aggregates.metrics.totalEvents}
         />
       )}
-
-      <BudgetSummaryCard
-        events={events}
-        plannedSpend={aggregates.budget.plannedSpend}
-        monthlyBudgets={monthlyBudgets}
-        budgetMonth={budgetMonth}
-        onBudgetMonthChange={setBudgetMonth}
-        locationKeyFilter={locationKeyFilter}
-        canManageBudgets={canManageEvents}
-        onBudgetsUpdated={() => void reloadMonthlyBudgetsForPickerMonth()}
-      />
 
       <Filters
         events={events}

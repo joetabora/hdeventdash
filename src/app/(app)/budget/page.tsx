@@ -1,14 +1,17 @@
 import { Suspense } from "react";
-import { DashboardContent } from "@/components/dashboard/dashboard-content";
 import { createClient } from "@/lib/supabase/server";
 import {
   getEventsForDashboard,
-  getChecklistStatsForEvents,
 } from "@/lib/events";
 import {
   fetchDashboardAggregates,
   parseDashboardAggregatesJson,
 } from "@/lib/dashboard-aggregates";
+import {
+  getMonthlyBudgetsForMonth,
+  budgetMonthToDbDate,
+} from "@/lib/budgets";
+import { BudgetPageClient } from "./budget-page-client";
 import { Loader2 } from "lucide-react";
 
 function currentYearMonth(): string {
@@ -16,15 +19,12 @@ function currentYearMonth(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
-export default async function DashboardPage() {
+export default async function BudgetPage() {
   const supabase = await createClient();
   const budgetMonth = currentYearMonth();
   const active = await getEventsForDashboard(supabase);
-  const [initialChecklistStats, initialAggregates] = await Promise.all([
-    getChecklistStatsForEvents(
-      supabase,
-      active.map((e) => e.id)
-    ),
+  const [initialMonthlyBudgets, initialAggregates] = await Promise.all([
+    getMonthlyBudgetsForMonth(supabase, budgetMonthToDbDate(budgetMonth)),
     fetchDashboardAggregates(supabase, {
       budgetMonth,
       budgetLocationKey: "",
@@ -40,19 +40,10 @@ export default async function DashboardPage() {
     }),
   ]);
 
-  const checklistStatsKey = active
-    .map((e) => {
-      const s = initialChecklistStats[e.id];
-      return `${e.id}:${s?.completed ?? 0}/${s?.total ?? 0}`;
-    })
-    .sort()
-    .join("|");
-
-  /** Remount client when server snapshot changes (e.g. router.refresh) without prop→state effects. */
-  const dashboardClientKey = [
+  const budgetClientKey = [
     budgetMonth,
-    checklistStatsKey,
     ...active.map((e) => `${e.id}:${e.updated_at}`),
+    ...initialMonthlyBudgets.map((b) => `${b.id}:${b.updated_at}`),
   ].join("\u0001");
 
   return (
@@ -63,10 +54,11 @@ export default async function DashboardPage() {
         </div>
       }
     >
-      <DashboardContent
-        key={dashboardClientKey}
+      <BudgetPageClient
+        key={budgetClientKey}
         initialEvents={active}
-        initialChecklistStats={initialChecklistStats}
+        initialMonthlyBudgets={initialMonthlyBudgets}
+        initialBudgetMonth={budgetMonth}
         initialAggregates={initialAggregates}
       />
     </Suspense>
