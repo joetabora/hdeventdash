@@ -2,14 +2,15 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import {
   getEvent,
-  getEvents,
   getChecklistItems,
   getEventDocuments,
   getEventComments,
   getEventMedia,
+  getEventBudgetSummariesForMonth,
 } from "@/lib/events";
-import { getVendors, getActiveEventVendors } from "@/lib/vendors";
-import type { Event, Vendor, EventVendorWithVendor } from "@/types/database";
+import { eventDateToYearMonth } from "@/lib/budgets";
+import { getActiveEventVendors } from "@/lib/vendors";
+import type { Event, EventVendorWithVendor } from "@/types/database";
 import { eventDetailBundleFingerprint } from "@/lib/event-detail-bundle-fingerprint";
 import { EventDetailClient } from "./event-detail-client";
 
@@ -28,27 +29,25 @@ export default async function EventDetailPage({
     notFound();
   }
 
+  const budgetMonth = eventDateToYearMonth(initialEvent.date);
+
   const [
     initialChecklist,
     initialDocuments,
     initialComments,
     initialMedia,
-    initialAllVendors,
     initialEventVendors,
-    orgEvents,
+    initialBudgetPeers,
   ] = await Promise.all([
     getChecklistItems(supabase, id),
     getEventDocuments(supabase, id),
     getEventComments(supabase, id),
     getEventMedia(supabase, id),
-    getVendors(supabase).catch(() => [] as Vendor[]),
     getActiveEventVendors(supabase, id).catch(
       () => [] as EventVendorWithVendor[]
     ),
-    getEvents(supabase).catch(() => [] as Event[]),
+    getEventBudgetSummariesForMonth(supabase, budgetMonth).catch(() => []),
   ]);
-
-  const initialAllEventsForBudget = orgEvents.filter((e) => !e.is_archived);
 
   const eventDetailClientKey = eventDetailBundleFingerprint({
     event: initialEvent,
@@ -56,9 +55,8 @@ export default async function EventDetailPage({
     documents: initialDocuments,
     comments: initialComments,
     media: initialMedia,
-    allVendors: initialAllVendors,
     eventVendors: initialEventVendors,
-    allEventsForBudget: initialAllEventsForBudget,
+    budgetPeers: initialBudgetPeers,
   });
 
   return (
@@ -70,9 +68,8 @@ export default async function EventDetailPage({
       initialDocuments={initialDocuments}
       initialComments={initialComments}
       initialMedia={initialMedia}
-      initialAllVendors={initialAllVendors}
       initialEventVendors={initialEventVendors}
-      initialAllEventsForBudget={initialAllEventsForBudget}
+      initialBudgetPeers={initialBudgetPeers}
     />
   );
 }

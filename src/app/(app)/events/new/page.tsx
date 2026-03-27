@@ -1,9 +1,14 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionOrganizationId } from "@/lib/organization-server";
-import { getEvents } from "@/lib/events";
+import { getEventBudgetSummariesForMonth } from "@/lib/events";
 import { getUserRole, canManageEventsRole } from "@/lib/roles";
 import { NewEventClient } from "./new-event-client";
+
+function currentYearMonth(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
 
 export default async function NewEventPage() {
   const supabase = await createClient();
@@ -25,8 +30,13 @@ export default async function NewEventPage() {
     redirect("/dashboard");
   }
 
-  const data = await getEvents(supabase);
-  const initialAllEvents = data.filter((e) => !e.is_archived);
+  const budgetMonth = currentYearMonth();
+  const initialBudgetPeers = await getEventBudgetSummariesForMonth(
+    supabase,
+    budgetMonth
+  );
 
-  return <NewEventClient initialAllEvents={initialAllEvents} />;
+  return (
+    <NewEventClient initialBudgetPeers={initialBudgetPeers} />
+  );
 }

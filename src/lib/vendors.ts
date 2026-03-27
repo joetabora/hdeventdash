@@ -16,6 +16,58 @@ export async function getVendors(supabase: SupabaseClient): Promise<Vendor[]> {
   return data as Vendor[];
 }
 
+export type VendorsListPage = {
+  vendors: Vendor[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+function escapeIlikePattern(term: string): string {
+  return term.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
+}
+
+function quotePostgrestIlikeValue(p: string): string {
+  return `"${p.replace(/"/g, '""')}"`;
+}
+
+/**
+ * Paginated directory list with optional multi-column search (server-side).
+ */
+export async function listVendorsPaginated(
+  supabase: SupabaseClient,
+  opts: { page: number; pageSize: number; search: string }
+): Promise<VendorsListPage> {
+  const { page, pageSize, search } = opts;
+  const safePage = Math.max(1, page);
+  const safeSize = Math.min(50, Math.max(1, pageSize));
+  const from = (safePage - 1) * safeSize;
+  const to = from + safeSize - 1;
+
+  let q = supabase
+    .from("vendors")
+    .select("*", { count: "exact" })
+    .order("name", { ascending: true });
+
+  const term = search.trim();
+  if (term.length > 0) {
+    const p = `%${escapeIlikePattern(term)}%`;
+    const qv = quotePostgrestIlikeValue(p);
+    q = q.or(
+      `name.ilike.${qv},contact_name.ilike.${qv},category.ilike.${qv},email.ilike.${qv}`
+    );
+  }
+
+  const { data, error, count } = await q.range(from, to);
+  if (error) throw error;
+  return {
+    vendors: (data ?? []) as Vendor[],
+    total: count ?? 0,
+    page: safePage,
+    pageSize: safeSize,
+  };
+}
+
 export async function getVendor(
   supabase: SupabaseClient,
   id: string

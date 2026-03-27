@@ -8,6 +8,7 @@ import {
 } from "@/hooks/use-event-detail-data";
 import { useAppRole } from "@/contexts/app-role-context";
 import { isEventAtRisk } from "@/lib/at-risk";
+import { eventDateToYearMonth } from "@/lib/budgets";
 import {
   apiDeleteEvent,
   apiPatchEvent,
@@ -28,9 +29,8 @@ export function useEventController(
     documents,
     comments,
     media,
-    allVendors,
+    budgetPeers,
     eventVendors,
-    allEventsForBudget,
     refetch,
   } = useEventDetailData(eventId, initial);
 
@@ -111,7 +111,7 @@ export function useEventController(
       });
       setEditModalOpen(false);
       setEvent(updated);
-      void refetch.orgEventsActive();
+      void refetch.budgetPeersForMonth(eventDateToYearMonth(updated.date));
     },
     [event, setEvent, refetch]
   );
@@ -135,9 +135,8 @@ export function useEventController(
     documents,
     comments,
     media,
-    allVendors,
+    budgetPeers,
     eventVendors,
-    allEventsForBudget,
     refetch,
     canManageEvents,
     isAdmin,
@@ -156,5 +155,8 @@ export function useEventController(
     handleStatusChange,
     handleEditSubmit,
     handleDelete,
+    onBudgetPeersMonthChange: (yearMonth: string) => {
+      void refetch.budgetPeersForMonth(yearMonth);
+    },
   };
 }

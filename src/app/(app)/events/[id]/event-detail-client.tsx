@@ -20,9 +20,9 @@ import {
   EventDocument,
   EventComment,
   EventMedia,
-  Vendor,
   EventVendorWithVendor,
 } from "@/types/database";
+import type { EventBudgetPeer } from "@/lib/budgets";
 import { useEventController } from "@/hooks/use-event-controller";
 import {
   BarChart3,
@@ -37,9 +37,8 @@ export type EventDetailClientProps = {
   initialDocuments: EventDocument[];
   initialComments: EventComment[];
   initialMedia: EventMedia[];
-  initialAllVendors: Vendor[];
   initialEventVendors: EventVendorWithVendor[];
-  initialAllEventsForBudget: Event[];
+  initialBudgetPeers: EventBudgetPeer[];
 };
 
 export function EventDetailClient({
@@ -49,9 +48,8 @@ export function EventDetailClient({
   initialDocuments,
   initialComments,
   initialMedia,
-  initialAllVendors,
   initialEventVendors,
-  initialAllEventsForBudget,
+  initialBudgetPeers,
 }: EventDetailClientProps) {
   const c = useEventController(eventId, {
     event: initialEvent,
@@ -59,9 +57,8 @@ export function EventDetailClient({
     documents: initialDocuments,
     comments: initialComments,
     media: initialMedia,
-    allVendors: initialAllVendors,
     eventVendors: initialEventVendors,
-    allEventsForBudget: initialAllEventsForBudget,
+    budgetPeers: initialBudgetPeers,
   });
 
   if (!c.event) {
@@ -137,7 +134,6 @@ export function EventDetailClient({
         <EventDetailVendors
           eventId={c.event.id}
           eventVendors={c.eventVendors}
-          allVendors={c.allVendors}
           canMutate={c.canManageEvents}
           onEventVendorsInvalidate={() => void c.refetch.eventVendors()}
         />
@@ -210,7 +206,8 @@ export function EventDetailClient({
           <EventForm
             event={c.event}
             canEditBudget={c.canManageEvents}
-            allEvents={c.allEventsForBudget}
+            allEvents={c.budgetPeers}
+            onBudgetPeersMonthChange={c.onBudgetPeersMonthChange}
             onSubmit={c.handleEditSubmit}
             onCancel={() => c.setEditModalOpen(false)}
             submitLabel="Save Changes"

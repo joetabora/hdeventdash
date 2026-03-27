@@ -1,20 +1,36 @@
 "use client";
 
+import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useCallback } from "react";
 import { apiCreateEvent } from "@/lib/events-api-client";
+import { apiFetchJson } from "@/lib/api/api-fetch-json";
 import { EventForm } from "@/components/events/event-form";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import type { Event, EventStatus, EventType } from "@/types/database";
+import type { EventBudgetPeer } from "@/lib/budgets";
+import type { EventStatus, EventType } from "@/types/database";
 
 export function NewEventClient({
-  initialAllEvents,
+  initialBudgetPeers,
 }: {
-  initialAllEvents: Event[];
+  initialBudgetPeers: EventBudgetPeer[];
 }) {
   const router = useRouter();
+  const [budgetPeers, setBudgetPeers] = useState(initialBudgetPeers);
+
+  const onBudgetPeersMonthChange = useCallback((yearMonth: string) => {
+    void (async () => {
+      try {
+        const data = await apiFetchJson<{ events: EventBudgetPeer[] }>(
+          `/api/events/budget-context?month=${encodeURIComponent(yearMonth)}`
+        );
+        setBudgetPeers(data.events);
+      } catch {
+        setBudgetPeers([]);
+      }
+    })();
+  }, []);
 
   const handleCreate = useCallback(
     async (data: {
@@ -59,7 +75,8 @@ export function NewEventClient({
       <Card padding="lg">
         <EventForm
           canEditBudget
-          allEvents={initialAllEvents}
+          allEvents={budgetPeers}
+          onBudgetPeersMonthChange={onBudgetPeersMonthChange}
           onSubmit={handleCreate}
           onCancel={() => router.push("/dashboard")}
         />

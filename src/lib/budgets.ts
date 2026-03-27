@@ -2,6 +2,25 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { Event, MonthlyBudget } from "@/types/database";
 import { normalizeLocationKey } from "@/lib/location-key";
 
+/** Minimal event row for monthly planned-budget aggregation (same org, one calendar month). */
+export type EventBudgetPeer = Pick<
+  Event,
+  "id" | "date" | "location" | "location_key" | "planned_budget" | "is_archived"
+>;
+
+/** First calendar day of the month after `yearMonth` (`YYYY-MM`). */
+export function firstDayOfNextCalendarMonth(yearMonth: string): string {
+  const ym = yearMonth.slice(0, 7);
+  const [ys, ms] = ym.split("-");
+  const y = Number(ys);
+  const m = Number(ms);
+  if (!Number.isFinite(y) || !Number.isFinite(m) || m < 1 || m > 12) {
+    return `${ym}-01`;
+  }
+  if (m === 12) return `${y + 1}-01-01`;
+  return `${y}-${String(m + 1).padStart(2, "0")}-01`;
+}
+
 /** `YYYY-MM` → `YYYY-MM-01` for DB month column */
 export function budgetMonthToDbDate(yearMonth: string): string {
   if (!yearMonth || yearMonth.length < 7) return yearMonth;
@@ -64,7 +83,7 @@ export async function deleteMonthlyBudget(
 
 /** Sum planned_budget for events whose date falls in yearMonth, optional location_key match. */
 export function sumPlannedBudgetForMonth(
-  events: Event[],
+  events: readonly EventBudgetPeer[],
   yearMonth: string,
   locationKeyFilter: string
 ): number {
@@ -95,7 +114,7 @@ export function totalMonthlyBudgetCapacity(
  * Matches dashboard rules: if `eventLocationKey` is set, only events at that location_key; otherwise all events in the month.
  */
 export function sumOthersPlannedForMonth(
-  events: Event[],
+  events: readonly EventBudgetPeer[],
   yearMonth: string,
   eventLocationKey: string,
   excludeEventId?: string

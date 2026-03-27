@@ -1,6 +1,6 @@
 "use client";
 
-import { Vendor, EventVendorWithVendor } from "@/types/database";
+import { EventVendorWithVendor } from "@/types/database";
 import { Store } from "lucide-react";
 import { CollapsibleSection } from "./collapsible-section";
 import { DynamicEventVendorsModuleInner } from "./lazy-event-detail-components";
@@ -8,13 +8,11 @@ import { DynamicEventVendorsModuleInner } from "./lazy-event-detail-components";
 export function EventVendorsModule({
   eventId,
   eventVendors,
-  allVendors,
   canMutate,
   onEventVendorsInvalidate,
 }: {
   eventId: string;
   eventVendors: EventVendorWithVendor[];
-  allVendors: Vendor[];
   canMutate: boolean;
   onEventVendorsInvalidate: () => void;
 }) {
@@ -31,7 +29,6 @@ export function EventVendorsModule({
       <DynamicEventVendorsModuleInner
         eventId={eventId}
         eventVendors={eventVendors}
-        allVendors={allVendors}
         canMutate={canMutate}
         onEventVendorsInvalidate={onEventVendorsInvalidate}
       />

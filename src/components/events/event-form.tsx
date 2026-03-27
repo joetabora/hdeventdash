@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import {
   Event,
   EventStatus,
@@ -9,6 +9,7 @@ import {
   EVENT_STATUSES,
   EVENT_TYPES,
 } from "@/types/database";
+import type { EventBudgetPeer } from "@/lib/budgets";
 import { FormActions } from "@/components/forms/form-actions";
 import { FormErrorAlert } from "@/components/forms/form-error-alert";
 import { Input, Textarea, Select } from "@/components/ui/input";
@@ -29,8 +30,10 @@ interface EventFormProps {
   event?: Partial<Event>;
   /** Managers/admins only — staff cannot edit budget fields (DB-enforced). */
   canEditBudget?: boolean;
-  /** Other events in the same organization (non-archived) for planned-vs-cap check; omit to skip validation. */
-  allEvents?: Event[];
+  /** Same-calendar-month peers for planned-vs-cap check; omit to skip validation. */
+  allEvents?: EventBudgetPeer[];
+  /** When the event date changes, parent refetches peers for that month (edit / create flows). */
+  onBudgetPeersMonthChange?: (yearMonth: string) => void;
   onSubmit: (data: {
     name: string;
     date: string;
@@ -58,6 +61,7 @@ export function EventForm({
   event,
   canEditBudget = false,
   allEvents = [],
+  onBudgetPeersMonthChange,
   onSubmit,
   onCancel,
   submitLabel = "Create Event",
@@ -82,6 +86,7 @@ export function EventForm({
   const [monthlyBudgets, setMonthlyBudgets] = useState<MonthlyBudget[]>([]);
   const [budgetsLoading, setBudgetsLoading] = useState(false);
   const [budgetOverrideConfirmed, setBudgetOverrideConfirmed] = useState(false);
+  const skipNextBudgetMonthFetch = useRef(true);
 
   const yearMonth =
     date.length >= 7 ? eventDateToYearMonth(date) : null;
@@ -151,6 +156,18 @@ export function EventForm({
   useEffect(() => {
     setBudgetOverrideConfirmed(false);
   }, [date, location, plannedBudget, yearMonth]);
+
+  useEffect(() => {
+    if (!canEditBudget || !onBudgetPeersMonthChange) return;
+    if (skipNextBudgetMonthFetch.current) {
+      skipNextBudgetMonthFetch.current = false;
+      return;
+    }
+    const ym = date.length >= 7 ? eventDateToYearMonth(date) : null;
+    if (!ym) return;
+    const t = setTimeout(() => onBudgetPeersMonthChange(ym), 300);
+    return () => clearTimeout(t);
+  }, [date, canEditBudget, onBudgetPeersMonthChange]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { DashboardContent } from "@/components/dashboard/dashboard-content";
 import { createClient } from "@/lib/supabase/server";
 import {
-  getEvents,
+  getEventsForDashboard,
   getChecklistStatsForEvents,
 } from "@/lib/events";
 import {
@@ -19,8 +19,7 @@ function currentYearMonth(): string {
 export default async function DashboardPage() {
   const supabase = await createClient();
   const budgetMonth = currentYearMonth();
-  const data = await getEvents(supabase);
-  const active = data.filter((e) => !e.is_archived);
+  const active = await getEventsForDashboard(supabase);
   const initialChecklistStats = await getChecklistStatsForEvents(
     supabase,
     active.map((e) => e.id)

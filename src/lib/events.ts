@@ -12,6 +12,10 @@ import {
   MediaTag,
 } from "@/types/database";
 import { getCurrentOrganizationId } from "@/lib/organization";
+import {
+  firstDayOfNextCalendarMonth,
+  type EventBudgetPeer,
+} from "@/lib/budgets";
 import { validateEventUploadFile } from "@/lib/validation/upload-file";
 
 export const EVENT_DOCUMENTS_BUCKET = "event-documents" as const;
@@ -27,6 +31,67 @@ export async function getEvents(supabase: SupabaseClient) {
   if (error) throw error;
   return data as Event[];
 }
+
+/** ~18 months in the past through ~24 months ahead; excludes archived. */
+const DASHBOARD_EVENT_PAST_DAYS = 548;
+const DASHBOARD_EVENT_FUTURE_DAYS = 730;
+
+function toLocalDateStr(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/**
+ * Dashboard / kanban / analytics: avoid loading the full events history.
+ */
+export async function getEventsForDashboard(
+  supabase: SupabaseClient
+): Promise<Event[]> {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const start = new Date(today);
+  start.setDate(start.getDate() - DASHBOARD_EVENT_PAST_DAYS);
+  const end = new Date(today);
+  end.setDate(end.getDate() + DASHBOARD_EVENT_FUTURE_DAYS);
+  const startStr = toLocalDateStr(start);
+  const endStr = toLocalDateStr(end);
+
+  const { data, error } = await supabase
+    .from("events")
+    .select("*")
+    .eq("is_archived", false)
+    .gte("date", startStr)
+    .lte("date", endStr)
+    .order("date", { ascending: true });
+  if (error) throw error;
+  return data as Event[];
+}
+
+/**
+ * Non-archived events whose `date` falls in the given calendar month (`YYYY-MM`).
+ * For event-form / budget cap checks without loading all org events.
+ */
+export async function getEventBudgetSummariesForMonth(
+  supabase: SupabaseClient,
+  yearMonth: string
+): Promise<EventBudgetPeer[]> {
+  const ym = yearMonth.slice(0, 7);
+  if (!/^\d{4}-\d{2}$/.test(ym)) return [];
+  const monthStart = `${ym}-01`;
+  const nextStart = firstDayOfNextCalendarMonth(ym);
+  const { data, error } = await supabase
+    .from("events")
+    .select("id, date, location, location_key, planned_budget, is_archived")
+    .eq("is_archived", false)
+    .gte("date", monthStart)
+    .lt("date", nextStart);
+  if (error) throw error;
+  return (data ?? []) as EventBudgetPeer[];
+}
+
+export type { EventBudgetPeer };
 
 export type ChecklistStats = Record<
   string,

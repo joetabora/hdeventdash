@@ -1,3 +1,4 @@
+import type { EventBudgetPeer } from "@/lib/budgets";
 import type {
   ChecklistItem,
   Event,
@@ -5,7 +6,6 @@ import type {
   EventDocument,
   EventMedia,
   EventVendorWithVendor,
-  Vendor,
 } from "@/types/database";
 
 function sortById<T extends { id: string }>(rows: T[]): T[] {
@@ -22,9 +22,8 @@ export function eventDetailBundleFingerprint(input: {
   documents: EventDocument[];
   comments: EventComment[];
   media: EventMedia[];
-  allVendors: Vendor[];
   eventVendors: EventVendorWithVendor[];
-  allEventsForBudget: Event[];
+  budgetPeers: EventBudgetPeer[];
 }): string {
   const {
     event,
@@ -32,9 +31,8 @@ export function eventDetailBundleFingerprint(input: {
     documents,
     comments,
     media,
-    allVendors,
     eventVendors,
-    allEventsForBudget,
+    budgetPeers,
   } = input;
 
   const parts = [
@@ -75,9 +73,6 @@ export function eventDetailBundleFingerprint(input: {
       ])
     ),
     JSON.stringify(
-      sortById(allVendors).map((v) => [v.id, v.updated_at])
-    ),
-    JSON.stringify(
       sortById(eventVendors).map((l) => [
         l.id,
         l.updated_at,
@@ -87,12 +82,7 @@ export function eventDetailBundleFingerprint(input: {
       ])
     ),
     JSON.stringify(
-      sortById(allEventsForBudget).map((e) => [
-        e.id,
-        e.updated_at,
-        e.planned_budget,
-        e.actual_budget,
-      ])
+      sortById(budgetPeers).map((e) => [e.id, e.planned_budget])
     ),
   ];
 

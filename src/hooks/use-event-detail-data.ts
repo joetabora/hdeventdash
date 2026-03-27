@@ -8,16 +8,16 @@ import {
   getEventDocuments,
   getEventComments,
   getEventMedia,
-  getEvents,
 } from "@/lib/events";
-import { getVendors, getActiveEventVendors } from "@/lib/vendors";
+import { getActiveEventVendors } from "@/lib/vendors";
+import { apiFetchJson } from "@/lib/api/api-fetch-json";
+import type { EventBudgetPeer } from "@/lib/budgets";
 import type {
   Event,
   ChecklistItem,
   EventDocument,
   EventComment,
   EventMedia,
-  Vendor,
   EventVendorWithVendor,
 } from "@/types/database";
 
@@ -27,9 +27,8 @@ export type EventDetailServerBundle = {
   documents: EventDocument[];
   comments: EventComment[];
   media: EventMedia[];
-  allVendors: Vendor[];
   eventVendors: EventVendorWithVendor[];
-  allEventsForBudget: Event[];
+  budgetPeers: EventBudgetPeer[];
 };
 
 export function useEventDetailData(
@@ -37,15 +36,13 @@ export function useEventDetailData(
   initial: EventDetailServerBundle
 ) {
   const [event, setEvent] = useState<Event | null>(initial.event);
+
   const [checklist, setChecklist] = useState(initial.checklist);
   const [documents, setDocuments] = useState(initial.documents);
   const [comments, setComments] = useState(initial.comments);
   const [media, setMedia] = useState(initial.media);
-  const [allVendors, setAllVendors] = useState(initial.allVendors);
   const [eventVendors, setEventVendors] = useState(initial.eventVendors);
-  const [allEventsForBudget, setAllEventsForBudget] = useState(
-    initial.allEventsForBudget
-  );
+  const [budgetPeers, setBudgetPeers] = useState(initial.budgetPeers);
 
   const refetch = useMemo(
     () => ({
@@ -74,12 +71,15 @@ export function useEventDetailData(
           setEventVendors([]);
         }
       },
-      orgVendors: async () => {
-        setAllVendors(await getVendors(getSupabaseBrowserClient()));
-      },
-      orgEventsActive: async () => {
-        const rows = await getEvents(getSupabaseBrowserClient());
-        setAllEventsForBudget(rows.filter((e) => !e.is_archived));
+      budgetPeersForMonth: async (yearMonth: string) => {
+        try {
+          const data = await apiFetchJson<{ events: EventBudgetPeer[] }>(
+            `/api/events/budget-context?month=${encodeURIComponent(yearMonth)}`
+          );
+          setBudgetPeers(data.events);
+        } catch {
+          setBudgetPeers([]);
+        }
       },
     }),
     [eventId]
@@ -92,9 +92,8 @@ export function useEventDetailData(
     documents,
     comments,
     media,
-    allVendors,
     eventVendors,
-    allEventsForBudget,
+    budgetPeers,
     refetch,
   };
 }

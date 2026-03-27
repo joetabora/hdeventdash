@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Vendor } from "@/types/database";
@@ -18,20 +18,45 @@ import {
 import { useFormSubmitState } from "@/hooks/use-form-submit-state";
 import { useAppRole } from "@/contexts/app-role-context";
 import { apiFetchJson } from "@/lib/api/api-fetch-json";
-import { PlusCircle, Store, Search, ChevronRight } from "lucide-react";
+import { PlusCircle, Store, Search, ChevronRight, ChevronLeft, Loader2 } from "lucide-react";
 
-export function VendorsPageClient({ initialVendors }: { initialVendors: Vendor[] }) {
+type VendorsApiPage = {
+  vendors: Vendor[];
+  total: number;
+  page: number;
+  pageSize: number;
+  hasMore: boolean;
+};
+
+export function VendorsPageClient({
+  initialVendors,
+  initialTotal,
+  initialPage,
+  pageSize,
+}: {
+  initialVendors: Vendor[];
+  initialTotal: number;
+  initialPage: number;
+  pageSize: number;
+}) {
   const router = useRouter();
   const { canManageEvents } = useAppRole();
 
   const [vendors, setVendors] = useState(initialVendors);
-
+  const [total, setTotal] = useState(initialTotal);
+  const [page, setPage] = useState(initialPage);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [listLoading, setListLoading] = useState(false);
+  const [listError, setListError] = useState("");
+
   const [modalOpen, setModalOpen] = useState(false);
   const { pending, error, setError, clearError, run } = useFormSubmitState();
   const [formValues, setFormValues] = useState<VendorFormValues>(
     EMPTY_VENDOR_FORM_VALUES
   );
+
+  const skipInitialFetch = useRef(true);
 
   function patchForm(field: keyof VendorFormValues, value: string) {
     setFormValues((prev) => ({ ...prev, [field]: value }));
@@ -47,16 +72,53 @@ export function VendorsPageClient({ initialVendors }: { initialVendors: Vendor[]
     resetCreateForm();
   }
 
-  const filtered = vendors.filter((v) => {
-    const q = search.trim().toLowerCase();
-    if (!q) return true;
-    return (
-      v.name.toLowerCase().includes(q) ||
-      v.contact_name.toLowerCase().includes(q) ||
-      v.category.toLowerCase().includes(q) ||
-      v.email.toLowerCase().includes(q)
-    );
-  });
+  const loadPage = useCallback(
+    async (p: number, q: string) => {
+      setListLoading(true);
+      setListError("");
+      try {
+        const res = await apiFetchJson<VendorsApiPage>(
+          `/api/vendors?page=${p}&pageSize=${pageSize}&q=${encodeURIComponent(q)}`
+        );
+        setVendors(res.vendors);
+        setTotal(res.total);
+        setPage(res.page);
+      } catch {
+        setListError("Failed to load vendors.");
+        setVendors([]);
+        setTotal(0);
+      } finally {
+        setListLoading(false);
+      }
+    },
+    [pageSize]
+  );
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search.trim()), 350);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  useEffect(() => {
+    if (skipInitialFetch.current && debouncedSearch === "") {
+      skipInitialFetch.current = false;
+      return;
+    }
+    setPage(1);
+    void loadPage(1, debouncedSearch);
+  }, [debouncedSearch, loadPage]);
+
+  const goToPage = useCallback(
+    (p: number) => {
+      setPage(p);
+      void loadPage(p, debouncedSearch);
+    },
+    [debouncedSearch, loadPage]
+  );
+
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const rangeStart = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const rangeEnd = Math.min(page * pageSize, total);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -73,11 +135,9 @@ export function VendorsPageClient({ initialVendors }: { initialVendors: Vendor[]
       })
     );
     if (!created) return;
-    setVendors((prev) =>
-      [...prev, created].sort((a, b) => a.name.localeCompare(b.name))
-    );
     closeModal();
     router.refresh();
+    await loadPage(page, debouncedSearch);
   }
 
   if (!canManageEvents) {
@@ -120,15 +180,63 @@ export function VendorsPageClient({ initialVendors }: { initialVendors: Vendor[]
         />
       </div>
 
-      {filtered.length === 0 ? (
+      {listError ? (
+        <Card className="!p-4 text-sm text-harley-danger">{listError}</Card>
+      ) : null}
+
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3 text-sm text-harley-text-muted">
+        <span>
+          {listLoading ? (
+            <span className="inline-flex items-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Loading…
+            </span>
+          ) : total === 0 ? (
+            "No vendors match your filters."
+          ) : (
+            <>
+              Showing {rangeStart}–{rangeEnd} of {total}
+            </>
+          )}
+        </span>
+        {total > 0 ? (
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={listLoading || page <= 1}
+              onClick={() => goToPage(Math.max(1, page - 1))}
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Previous
+            </Button>
+            <span className="text-xs tabular-nums px-1">
+              Page {page} / {totalPages}
+            </span>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={listLoading || page >= totalPages}
+              onClick={() => goToPage(Math.min(totalPages, page + 1))}
+            >
+              Next
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        ) : null}
+      </div>
+
+      {vendors.length === 0 && !listLoading ? (
         <Card className="!p-8 text-center text-harley-text-muted text-sm">
-          {vendors.length === 0
+          {total === 0 && debouncedSearch === ""
             ? "No vendors yet. Add your first vendor to start attaching them to events."
             : "No vendors match your search."}
         </Card>
       ) : (
         <ul className="space-y-2">
-          {filtered.map((v) => (
+          {vendors.map((v) => (
             <li key={v.id}>
               <Link href={`/vendors/${v.id}`}>
                 <Card className="!p-4 transition-colors hover:border-harley-orange/40 hover:bg-harley-gray/30">
