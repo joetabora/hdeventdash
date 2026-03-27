@@ -19,6 +19,7 @@ import {
   MessageSquare,
   ChevronRight,
   DollarSign,
+  Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -381,9 +382,9 @@ function ChecklistItemRow({
             type="button"
             onClick={() => setShowDetails(!showDetails)}
             className="p-2 md:p-1.5 rounded-md text-harley-text-muted hover:text-harley-orange hover:bg-harley-gray-light/40 transition-all duration-150"
-            title="Details"
+            title="Edit details"
           >
-            <MessageSquare className="w-4 h-4 md:w-3.5 md:h-3.5" />
+            <Pencil className="w-4 h-4 md:w-3.5 md:h-3.5" />
           </button>
           {allowDelete && (
             <button
