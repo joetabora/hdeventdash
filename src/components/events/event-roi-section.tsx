@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { apiPatchEvent } from "@/lib/events-api-client";
 import type { Event } from "@/types/database";
+import { formatUsd } from "@/lib/format-currency";
 import {
-  formatUsd,
   hasAnyRoiData,
   netRoiProfit,
   roiMoneyVerdict,

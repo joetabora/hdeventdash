@@ -12,6 +12,7 @@ import { StatusBadge, Badge } from "@/components/ui/badge";
 import { Button, buttonStyles } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DaysUntilEvent } from "@/components/events/days-until";
+import { formatUsdNullable } from "@/lib/format-currency";
 import {
   ArrowLeft,
   Edit,
@@ -28,14 +29,6 @@ import {
   ChevronDown,
   Wallet,
 } from "lucide-react";
-
-function formatEventMoney(n: number | null | undefined): string {
-  if (n == null || n === undefined || Number.isNaN(Number(n))) return "—";
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(Number(n));
-}
 
 export type EventDetailHeaderLiveProps = {
   mode: "live";
@@ -337,8 +330,8 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
                 <span className="font-medium text-harley-text">Budget</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-harley-text-muted">
-                <span>Planned: {formatEventMoney(event.planned_budget)}</span>
-                <span>Actual: {formatEventMoney(event.actual_budget)}</span>
+                <span>Planned: {formatUsdNullable(event.planned_budget)}</span>
+                <span>Actual: {formatUsdNullable(event.actual_budget)}</span>
               </div>
               {canManageEvents && (
                 <p className="text-xs text-harley-text-muted/80 mt-2">

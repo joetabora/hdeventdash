@@ -20,15 +20,8 @@ import {
   sumOthersPlannedForMonth,
 } from "@/lib/budgets";
 import { normalizeLocationKey } from "@/lib/location-key";
+import { formatUsd } from "@/lib/format-currency";
 import { Loader2, AlertTriangle } from "lucide-react";
-
-function formatBudgetUsd(n: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(n);
-}
 
 interface EventFormProps {
   event?: Partial<Event>;
@@ -283,7 +276,7 @@ export function EventForm({
               {budgetsLoading
                 ? "Loading monthly cap…"
                 : budgetCheck.cap > 0
-                  ? `Monthly cap for ${yearMonth}${locationTrimmed ? ` · ${locationTrimmed}` : " (all locations combined)"}: ${formatBudgetUsd(budgetCheck.cap)} · Other events this month: ${formatBudgetUsd(budgetCheck.othersPlanned)}`
+                  ? `Monthly cap for ${yearMonth}${locationTrimmed ? ` · ${locationTrimmed}` : " (all locations combined)"}: ${formatUsd(budgetCheck.cap)} · Other events this month: ${formatUsd(budgetCheck.othersPlanned)}`
                   : `No monthly cap set for ${yearMonth}${locationTrimmed ? ` at "${locationTrimmed}"` : ""}. Add one on the dashboard if you want warnings.`}
             </p>
           )}
@@ -302,10 +295,10 @@ export function EventForm({
                         ? <> at <strong>{locationTrimmed}</strong></>
                         : <> (all locations)</>}{" "}
                       would be{" "}
-                      <strong>{formatBudgetUsd(budgetCheck.total)}</strong>,
+                      <strong>{formatUsd(budgetCheck.total)}</strong>,
                       over the cap of{" "}
-                      <strong>{formatBudgetUsd(budgetCheck.cap)}</strong> (
-                      {formatBudgetUsd(budgetCheck.total - budgetCheck.cap)}{" "}
+                      <strong>{formatUsd(budgetCheck.cap)}</strong> (
+                      {formatUsd(budgetCheck.total - budgetCheck.cap)}{" "}
                       over).
                     </p>
                     <p className="text-xs text-harley-text-muted mt-2">

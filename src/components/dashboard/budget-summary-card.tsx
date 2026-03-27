@@ -10,18 +10,11 @@ import {
   type BudgetCardStatus,
 } from "@/lib/budgets";
 import { apiFetchJson } from "@/lib/api/api-fetch-json";
+import { formatUsd } from "@/lib/format-currency";
 import { Event, MonthlyBudget } from "@/types/database";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, Trash2, Plus } from "lucide-react";
-
-function formatUsd(n: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(n);
-}
 
 function formatPct(n: number): string {
   return `${n.toFixed(n >= 100 && n % 1 < 0.05 ? 0 : 1)}%`;

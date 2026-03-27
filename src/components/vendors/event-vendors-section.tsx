@@ -8,30 +8,16 @@ import {
   VENDOR_PARTICIPATION_STATUSES,
   VendorParticipationStatus,
 } from "@/types/database";
+import {
+  vendorParticipationBadgeVariant,
+  vendorParticipationLabel,
+} from "@/lib/vendor-participation";
 import { apiFetchJson } from "@/lib/api/api-fetch-json";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/input";
 import { Loader2, UserMinus, ExternalLink } from "lucide-react";
-
-function participationVariant(
-  s: VendorParticipationStatus
-): "default" | "success" | "warning" | "danger" | "muted" | "orange" {
-  switch (s) {
-    case "participated":
-      return "success";
-    case "confirmed":
-      return "muted";
-    case "invited":
-      return "warning";
-    case "declined":
-    case "cancelled":
-      return "danger";
-    default:
-      return "default";
-  }
-}
 
 interface EventVendorsSectionProps {
   eventId: string;
@@ -218,10 +204,12 @@ export function EventVendorsSection({
                         >
                           {v.name}
                         </Link>
-                        <Badge variant={participationVariant(row.participation_status)}>
-                          {VENDOR_PARTICIPATION_STATUSES.find(
-                            (x) => x.value === row.participation_status
-                          )?.label ?? row.participation_status}
+                        <Badge
+                          variant={vendorParticipationBadgeVariant(
+                            row.participation_status
+                          )}
+                        >
+                          {vendorParticipationLabel(row.participation_status)}
                         </Badge>
                       </div>
                       {(v.category || v.contact_name) && (

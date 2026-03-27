@@ -4,11 +4,8 @@ import { useMemo } from "react";
 import Link from "next/link";
 import { parseISO, compareAsc, format } from "date-fns";
 import type { Event } from "@/types/database";
-import {
-  formatUsd,
-  hasAnyRoiData,
-  totalRoiRevenue,
-} from "@/lib/event-roi";
+import { formatUsd } from "@/lib/format-currency";
+import { hasAnyRoiData, totalRoiRevenue } from "@/lib/event-roi";
 import { Card } from "@/components/ui/card";
 import { TrendingUp } from "lucide-react";
 

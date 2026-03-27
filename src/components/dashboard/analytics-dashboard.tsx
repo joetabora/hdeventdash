@@ -10,7 +10,7 @@ import {
   attendanceTrendSeries,
   aggregatesByEventType,
 } from "@/lib/analytics";
-import { formatUsd } from "@/lib/event-roi";
+import { formatUsd } from "@/lib/format-currency";
 import { RoiTrendsCard } from "@/components/dashboard/roi-trends-card";
 import { Card } from "@/components/ui/card";
 import {

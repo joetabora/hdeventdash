@@ -1,4 +1,5 @@
 import type { Event } from "@/types/database";
+import { formatUsd } from "@/lib/format-currency";
 
 export type EventRoiFields = Pick<
   Event,
@@ -44,23 +45,6 @@ export function hasAnyRoiData(e: EventRoiFields): boolean {
     num(e.roi_bike_sales_revenue) > 0 ||
     num(e.roi_event_cost) > 0
   );
-}
-
-export function formatUsd(n: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(n);
-}
-
-export function formatUsdDetailed(n: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(n);
 }
 
 /** One-line answer for “did we make money?” */

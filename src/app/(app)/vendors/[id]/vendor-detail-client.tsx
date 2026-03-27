@@ -3,11 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Vendor, EventVendorWithEvent } from "@/types/database";
 import {
-  Vendor,
-  EventVendorWithEvent,
-  VENDOR_PARTICIPATION_STATUSES,
-} from "@/types/database";
+  vendorParticipationBadgeVariant,
+  vendorParticipationLabel,
+} from "@/lib/vendor-participation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,24 +22,6 @@ import {
   MapPin,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
-
-function participationVariant(
-  s: string
-): "default" | "success" | "warning" | "danger" | "muted" | "orange" {
-  switch (s) {
-    case "participated":
-      return "success";
-    case "confirmed":
-      return "muted";
-    case "invited":
-      return "warning";
-    case "declined":
-    case "cancelled":
-      return "danger";
-    default:
-      return "default";
-  }
-}
 
 export function VendorDetailClient({
   initialVendor,
@@ -217,10 +199,12 @@ export function VendorDetailClient({
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <Badge variant={participationVariant(row.participation_status)}>
-                          {VENDOR_PARTICIPATION_STATUSES.find(
-                            (x) => x.value === row.participation_status
-                          )?.label ?? row.participation_status}
+                        <Badge
+                          variant={vendorParticipationBadgeVariant(
+                            row.participation_status
+                          )}
+                        >
+                          {vendorParticipationLabel(row.participation_status)}
                         </Badge>
                       </td>
                       <td className="px-4 py-3 text-harley-text-muted max-w-[140px] truncate">
