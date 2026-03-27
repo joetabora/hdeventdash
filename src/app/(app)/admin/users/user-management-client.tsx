@@ -351,9 +351,10 @@ export function UserManagementClient({
       </Card>
 
       <p className="text-xs text-harley-text-muted/50 text-center">
-        Users are created on the server via Supabase Auth (service role). Roles
-        are stored in the user_roles table and updated through authenticated
-        admin API routes.
+        New accounts are provisioned through Supabase Auth (service role).
+        Email and profile metadata are mirrored in <code className="text-[10px]">app_users</code> for
+        org-scoped queries. Roles live in <code className="text-[10px]">user_roles</code> and are
+        updated via authenticated admin API routes.
       </p>
     </div>
   );
