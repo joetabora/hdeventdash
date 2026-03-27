@@ -23,6 +23,7 @@ import type {
   EventComment,
   EventMedia,
   EventVendorWithVendor,
+  MonthlyBudget,
 } from "@/types/database";
 
 export type EventDetailServerBundle = {
@@ -33,6 +34,8 @@ export type EventDetailServerBundle = {
   media: EventMedia[];
   eventVendors: EventVendorWithVendor[];
   budgetPeers: EventBudgetPeer[];
+  /** Monthly venue caps for the event date’s calendar month (same scope as budgetPeers). */
+  monthlyBudgetsForEventMonth: MonthlyBudget[];
 };
 
 export function useEventDetailData(
@@ -47,6 +50,8 @@ export function useEventDetailData(
   const [media, setMedia] = useState(initial.media);
   const [eventVendors, setEventVendors] = useState(initial.eventVendors);
   const [budgetPeers, setBudgetPeers] = useState(initial.budgetPeers);
+  const [monthlyBudgetsForEventMonth, setMonthlyBudgetsForEventMonth] =
+    useState(initial.monthlyBudgetsForEventMonth);
 
   const refetch = useMemo(
     () => ({
@@ -76,14 +81,19 @@ export function useEventDetailData(
           setEventVendors([]);
         }
       },
-      budgetPeersForMonth: async (yearMonth: string) => {
+      budgetContextForMonth: async (yearMonth: string) => {
         try {
-          const data = await apiFetchJson<{ events: EventBudgetPeer[] }>(
+          const data = await apiFetchJson<{
+            events: EventBudgetPeer[];
+            monthlyBudgets: MonthlyBudget[];
+          }>(
             `/api/events/${eventId}/budget-context?month=${encodeURIComponent(yearMonth)}`
           );
           setBudgetPeers(data.events);
+          setMonthlyBudgetsForEventMonth(data.monthlyBudgets ?? []);
         } catch {
           setBudgetPeers([]);
+          setMonthlyBudgetsForEventMonth([]);
         }
       },
     }),
@@ -99,6 +109,7 @@ export function useEventDetailData(
     media,
     eventVendors,
     budgetPeers,
+    monthlyBudgetsForEventMonth,
     refetch,
   };
 }

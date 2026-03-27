@@ -8,7 +8,11 @@ import {
   getEventMedia,
   getEventBudgetSummariesForMonth,
 } from "@/lib/events";
-import { eventDateToYearMonth } from "@/lib/budgets";
+import {
+  eventDateToYearMonth,
+  getMonthlyBudgetsForMonth,
+  budgetMonthToDbDate,
+} from "@/lib/budgets";
 import { getActiveEventVendors } from "@/lib/vendors";
 import type { Event, EventVendorWithVendor } from "@/types/database";
 import { eventDetailBundleFingerprint } from "@/lib/event-detail-bundle-fingerprint";
@@ -38,6 +42,7 @@ export default async function EventDetailPage({
     initialMedia,
     initialEventVendors,
     initialBudgetPeers,
+    initialMonthlyBudgetsForEventMonth,
   ] = await Promise.all([
     getChecklistItems(supabase, id),
     getEventDocuments(supabase, id),
@@ -47,6 +52,10 @@ export default async function EventDetailPage({
       () => [] as EventVendorWithVendor[]
     ),
     getEventBudgetSummariesForMonth(supabase, budgetMonth).catch(() => []),
+    getMonthlyBudgetsForMonth(
+      supabase,
+      budgetMonthToDbDate(budgetMonth)
+    ).catch(() => []),
   ]);
 
   const eventDetailClientKey = eventDetailBundleFingerprint({
@@ -57,6 +66,7 @@ export default async function EventDetailPage({
     media: initialMedia,
     eventVendors: initialEventVendors,
     budgetPeers: initialBudgetPeers,
+    monthlyBudgetsForEventMonth: initialMonthlyBudgetsForEventMonth,
   });
 
   return (
@@ -70,6 +80,7 @@ export default async function EventDetailPage({
       initialMedia={initialMedia}
       initialEventVendors={initialEventVendors}
       initialBudgetPeers={initialBudgetPeers}
+      initialMonthlyBudgetsForEventMonth={initialMonthlyBudgetsForEventMonth}
     />
   );
 }

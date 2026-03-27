@@ -12,7 +12,7 @@ import { StatusBadge, Badge } from "@/components/ui/badge";
 import { Button, buttonStyles } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DaysUntilEvent } from "@/components/events/days-until";
-import { formatUsdNullable } from "@/lib/format-currency";
+import { formatUsd, formatUsdNullable } from "@/lib/format-currency";
 import {
   ArrowLeft,
   Edit,
@@ -38,6 +38,14 @@ export type EventDetailHeaderLiveProps = {
   onMarkLiveEvent: () => void | Promise<void>;
 };
 
+/** Monthly cap + peer planned totals for the event’s date month (managers). */
+export type EventBudgetMonthSummary = {
+  yearMonth: string;
+  cap: number;
+  othersPlanned: number;
+  locationLabel: string;
+};
+
 export type EventDetailHeaderStandardProps = {
   mode: "standard";
   event: Event;
@@ -54,6 +62,7 @@ export type EventDetailHeaderStandardProps = {
   onOpenEdit: () => void;
   onDelete: () => void | Promise<void>;
   onStatusChange: (s: EventStatus) => void | Promise<void>;
+  budgetSummaryForEventMonth?: EventBudgetMonthSummary | null;
 };
 
 export type EventDetailHeaderProps =
@@ -147,6 +156,7 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
     onOpenEdit,
     onDelete,
     onStatusChange,
+    budgetSummaryForEventMonth = null,
   } = props;
 
   return (
@@ -336,6 +346,44 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
               {canManageEvents && (
                 <p className="text-xs text-harley-text-muted/80 mt-2">
                   Edit planned and actual amounts when you open Edit event.
+                </p>
+              )}
+              {canManageEvents && budgetSummaryForEventMonth && (
+                <p className="text-xs text-harley-text-muted/90 mt-2 leading-relaxed">
+                  {budgetSummaryForEventMonth.cap > 0 ? (
+                    <>
+                      Monthly cap for{" "}
+                      {format(
+                        parseISO(`${budgetSummaryForEventMonth.yearMonth}-01`),
+                        "MMMM yyyy"
+                      )}
+                      {budgetSummaryForEventMonth.locationLabel
+                        ? ` · ${budgetSummaryForEventMonth.locationLabel}`
+                        : " (all locations combined)"}
+                      : {formatUsd(budgetSummaryForEventMonth.cap)} · Other
+                      events planned:{" "}
+                      {formatUsd(budgetSummaryForEventMonth.othersPlanned)}
+                    </>
+                  ) : (
+                    <>
+                      No monthly cap set for{" "}
+                      {format(
+                        parseISO(`${budgetSummaryForEventMonth.yearMonth}-01`),
+                        "MMMM yyyy"
+                      )}
+                      {budgetSummaryForEventMonth.locationLabel
+                        ? ` at “${budgetSummaryForEventMonth.locationLabel}”`
+                        : ""}
+                      . Add caps on the{" "}
+                      <Link
+                        href="/budget"
+                        className="text-harley-orange hover:text-harley-orange-light underline-offset-2 hover:underline"
+                      >
+                        Budget
+                      </Link>{" "}
+                      page.
+                    </>
+                  )}
                 </p>
               )}
             </div>

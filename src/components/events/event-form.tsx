@@ -34,6 +34,9 @@ interface EventFormProps {
   allEvents?: EventBudgetPeer[];
   /** When the event date changes, parent refetches peers for that month (edit / create flows). */
   onBudgetPeersMonthChange?: (yearMonth: string) => void;
+  /** When this matches `yearMonth` from the date field, caps come from the parent (SSR / refetch) instead of a separate client query. */
+  prefetchedMonthlyBudgets?: MonthlyBudget[];
+  prefetchedForYearMonth?: string | null;
   onSubmit: (data: {
     name: string;
     date: string;
@@ -61,6 +64,8 @@ export function EventForm({
   event,
   canEditBudget = false,
   allEvents = [],
+  prefetchedMonthlyBudgets,
+  prefetchedForYearMonth = null,
   onBudgetPeersMonthChange,
   onSubmit,
   onCancel,
@@ -83,7 +88,9 @@ export function EventForm({
     event?.actual_budget != null ? String(event.actual_budget) : ""
   );
   const { pending, error, setError, clearError, run } = useFormSubmitState();
-  const [monthlyBudgets, setMonthlyBudgets] = useState<MonthlyBudget[]>([]);
+  const [fetchedMonthlyBudgets, setFetchedMonthlyBudgets] = useState<
+    MonthlyBudget[]
+  >([]);
   const [budgetsLoading, setBudgetsLoading] = useState(false);
   const [budgetOverrideConfirmed, setBudgetOverrideConfirmed] = useState(false);
   const skipNextBudgetMonthFetch = useRef(true);
@@ -93,20 +100,39 @@ export function EventForm({
   const locationTrimmed = location.trim();
   const locationKey = normalizeLocationKey(locationTrimmed);
 
+  const budgetsFromParent =
+    yearMonth != null &&
+    prefetchedForYearMonth != null &&
+    yearMonth === prefetchedForYearMonth &&
+    prefetchedMonthlyBudgets !== undefined;
+
+  const capBudgetRows = useMemo(() => {
+    if (!yearMonth) return [];
+    if (budgetsFromParent) return prefetchedMonthlyBudgets;
+    return fetchedMonthlyBudgets;
+  }, [
+    yearMonth,
+    budgetsFromParent,
+    prefetchedMonthlyBudgets,
+    fetchedMonthlyBudgets,
+  ]);
+
+  const budgetsLoadingEffective =
+    Boolean(yearMonth) && !budgetsFromParent && budgetsLoading;
+
   useEffect(() => {
-    if (!yearMonth) {
-      setMonthlyBudgets([]);
-      return;
-    }
+    if (!yearMonth || budgetsFromParent) return;
     const supabase = getSupabaseBrowserClient();
     let cancelled = false;
-    setBudgetsLoading(true);
+    queueMicrotask(() => {
+      if (!cancelled) setBudgetsLoading(true);
+    });
     getMonthlyBudgetsForMonth(supabase, budgetMonthToDbDate(yearMonth))
       .then((rows) => {
-        if (!cancelled) setMonthlyBudgets(rows);
+        if (!cancelled) setFetchedMonthlyBudgets(rows);
       })
       .catch(() => {
-        if (!cancelled) setMonthlyBudgets([]);
+        if (!cancelled) setFetchedMonthlyBudgets([]);
       })
       .finally(() => {
         if (!cancelled) setBudgetsLoading(false);
@@ -114,7 +140,7 @@ export function EventForm({
     return () => {
       cancelled = true;
     };
-  }, [yearMonth]);
+  }, [yearMonth, budgetsFromParent]);
 
   const budgetCheck = useMemo(() => {
     if (!canEditBudget || !yearMonth) {
@@ -127,7 +153,7 @@ export function EventForm({
       };
     }
     const thisPlanned = numOrNull(plannedBudget) ?? 0;
-    const cap = totalMonthlyBudgetCapacity(monthlyBudgets, locationKey);
+    const cap = totalMonthlyBudgetCapacity(capBudgetRows, locationKey);
     const othersPlanned = sumOthersPlannedForMonth(
       allEvents,
       yearMonth,
@@ -147,14 +173,14 @@ export function EventForm({
     canEditBudget,
     yearMonth,
     allEvents,
-    monthlyBudgets,
+    capBudgetRows,
     locationKey,
     plannedBudget,
     event?.id,
   ]);
 
   useEffect(() => {
-    setBudgetOverrideConfirmed(false);
+    void Promise.resolve().then(() => setBudgetOverrideConfirmed(false));
   }, [date, location, plannedBudget, yearMonth]);
 
   useEffect(() => {
@@ -284,13 +310,13 @@ export function EventForm({
               placeholder="After event"
             />
           </div>
-          {yearMonth && (
+              {yearMonth && (
             <p className="text-[11px] text-harley-text-muted">
-              {budgetsLoading
+              {budgetsLoadingEffective
                 ? "Loading monthly cap…"
                 : budgetCheck.cap > 0
                   ? `Monthly cap for ${yearMonth}${locationTrimmed ? ` · ${locationTrimmed}` : " (all locations combined)"}: ${formatUsd(budgetCheck.cap)} · Other events this month: ${formatUsd(budgetCheck.othersPlanned)}`
-                  : `No monthly cap set for ${yearMonth}${locationTrimmed ? ` at "${locationTrimmed}"` : ""}. Add one on the dashboard if you want warnings.`}
+                  : `No monthly cap set for ${yearMonth}${locationTrimmed ? ` at "${locationTrimmed}"` : ""}. Add caps on the Budget page if you want warnings.`}
             </p>
           )}
           {budgetCheck.exceeds && (

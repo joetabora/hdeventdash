@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { requireSession } from "@/lib/api/require-session";
 import { assertEventInOrganization } from "@/lib/api/event-in-org";
 import { getEvent, getEventBudgetSummariesForMonth } from "@/lib/events";
-import { eventDateToYearMonth } from "@/lib/budgets";
+import {
+  eventDateToYearMonth,
+  getMonthlyBudgetsForMonth,
+  budgetMonthToDbDate,
+} from "@/lib/budgets";
 import { parseUuidParam } from "@/lib/validation/request-json";
 
 /**
@@ -45,11 +49,14 @@ export async function GET(
   }
 
   try {
-    const events = await getEventBudgetSummariesForMonth(
-      session.supabase,
-      month
-    );
-    return NextResponse.json({ events });
+    const [events, monthlyBudgets] = await Promise.all([
+      getEventBudgetSummariesForMonth(session.supabase, month),
+      getMonthlyBudgetsForMonth(
+        session.supabase,
+        budgetMonthToDbDate(month)
+      ),
+    ]);
+    return NextResponse.json({ events, monthlyBudgets });
   } catch (e) {
     console.error("GET /api/events/[eventId]/budget-context:", e);
     return NextResponse.json(

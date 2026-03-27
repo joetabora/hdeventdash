@@ -8,7 +8,12 @@ import {
 } from "@/hooks/use-event-detail-data";
 import { useAppRole } from "@/contexts/app-role-context";
 import { isEventAtRisk } from "@/lib/at-risk";
-import { eventDateToYearMonth } from "@/lib/budgets";
+import {
+  eventDateToYearMonth,
+  totalMonthlyBudgetCapacity,
+  sumOthersPlannedForMonth,
+} from "@/lib/budgets";
+import { normalizeLocationKey } from "@/lib/location-key";
 import {
   apiDeleteEvent,
   apiPatchEvent,
@@ -30,12 +35,49 @@ export function useEventController(
     comments,
     media,
     budgetPeers,
+    monthlyBudgetsForEventMonth,
     eventVendors,
     refetch,
   } = useEventDetailData(eventId, initial);
 
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [showStatusPills, setShowStatusPills] = useState(false);
+
+  const eventMonthYearMonth = useMemo(() => {
+    if (!event?.date || event.date.length < 7) return null;
+    return eventDateToYearMonth(event.date);
+  }, [event]);
+
+  const budgetSummaryForEventMonth = useMemo(() => {
+    if (!event || !canManageEvents || !eventMonthYearMonth) return null;
+    const key =
+      (event.location_key && event.location_key.trim()) ||
+      normalizeLocationKey(event.location?.trim() ?? "");
+    const cap = totalMonthlyBudgetCapacity(monthlyBudgetsForEventMonth, key);
+    const othersPlanned = sumOthersPlannedForMonth(
+      budgetPeers,
+      eventMonthYearMonth,
+      key,
+      event.id
+    );
+    return {
+      yearMonth: eventMonthYearMonth,
+      cap,
+      othersPlanned,
+      locationLabel: event.location?.trim() ?? "",
+    };
+  }, [
+    event,
+    canManageEvents,
+    eventMonthYearMonth,
+    monthlyBudgetsForEventMonth,
+    budgetPeers,
+  ]);
+
+  useEffect(() => {
+    if (!editModalOpen || !event || !eventMonthYearMonth) return;
+    void refetch.budgetContextForMonth(eventMonthYearMonth);
+  }, [editModalOpen, event, eventMonthYearMonth, refetch]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -111,7 +153,7 @@ export function useEventController(
       });
       setEditModalOpen(false);
       setEvent(updated);
-      void refetch.budgetPeersForMonth(eventDateToYearMonth(updated.date));
+      void refetch.budgetContextForMonth(eventDateToYearMonth(updated.date));
     },
     [event, setEvent, refetch]
   );
@@ -136,8 +178,11 @@ export function useEventController(
     comments,
     media,
     budgetPeers,
+    monthlyBudgetsForEventMonth,
     eventVendors,
     refetch,
+    eventMonthYearMonth,
+    budgetSummaryForEventMonth,
     canManageEvents,
     isAdmin,
     editModalOpen,
@@ -156,7 +201,7 @@ export function useEventController(
     handleEditSubmit,
     handleDelete,
     onBudgetPeersMonthChange: (yearMonth: string) => {
-      void refetch.budgetPeersForMonth(yearMonth);
+      void refetch.budgetContextForMonth(yearMonth);
     },
   };
 }

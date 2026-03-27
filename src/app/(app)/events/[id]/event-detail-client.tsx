@@ -21,6 +21,7 @@ import {
   EventComment,
   EventMedia,
   EventVendorWithVendor,
+  MonthlyBudget,
 } from "@/types/database";
 import type { EventBudgetPeer } from "@/lib/budgets";
 import { useEventController } from "@/hooks/use-event-controller";
@@ -39,6 +40,7 @@ export type EventDetailClientProps = {
   initialMedia: EventMedia[];
   initialEventVendors: EventVendorWithVendor[];
   initialBudgetPeers: EventBudgetPeer[];
+  initialMonthlyBudgetsForEventMonth: MonthlyBudget[];
 };
 
 export function EventDetailClient({
@@ -50,6 +52,7 @@ export function EventDetailClient({
   initialMedia,
   initialEventVendors,
   initialBudgetPeers,
+  initialMonthlyBudgetsForEventMonth,
 }: EventDetailClientProps) {
   const c = useEventController(eventId, {
     event: initialEvent,
@@ -59,6 +62,7 @@ export function EventDetailClient({
     media: initialMedia,
     eventVendors: initialEventVendors,
     budgetPeers: initialBudgetPeers,
+    monthlyBudgetsForEventMonth: initialMonthlyBudgetsForEventMonth,
   });
 
   if (!c.event) {
@@ -121,6 +125,7 @@ export function EventDetailClient({
           onOpenEdit={() => c.setEditModalOpen(true)}
           onDelete={c.handleDelete}
           onStatusChange={c.handleStatusChange}
+          budgetSummaryForEventMonth={c.budgetSummaryForEventMonth}
         />
 
         <EventDetailChecklist
@@ -207,6 +212,8 @@ export function EventDetailClient({
             event={c.event}
             canEditBudget={c.canManageEvents}
             allEvents={c.budgetPeers}
+            prefetchedMonthlyBudgets={c.monthlyBudgetsForEventMonth}
+            prefetchedForYearMonth={c.eventMonthYearMonth}
             onBudgetPeersMonthChange={c.onBudgetPeersMonthChange}
             onSubmit={c.handleEditSubmit}
             onCancel={() => c.setEditModalOpen(false)}
