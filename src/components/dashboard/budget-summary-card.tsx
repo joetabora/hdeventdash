@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   budgetMonthToDbDate,
   sumPlannedBudgetForMonth,
@@ -63,7 +63,8 @@ interface BudgetSummaryCardProps {
   monthlyBudgets: MonthlyBudget[];
   budgetMonth: string;
   onBudgetMonthChange: (ym: string) => void;
-  locationFilter: string;
+  /** Canonical venue key (empty = all locations) */
+  locationKeyFilter: string;
   canManageBudgets: boolean;
   onBudgetsUpdated: () => void;
 }
@@ -73,7 +74,7 @@ export function BudgetSummaryCard({
   monthlyBudgets,
   budgetMonth,
   onBudgetMonthChange,
-  locationFilter,
+  locationKeyFilter,
   canManageBudgets,
   onBudgetsUpdated,
 }: BudgetSummaryCardProps) {
@@ -82,8 +83,22 @@ export function BudgetSummaryCard({
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  const cap = totalMonthlyBudgetCapacity(monthlyBudgets, locationFilter);
-  const planned = sumPlannedBudgetForMonth(events, budgetMonth, locationFilter);
+  const filterLocationLabel = useMemo(() => {
+    if (!locationKeyFilter) return "";
+    const fromBudget = monthlyBudgets.find(
+      (b) => b.location_key === locationKeyFilter
+    );
+    if (fromBudget?.location) return fromBudget.location;
+    const fromEvent = events.find((e) => e.location_key === locationKeyFilter);
+    return fromEvent?.location || locationKeyFilter;
+  }, [locationKeyFilter, monthlyBudgets, events]);
+
+  const cap = totalMonthlyBudgetCapacity(monthlyBudgets, locationKeyFilter);
+  const planned = sumPlannedBudgetForMonth(
+    events,
+    budgetMonth,
+    locationKeyFilter
+  );
   const remaining = cap - planned;
   const pctUsed = budgetPercentUsed(planned, cap);
   const status = budgetCardStatus(planned, cap);
@@ -173,8 +188,10 @@ export function BudgetSummaryCard({
               Budget overview
             </p>
             <p className="text-xs text-harley-text-muted mt-1 max-w-xl leading-relaxed">
-              {locationFilter ? (
-                <>Events at &quot;{locationFilter}&quot; · month {budgetMonth}</>
+              {locationKeyFilter ? (
+                <>
+                  Events at &quot;{filterLocationLabel}&quot; · month {budgetMonth}
+                </>
               ) : (
                 <>
                   All locations combined · caps summed · planned includes every
@@ -275,7 +292,9 @@ export function BudgetSummaryCard({
             Manage caps
           </p>
           <p className="text-xs text-harley-text-muted mt-1 mb-4">
-            Match event location text exactly. One cap per location per month.
+            Use the same venue label as on events. Caps are matched by a
+            normalized key (spacing and punctuation don&apos;t matter). One cap
+            per venue per month.
           </p>
           {monthlyBudgets.length > 0 && (
             <ul className="space-y-2 mb-4">

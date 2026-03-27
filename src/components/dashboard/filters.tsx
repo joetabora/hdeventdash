@@ -2,14 +2,16 @@
 
 import { useMemo } from "react";
 import { Event } from "@/types/database";
+import { normalizeLocationKey } from "@/lib/location-key";
 import { Search, Filter } from "lucide-react";
 
 interface FiltersProps {
   events: Event[];
   search: string;
   onSearchChange: (value: string) => void;
-  locationFilter: string;
-  onLocationFilterChange: (value: string) => void;
+  /** Canonical venue key; empty = all */
+  locationKeyFilter: string;
+  onLocationKeyFilterChange: (value: string) => void;
   ownerFilter: string;
   onOwnerFilterChange: (value: string) => void;
 }
@@ -18,14 +20,21 @@ export function Filters({
   events,
   search,
   onSearchChange,
-  locationFilter,
-  onLocationFilterChange,
+  locationKeyFilter,
+  onLocationKeyFilterChange,
   ownerFilter,
   onOwnerFilterChange,
 }: FiltersProps) {
-  const locations = useMemo(() => {
-    const set = new Set(events.map((e) => e.location).filter(Boolean));
-    return Array.from(set).sort();
+  const locationOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const e of events) {
+      const key = e.location_key || normalizeLocationKey(e.location);
+      if (!key) continue;
+      if (!map.has(key)) map.set(key, e.location.trim() || key);
+    }
+    return Array.from(map.entries()).sort((a, b) =>
+      a[1].localeCompare(b[1], undefined, { sensitivity: "base" })
+    );
   }, [events]);
 
   const owners = useMemo(() => {
@@ -46,18 +55,18 @@ export function Filters({
         />
       </div>
 
-      {locations.length > 0 && (
+      {locationOptions.length > 0 && (
         <div className="flex items-center gap-1.5">
           <Filter className="w-4 h-4 text-harley-text-muted" />
           <select
-            value={locationFilter}
-            onChange={(e) => onLocationFilterChange(e.target.value)}
+            value={locationKeyFilter}
+            onChange={(e) => onLocationKeyFilterChange(e.target.value)}
             className="px-3 py-2 rounded-lg bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-sm focus:outline-none focus:border-harley-orange/70 focus:ring-1 focus:ring-harley-orange/20 transition-all duration-150"
           >
             <option value="">All Locations</option>
-            {locations.map((loc) => (
-              <option key={loc} value={loc}>
-                {loc}
+            {locationOptions.map(([key, label]) => (
+              <option key={key} value={key}>
+                {label}
               </option>
             ))}
           </select>

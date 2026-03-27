@@ -1,5 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Event, MonthlyBudget } from "@/types/database";
+import { normalizeLocationKey } from "@/lib/location-key";
 
 /** `YYYY-MM` → `YYYY-MM-01` for DB month column */
 export function budgetMonthToDbDate(yearMonth: string): string {
@@ -20,6 +21,7 @@ export async function getMonthlyBudgetsForMonth(
     .from("monthly_budgets")
     .select("*")
     .eq("month", monthFirstDay)
+    .order("location_key", { ascending: true })
     .order("location", { ascending: true });
   if (error) throw error;
   return (data ?? []) as MonthlyBudget[];
@@ -33,15 +35,18 @@ export async function upsertMonthlyBudget(
     budget_amount: number;
   }
 ): Promise<MonthlyBudget> {
+  const location = payload.location.trim();
+  const location_key = normalizeLocationKey(location);
   const { data, error } = await supabase
     .from("monthly_budgets")
     .upsert(
       {
         month: payload.month,
-        location: payload.location.trim(),
+        location,
+        location_key,
         budget_amount: payload.budget_amount,
       },
-      { onConflict: "organization_id,month,location" }
+      { onConflict: "organization_id,month,location_key" }
     )
     .select()
     .single();
@@ -57,17 +62,18 @@ export async function deleteMonthlyBudget(
   if (error) throw error;
 }
 
-/** Sum planned_budget for events whose date falls in yearMonth, optional exact location match. */
+/** Sum planned_budget for events whose date falls in yearMonth, optional location_key match. */
 export function sumPlannedBudgetForMonth(
   events: Event[],
   yearMonth: string,
-  locationFilter: string
+  locationKeyFilter: string
 ): number {
   let sum = 0;
   for (const e of events) {
     if (e.is_archived) continue;
     if (eventDateToYearMonth(e.date) !== yearMonth) continue;
-    if (locationFilter && e.location !== locationFilter) continue;
+    const key = e.location_key ?? normalizeLocationKey(e.location);
+    if (locationKeyFilter && key !== locationKeyFilter) continue;
     sum += Number(e.planned_budget) || 0;
   }
   return sum;
@@ -75,10 +81,10 @@ export function sumPlannedBudgetForMonth(
 
 export function totalMonthlyBudgetCapacity(
   budgets: MonthlyBudget[],
-  locationFilter: string
+  locationKeyFilter: string
 ): number {
-  if (locationFilter) {
-    const row = budgets.find((b) => b.location === locationFilter);
+  if (locationKeyFilter) {
+    const row = budgets.find((b) => b.location_key === locationKeyFilter);
     return row ? Number(row.budget_amount) || 0 : 0;
   }
   return budgets.reduce((s, b) => s + (Number(b.budget_amount) || 0), 0);
@@ -86,12 +92,12 @@ export function totalMonthlyBudgetCapacity(
 
 /**
  * Sum planned budgets for other events in the same calendar month.
- * Matches dashboard rules: if `eventLocation` is set, only events at that location; otherwise all events in the month.
+ * Matches dashboard rules: if `eventLocationKey` is set, only events at that location_key; otherwise all events in the month.
  */
 export function sumOthersPlannedForMonth(
   events: Event[],
   yearMonth: string,
-  eventLocationTrimmed: string,
+  eventLocationKey: string,
   excludeEventId?: string
 ): number {
   let sum = 0;
@@ -99,7 +105,8 @@ export function sumOthersPlannedForMonth(
     if (e.is_archived) continue;
     if (eventDateToYearMonth(e.date) !== yearMonth) continue;
     if (excludeEventId && e.id === excludeEventId) continue;
-    if (eventLocationTrimmed && e.location !== eventLocationTrimmed) continue;
+    const key = e.location_key ?? normalizeLocationKey(e.location);
+    if (eventLocationKey && key !== eventLocationKey) continue;
     sum += Number(e.planned_budget) || 0;
   }
   return sum;

@@ -48,7 +48,7 @@ export function DashboardContent({
       : "kanban";
 
   const [search, setSearch] = useState("");
-  const [locationFilter, setLocationFilter] = useState("");
+  const [locationKeyFilter, setLocationKeyFilter] = useState("");
   const [ownerFilter, setOwnerFilter] = useState("");
   const [budgetMonth, setBudgetMonth] = useState(initialBudgetMonth);
   const [events, setEvents] = useState(initialEvents);
@@ -161,11 +161,11 @@ export function DashboardContent({
         event.name.toLowerCase().includes(search.toLowerCase()) ||
         event.description.toLowerCase().includes(search.toLowerCase());
       const matchesLocation =
-        !locationFilter || event.location === locationFilter;
+        !locationKeyFilter || event.location_key === locationKeyFilter;
       const matchesOwner = !ownerFilter || event.owner === ownerFilter;
       return matchesSearch && matchesLocation && matchesOwner;
     });
-  }, [events, search, locationFilter, ownerFilter]);
+  }, [events, search, locationKeyFilter, ownerFilter]);
 
   async function reloadMonthlyBudgetsForPickerMonth() {
     const supabase = supabaseRef.current;
@@ -253,7 +253,7 @@ export function DashboardContent({
         monthlyBudgets={monthlyBudgets}
         budgetMonth={budgetMonth}
         onBudgetMonthChange={setBudgetMonth}
-        locationFilter={locationFilter}
+        locationKeyFilter={locationKeyFilter}
         canManageBudgets={canManageEvents}
         onBudgetsUpdated={() => void reloadMonthlyBudgetsForPickerMonth()}
       />
@@ -262,8 +262,8 @@ export function DashboardContent({
         events={events}
         search={search}
         onSearchChange={setSearch}
-        locationFilter={locationFilter}
-        onLocationFilterChange={setLocationFilter}
+        locationKeyFilter={locationKeyFilter}
+        onLocationKeyFilterChange={setLocationKeyFilter}
         ownerFilter={ownerFilter}
         onOwnerFilterChange={setOwnerFilter}
       />

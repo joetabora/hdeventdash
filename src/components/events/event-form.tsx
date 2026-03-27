@@ -19,6 +19,7 @@ import {
   totalMonthlyBudgetCapacity,
   sumOthersPlannedForMonth,
 } from "@/lib/budgets";
+import { normalizeLocationKey } from "@/lib/location-key";
 import { Loader2, AlertTriangle } from "lucide-react";
 
 function formatBudgetUsd(n: number): string {
@@ -91,6 +92,7 @@ export function EventForm({
   const yearMonth =
     date.length >= 7 ? eventDateToYearMonth(date) : null;
   const locationTrimmed = location.trim();
+  const locationKey = normalizeLocationKey(locationTrimmed);
 
   useEffect(() => {
     if (!yearMonth) {
@@ -126,11 +128,11 @@ export function EventForm({
       };
     }
     const thisPlanned = numOrNull(plannedBudget) ?? 0;
-    const cap = totalMonthlyBudgetCapacity(monthlyBudgets, locationTrimmed);
+    const cap = totalMonthlyBudgetCapacity(monthlyBudgets, locationKey);
     const othersPlanned = sumOthersPlannedForMonth(
       allEvents,
       yearMonth,
-      locationTrimmed,
+      locationKey,
       event?.id
     );
     const total = othersPlanned + thisPlanned;
@@ -147,7 +149,7 @@ export function EventForm({
     yearMonth,
     allEvents,
     monthlyBudgets,
-    locationTrimmed,
+    locationKey,
     plannedBudget,
     event?.id,
   ]);

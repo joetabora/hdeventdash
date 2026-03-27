@@ -62,7 +62,10 @@ export interface Event {
   organization_id: string;
   name: string;
   date: string;
+  /** Display-only venue label */
   location: string;
+  /** Canonical venue key for budgets, filters, and caps */
+  location_key: string;
   owner: string;
   status: EventStatus;
   description: string;
@@ -89,13 +92,16 @@ export interface Event {
   actual_budget?: number | null;
 }
 
-/** Org cap for a calendar month and location (matches event.location). */
+/** Org cap for a calendar month and location_key (matches event.location_key). */
 export interface MonthlyBudget {
   id: string;
   organization_id: string;
   /** First day of month, e.g. 2025-03-01 */
   month: string;
+  /** Display-only label for this cap */
   location: string;
+  /** Canonical venue key (same normalization as events.location_key) */
+  location_key: string;
   budget_amount: number;
   created_at: string;
   updated_at: string;
