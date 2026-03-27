@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { updateEvent } from "@/lib/events";
 import { Event } from "@/types/database";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,7 @@ export function EventRecap({ event, onUpdate, canEdit = true }: EventRecapProps)
     event.sales_estimate?.toString() || ""
   );
   const [saving, setSaving] = useState(false);
-  const supabase = createClient();
+  const supabase = getSupabaseBrowserClient();
 
   async function handleSave() {
     setSaving(true);

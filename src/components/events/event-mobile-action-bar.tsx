@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
   updateChecklistItem,
   addComment,
@@ -38,7 +38,7 @@ export function EventMobileActionBar({
   onAfterCommentChange,
   canManageExtras = true,
 }: EventMobileActionBarProps) {
-  const supabase = createClient();
+  const supabase = getSupabaseBrowserClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [taskModalOpen, setTaskModalOpen] = useState(false);

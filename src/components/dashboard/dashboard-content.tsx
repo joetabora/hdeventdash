@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useLayoutEffect, useRef, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { updateEvent, ChecklistStats } from "@/lib/events";
 import { Event, EventStatus, MonthlyBudget } from "@/types/database";
 import { isEventAtRisk } from "@/lib/at-risk";
@@ -36,7 +36,7 @@ export function DashboardContent({
   const searchParams = useSearchParams();
   const router = useRouter();
   const supabaseRef = useRef(
-    typeof window !== "undefined" ? createClient() : null
+    typeof window !== "undefined" ? getSupabaseBrowserClient() : null
   );
 
   const rawView = searchParams.get("view");
@@ -77,7 +77,7 @@ export function DashboardContent({
       skipNextBudgetFetch.current = false;
       return;
     }
-    const supabase = createClient();
+    const supabase = getSupabaseBrowserClient();
     void (async () => {
       try {
         const rows = await getMonthlyBudgetsForMonth(

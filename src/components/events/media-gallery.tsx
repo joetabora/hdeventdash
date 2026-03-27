@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { uploadMedia, deleteMedia, getMediaUrl } from "@/lib/events";
 import { EventMedia, MediaTag, MEDIA_TAGS } from "@/types/database";
 import { Button } from "@/components/ui/button";
@@ -41,7 +41,7 @@ export function MediaGallery({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewType, setPreviewType] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const supabase = createClient();
+  const supabase = getSupabaseBrowserClient();
 
   const filteredMedia =
     filterTag === "all" ? media : media.filter((m) => m.tag === filterTag);

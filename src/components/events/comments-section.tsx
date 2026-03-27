@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { addComment, deleteComment } from "@/lib/events";
 import { EventComment } from "@/types/database";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,7 @@ export function CommentsSection({
 }: CommentsSectionProps) {
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const supabase = createClient();
+  const supabase = getSupabaseBrowserClient();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

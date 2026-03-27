@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useRef } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { createEvent } from "@/lib/events";
 import { EventForm } from "@/components/events/event-form";
 import { Card } from "@/components/ui/card";
@@ -18,7 +18,9 @@ export function NewEventClient({
   initialAllEvents: Event[];
 }) {
   const router = useRouter();
-  const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
+  const supabaseRef = useRef<ReturnType<typeof getSupabaseBrowserClient> | null>(
+    null
+  );
 
   const handleCreate = useCallback(
     async (data: {
@@ -34,7 +36,7 @@ export function NewEventClient({
       actual_budget: number | null;
     }) => {
       const supabase =
-        supabaseRef.current ?? (supabaseRef.current = createClient());
+        supabaseRef.current ?? (supabaseRef.current = getSupabaseBrowserClient());
       const event = await createEvent(supabase, {
         ...data,
         status: data.status as "idea",

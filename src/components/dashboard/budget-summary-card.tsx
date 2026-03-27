@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
   budgetMonthToDbDate,
   sumPlannedBudgetForMonth,
@@ -97,7 +97,7 @@ export function BudgetSummaryCard({
     e.preventDefault();
     const amt = parseFloat(newAmount);
     if (!newLocation.trim() || Number.isNaN(amt) || amt < 0) return;
-    const supabase = createClient();
+    const supabase = getSupabaseBrowserClient();
     setSaving(true);
     try {
       await upsertMonthlyBudget(supabase, {
@@ -117,7 +117,7 @@ export function BudgetSummaryCard({
 
   async function handleDeleteRow(id: string) {
     if (!confirm("Remove this monthly budget row?")) return;
-    const supabase = createClient();
+    const supabase = getSupabaseBrowserClient();
     setBusyId(id);
     try {
       await deleteMonthlyBudget(supabase, id);
@@ -132,7 +132,7 @@ export function BudgetSummaryCard({
   async function handleAmountBlur(row: MonthlyBudget, raw: string) {
     const amt = parseFloat(raw);
     if (Number.isNaN(amt) || amt < 0 || amt === Number(row.budget_amount)) return;
-    const supabase = createClient();
+    const supabase = getSupabaseBrowserClient();
     setBusyId(row.id);
     try {
       await upsertMonthlyBudget(supabase, {

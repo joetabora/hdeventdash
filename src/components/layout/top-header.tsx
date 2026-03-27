@@ -2,7 +2,7 @@
 
 import { useState, Suspense } from "react";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Menu, ChevronDown, LogOut } from "lucide-react";
 
 interface TopHeaderProps {
@@ -30,7 +30,7 @@ function TopHeaderInner({ onMenuToggle, userEmail }: TopHeaderProps) {
         (pathname.startsWith("/events/") ? "Event Details" : "Dashboard");
 
   async function handleSignOut() {
-    const supabase = createClient();
+    const supabase = getSupabaseBrowserClient();
     await supabase.auth.signOut();
     router.replace("/auth/login");
   }

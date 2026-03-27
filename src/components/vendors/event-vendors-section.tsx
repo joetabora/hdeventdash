@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
   attachVendorToEvent,
   updateEventVendor,
@@ -75,7 +75,7 @@ export function EventVendorsSection({
   async function handleAttach(e: React.FormEvent) {
     e.preventDefault();
     if (!vendorId) return;
-    const supabase = createClient();
+    const supabase = getSupabaseBrowserClient();
     setAttaching(true);
     try {
       await attachVendorToEvent(supabase, {
@@ -99,7 +99,7 @@ export function EventVendorsSection({
     linkId: string,
     patch: Partial<{ role: string; notes: string; participation_status: VendorParticipationStatus }>
   ) {
-    const supabase = createClient();
+    const supabase = getSupabaseBrowserClient();
     setBusyLinkId(linkId);
     try {
       await updateEventVendor(supabase, linkId, patch);
@@ -115,7 +115,7 @@ export function EventVendorsSection({
     if (!confirm("Remove this vendor from the event? Their participation stays in history on their profile.")) {
       return;
     }
-    const supabase = createClient();
+    const supabase = getSupabaseBrowserClient();
     setBusyLinkId(linkId);
     try {
       await detachVendorFromEvent(supabase, linkId);

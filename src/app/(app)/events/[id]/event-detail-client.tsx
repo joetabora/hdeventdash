@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { updateEvent, deleteEvent } from "@/lib/events";
 import { useEventDetailData } from "@/hooks/use-event-detail-data";
 import {
@@ -92,7 +92,7 @@ export function EventDetailClient({
   const router = useRouter();
   const { canManageEvents, isAdmin } = useAppRole();
   const supabaseRef = useRef(
-    typeof window !== "undefined" ? createClient() : null
+    typeof window !== "undefined" ? getSupabaseBrowserClient() : null
   );
 
   const {

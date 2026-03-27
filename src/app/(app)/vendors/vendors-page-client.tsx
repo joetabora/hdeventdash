@@ -3,7 +3,7 @@
 import { useState, useLayoutEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { createVendor } from "@/lib/vendors";
 import { Vendor } from "@/types/database";
 import { Card } from "@/components/ui/card";
@@ -16,7 +16,7 @@ import { Loader2, PlusCircle, Store, Search, ChevronRight } from "lucide-react";
 export function VendorsPageClient({ initialVendors }: { initialVendors: Vendor[] }) {
   const router = useRouter();
   const supabaseRef = useRef(
-    typeof window !== "undefined" ? createClient() : null
+    typeof window !== "undefined" ? getSupabaseBrowserClient() : null
   );
   const { canManageEvents } = useAppRole();
 

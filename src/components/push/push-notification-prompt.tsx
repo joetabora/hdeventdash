@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { isFirebaseConfigured } from "@/lib/firebase/public-config";
 import { Bell, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -44,7 +44,7 @@ export function PushNotificationPrompt() {
     const token = await getToken(messaging, { vapidKey });
     if (!token) return;
 
-    const supabase = createClient();
+    const supabase = getSupabaseBrowserClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();

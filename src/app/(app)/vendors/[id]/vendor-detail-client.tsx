@@ -3,7 +3,7 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { updateVendor, deleteVendor } from "@/lib/vendors";
 import {
   Vendor,
@@ -53,7 +53,7 @@ export function VendorDetailClient({
 }) {
   const router = useRouter();
   const supabaseRef = useRef(
-    typeof window !== "undefined" ? createClient() : null
+    typeof window !== "undefined" ? getSupabaseBrowserClient() : null
   );
   const { canManageEvents } = useAppRole();
 

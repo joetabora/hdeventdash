@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ChecklistItem, ChecklistSection as ChecklistSectionType } from "@/types/database";
-import { createClient } from "@/lib/supabase/client";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { updateChecklistItem, addChecklistItem, deleteChecklistItem } from "@/lib/events";
 import {
   Check,
@@ -37,7 +37,7 @@ export function ChecklistSectionComponent({
   const [isExpanded, setIsExpanded] = useState(true);
   const [newItemLabel, setNewItemLabel] = useState("");
   const [addingItem, setAddingItem] = useState(false);
-  const supabase = createClient();
+  const supabase = getSupabaseBrowserClient();
 
   const checkedCount = items.filter((i) => i.is_checked).length;
   const progress = items.length > 0 ? (checkedCount / items.length) * 100 : 0;

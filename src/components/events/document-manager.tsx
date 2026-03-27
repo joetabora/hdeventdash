@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
   uploadDocument,
   deleteDocument,
@@ -41,7 +41,7 @@ export function DocumentManager({
   const [uploading, setUploading] = useState(false);
   const [selectedTag, setSelectedTag] = useState<DocumentTag>("other");
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const supabase = createClient();
+  const supabase = getSupabaseBrowserClient();
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;

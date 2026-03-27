@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { updateEvent } from "@/lib/events";
 import type { Event } from "@/types/database";
 import {
@@ -47,7 +47,7 @@ export function EventRoiSection({
   );
   const [eventCost, setEventCost] = useState(moneyStr(event.roi_event_cost));
   const [saving, setSaving] = useState(false);
-  const supabase = createClient();
+  const supabase = getSupabaseBrowserClient();
 
   useEffect(() => {
     setLeads(intStr(event.roi_leads_generated));

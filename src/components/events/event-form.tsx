@@ -11,7 +11,7 @@ import {
 } from "@/types/database";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea, Select } from "@/components/ui/input";
-import { createClient } from "@/lib/supabase/client";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
   getMonthlyBudgetsForMonth,
   budgetMonthToDbDate,
@@ -97,7 +97,7 @@ export function EventForm({
       setMonthlyBudgets([]);
       return;
     }
-    const supabase = createClient();
+    const supabase = getSupabaseBrowserClient();
     let cancelled = false;
     setBudgetsLoading(true);
     getMonthlyBudgetsForMonth(supabase, budgetMonthToDbDate(yearMonth))

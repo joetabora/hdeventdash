@@ -1,7 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useMemo, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
   getEvent,
   getChecklistItems,
@@ -73,35 +73,35 @@ export function useEventDetailData(
   const refetch = useMemo(
     () => ({
       event: async () => {
-        const row = await getEvent(createClient(), eventId);
+        const row = await getEvent(getSupabaseBrowserClient(), eventId);
         setEvent(row);
       },
       checklist: async () => {
-        setChecklist(await getChecklistItems(createClient(), eventId));
+        setChecklist(await getChecklistItems(getSupabaseBrowserClient(), eventId));
       },
       documents: async () => {
-        setDocuments(await getEventDocuments(createClient(), eventId));
+        setDocuments(await getEventDocuments(getSupabaseBrowserClient(), eventId));
       },
       comments: async () => {
-        setComments(await getEventComments(createClient(), eventId));
+        setComments(await getEventComments(getSupabaseBrowserClient(), eventId));
       },
       media: async () => {
-        setMedia(await getEventMedia(createClient(), eventId));
+        setMedia(await getEventMedia(getSupabaseBrowserClient(), eventId));
       },
       eventVendors: async () => {
         try {
           setEventVendors(
-            await getActiveEventVendors(createClient(), eventId)
+            await getActiveEventVendors(getSupabaseBrowserClient(), eventId)
           );
         } catch {
           setEventVendors([]);
         }
       },
       orgVendors: async () => {
-        setAllVendors(await getVendors(createClient()));
+        setAllVendors(await getVendors(getSupabaseBrowserClient()));
       },
       orgEventsActive: async () => {
-        const rows = await getEvents(createClient());
+        const rows = await getEvents(getSupabaseBrowserClient());
         setAllEventsForBudget(rows.filter((e) => !e.is_archived));
       },
     }),
