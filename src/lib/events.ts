@@ -33,8 +33,8 @@ export async function getEvents(supabase: SupabaseClient) {
 }
 
 /** ~18 months in the past through ~24 months ahead; excludes archived. */
-const DASHBOARD_EVENT_PAST_DAYS = 548;
-const DASHBOARD_EVENT_FUTURE_DAYS = 730;
+export const DASHBOARD_EVENT_PAST_DAYS = 548;
+export const DASHBOARD_EVENT_FUTURE_DAYS = 730;
 
 function toLocalDateStr(d: Date): string {
   const y = d.getFullYear();
@@ -44,19 +44,25 @@ function toLocalDateStr(d: Date): string {
 }
 
 /**
- * Dashboard / kanban / analytics: avoid loading the full events history.
+ * Same local-date window as {@link getEventsForDashboard} (for RPCs and API routes).
  */
-export async function getEventsForDashboard(
-  supabase: SupabaseClient
-): Promise<Event[]> {
+export function getDashboardEventDateBounds(): { start: string; end: string } {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const start = new Date(today);
   start.setDate(start.getDate() - DASHBOARD_EVENT_PAST_DAYS);
   const end = new Date(today);
   end.setDate(end.getDate() + DASHBOARD_EVENT_FUTURE_DAYS);
-  const startStr = toLocalDateStr(start);
-  const endStr = toLocalDateStr(end);
+  return { start: toLocalDateStr(start), end: toLocalDateStr(end) };
+}
+
+/**
+ * Dashboard / kanban / analytics: avoid loading the full events history.
+ */
+export async function getEventsForDashboard(
+  supabase: SupabaseClient
+): Promise<Event[]> {
+  const { start: startStr, end: endStr } = getDashboardEventDateBounds();
 
   const { data, error } = await supabase
     .from("events")

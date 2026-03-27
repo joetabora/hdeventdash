@@ -1,16 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
-import type { Event } from "@/types/database";
-import type { ChecklistStats } from "@/lib/events";
-import {
-  computePerformanceSnapshot,
-  attendanceTrendSeries,
-  aggregatesByEventType,
-} from "@/lib/analytics";
 import { formatUsd } from "@/lib/format-currency";
+import type { DashboardAggregates } from "@/lib/dashboard-aggregates";
 import { RoiTrendsCard } from "@/components/dashboard/roi-trends-card";
 import { Card } from "@/components/ui/card";
 import {
@@ -23,28 +16,11 @@ import {
 } from "lucide-react";
 
 interface AnalyticsDashboardProps {
-  events: Event[];
-  checklistStats: ChecklistStats;
+  aggregate: DashboardAggregates["filtered"];
 }
 
-export function AnalyticsDashboard({
-  events,
-  checklistStats,
-}: AnalyticsDashboardProps) {
-  const snapshot = useMemo(
-    () => computePerformanceSnapshot(events, checklistStats),
-    [events, checklistStats]
-  );
-
-  const attendanceSeries = useMemo(
-    () => attendanceTrendSeries(events),
-    [events]
-  );
-
-  const typeRows = useMemo(
-    () => aggregatesByEventType(events, checklistStats),
-    [events, checklistStats]
-  );
+export function AnalyticsDashboard({ aggregate }: AnalyticsDashboardProps) {
+  const { snapshot, attendanceSeries, byEventType, roiTrends } = aggregate;
 
   const maxAtt =
     attendanceSeries.length > 0
@@ -193,7 +169,7 @@ export function AnalyticsDashboard({
         <h3 className="text-sm font-semibold text-harley-text mb-3">
           ROI trends
         </h3>
-        <RoiTrendsCard events={events} />
+        <RoiTrendsCard trends={roiTrends} />
       </div>
 
       <div>
@@ -205,7 +181,7 @@ export function AnalyticsDashboard({
           Grouped by event type (set on each event). Ranked by average tracked
           revenue per event.
         </p>
-        {typeRows.length === 0 ? (
+        {byEventType.length === 0 ? (
           <Card className="!p-5">
             <p className="text-sm text-harley-text-muted">No events in view.</p>
           </Card>
@@ -236,7 +212,7 @@ export function AnalyticsDashboard({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-harley-gray/40">
-                  {typeRows.map((row, idx) => (
+                  {byEventType.map((row, idx) => (
                     <tr
                       key={row.key}
                       className={

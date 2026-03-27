@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import {
   budgetMonthToDbDate,
-  sumPlannedBudgetForMonth,
   totalMonthlyBudgetCapacity,
   budgetPercentUsed,
   budgetCardStatus,
@@ -54,6 +53,8 @@ const statusCopy: Record<
 
 interface BudgetSummaryCardProps {
   events: Event[];
+  /** Sum of planned_budget for events in `budgetMonth` (from DB aggregates). */
+  plannedSpend: number;
   monthlyBudgets: MonthlyBudget[];
   budgetMonth: string;
   onBudgetMonthChange: (ym: string) => void;
@@ -65,6 +66,7 @@ interface BudgetSummaryCardProps {
 
 export function BudgetSummaryCard({
   events,
+  plannedSpend,
   monthlyBudgets,
   budgetMonth,
   onBudgetMonthChange,
@@ -88,11 +90,7 @@ export function BudgetSummaryCard({
   }, [locationKeyFilter, monthlyBudgets, events]);
 
   const cap = totalMonthlyBudgetCapacity(monthlyBudgets, locationKeyFilter);
-  const planned = sumPlannedBudgetForMonth(
-    events,
-    budgetMonth,
-    locationKeyFilter
-  );
+  const planned = plannedSpend;
   const remaining = cap - planned;
   const pctUsed = budgetPercentUsed(planned, cap);
   const status = budgetCardStatus(planned, cap);

@@ -1,48 +1,20 @@
 "use client";
 
-import { useMemo } from "react";
 import Link from "next/link";
-import { parseISO, compareAsc, format } from "date-fns";
-import type { Event } from "@/types/database";
+import { parseISO, format } from "date-fns";
 import { formatUsd } from "@/lib/format-currency";
-import { hasAnyRoiData, totalRoiRevenue } from "@/lib/event-roi";
+import type { DashboardRoiTrends } from "@/lib/dashboard-aggregates";
 import { Card } from "@/components/ui/card";
 import { TrendingUp } from "lucide-react";
 
 interface RoiTrendsCardProps {
-  events: Event[];
+  trends: DashboardRoiTrends;
 }
 
-export function RoiTrendsCard({ events }: RoiTrendsCardProps) {
-  const series = useMemo(() => {
-    const rows = events
-      .filter((e) => totalRoiRevenue(e) > 0 || hasAnyRoiData(e))
-      .sort((a, b) => compareAsc(parseISO(a.date), parseISO(b.date)));
+export function RoiTrendsCard({ trends }: RoiTrendsCardProps) {
+  const { rows, runningTotals, totalTracked, maxRev, maxRunning } = trends;
 
-    const maxRev = Math.max(...rows.map((e) => totalRoiRevenue(e)), 1);
-
-    const totalTracked = rows.reduce((s, e) => s + totalRoiRevenue(e), 0);
-
-    const runningTotals = rows.reduce<{ event: Event; running: number }[]>(
-      (acc, e) => {
-        const prev = acc.length ? acc[acc.length - 1].running : 0;
-        const running = prev + totalRoiRevenue(e);
-        acc.push({ event: e, running });
-        return acc;
-      },
-      []
-    );
-    const maxRunning = Math.max(
-      runningTotals.length
-        ? runningTotals[runningTotals.length - 1].running
-        : 0,
-      1
-    );
-
-    return { rows, maxRev, totalTracked, runningTotals, maxRunning };
-  }, [events]);
-
-  if (series.rows.length === 0) {
+  if (rows.length === 0) {
     return (
       <Card className="!p-4 md:!p-5">
         <div className="flex items-center gap-2 mb-2">
@@ -75,9 +47,9 @@ export function RoiTrendsCard({ events }: RoiTrendsCardProps) {
         <p className="text-[10px] font-semibold uppercase tracking-wide text-harley-text-muted">
           Revenue per event
         </p>
-        {series.rows.map((e) => {
-          const rev = totalRoiRevenue(e);
-          const w = (rev / series.maxRev) * 100;
+        {rows.map((e) => {
+          const rev = e.revenue;
+          const w = (rev / maxRev) * 100;
           return (
             <div key={e.id} className="space-y-1">
               <div className="flex items-center justify-between gap-2 text-xs">
@@ -111,17 +83,17 @@ export function RoiTrendsCard({ events }: RoiTrendsCardProps) {
             Cumulative revenue over time
           </p>
           <span className="text-xs font-bold text-harley-success tabular-nums">
-            Total {formatUsd(series.totalTracked)}
+            Total {formatUsd(totalTracked)}
           </span>
         </div>
         <div className="flex items-end gap-0.5 h-16 pl-0.5">
-          {series.runningTotals.map(({ event: e, running }) => {
-            const h = (running / series.maxRunning) * 100;
+          {runningTotals.map(({ id, running }) => {
+            const h = (running / maxRunning) * 100;
             return (
               <Link
-                key={`bar-${e.id}`}
-                href={`/events/${e.id}`}
-                title={`${e.name}: ${formatUsd(running)} cumulative`}
+                key={`bar-${id}`}
+                href={`/events/${id}`}
+                title={`Cumulative ${formatUsd(running)}`}
                 className="flex-1 min-w-[4px] max-w-[24px] group flex flex-col justify-end"
               >
                 <div

@@ -6,6 +6,10 @@ import {
   getChecklistStatsForEvents,
 } from "@/lib/events";
 import {
+  fetchDashboardAggregates,
+  parseDashboardAggregatesJson,
+} from "@/lib/dashboard-aggregates";
+import {
   getMonthlyBudgetsForMonth,
   budgetMonthToDbDate,
 } from "@/lib/budgets";
@@ -20,14 +24,24 @@ export default async function DashboardPage() {
   const supabase = await createClient();
   const budgetMonth = currentYearMonth();
   const active = await getEventsForDashboard(supabase);
-  const initialChecklistStats = await getChecklistStatsForEvents(
-    supabase,
-    active.map((e) => e.id)
-  );
-  const initialMonthlyBudgets = await getMonthlyBudgetsForMonth(
-    supabase,
-    budgetMonthToDbDate(budgetMonth)
-  );
+  const [initialChecklistStats, initialMonthlyBudgets, initialAggregates] =
+    await Promise.all([
+      getChecklistStatsForEvents(
+        supabase,
+        active.map((e) => e.id)
+      ),
+      getMonthlyBudgetsForMonth(supabase, budgetMonthToDbDate(budgetMonth)),
+      fetchDashboardAggregates(supabase, {
+        budgetMonth,
+        budgetLocationKey: "",
+        search: "",
+        locationKey: "",
+        owner: "",
+      }).catch((err) => {
+        console.error("dashboard_aggregates RPC failed (run supabase-migration-dashboard-aggregates.sql):", err);
+        return parseDashboardAggregatesJson({});
+      }),
+    ]);
 
   const checklistStatsKey = active
     .map((e) => {
@@ -59,6 +73,7 @@ export default async function DashboardPage() {
         initialChecklistStats={initialChecklistStats}
         initialMonthlyBudgets={initialMonthlyBudgets}
         initialBudgetMonth={budgetMonth}
+        initialAggregates={initialAggregates}
       />
     </Suspense>
   );

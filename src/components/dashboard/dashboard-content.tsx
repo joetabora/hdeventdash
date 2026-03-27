@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useRef, useEffect } from "react";
+import { useMemo, useState, useRef, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { ChecklistStats } from "@/lib/events";
@@ -17,9 +17,9 @@ import { RoiTrendsCard } from "@/components/dashboard/roi-trends-card";
 import { AnalyticsDashboard } from "@/components/dashboard/analytics-dashboard";
 import { Card } from "@/components/ui/card";
 import { LayoutGrid, Calendar, List, BarChart3 } from "lucide-react";
-import { parseISO, isBefore, startOfDay } from "date-fns";
 import { useAppRole } from "@/contexts/app-role-context";
 import { getMonthlyBudgetsForMonth, budgetMonthToDbDate } from "@/lib/budgets";
+import type { DashboardAggregates } from "@/lib/dashboard-aggregates";
 
 type ViewType = "kanban" | "calendar" | "list" | "analytics";
 
@@ -28,11 +28,13 @@ export function DashboardContent({
   initialChecklistStats,
   initialMonthlyBudgets,
   initialBudgetMonth,
+  initialAggregates,
 }: {
   initialEvents: Event[];
   initialChecklistStats: ChecklistStats;
   initialMonthlyBudgets: MonthlyBudget[];
   initialBudgetMonth: string;
+  initialAggregates: DashboardAggregates;
 }) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -55,9 +57,42 @@ export function DashboardContent({
   const [events, setEvents] = useState(initialEvents);
   const [checklistStats] = useState(initialChecklistStats);
   const [monthlyBudgets, setMonthlyBudgets] = useState(initialMonthlyBudgets);
+  const [aggregates, setAggregates] = useState(initialAggregates);
   /** Skip first run: props already match `budgetMonth`; only refetch when user changes month. */
   const skipInitialBudgetMonthEffect = useRef(true);
+  /** Avoid duplicate RPC right after SSR (initialAggregates already matches first filters). */
+  const skipInitialAggregatesEffect = useRef(true);
   const { canManageEvents } = useAppRole();
+
+  const refetchAggregates = useCallback(async () => {
+    const params = new URLSearchParams({
+      budgetMonth,
+      budgetLocationKey: locationKeyFilter,
+      search: search.trim(),
+      locationKey: locationKeyFilter,
+      owner: ownerFilter.trim(),
+    });
+    try {
+      const res = await fetch(`/api/dashboard/aggregates?${params.toString()}`);
+      if (!res.ok) return;
+      const data = (await res.json()) as DashboardAggregates;
+      setAggregates(data);
+    } catch {
+      /* keep previous aggregates */
+    }
+  }, [budgetMonth, locationKeyFilter, search, ownerFilter]);
+
+  useEffect(() => {
+    if (skipInitialAggregatesEffect.current) {
+      skipInitialAggregatesEffect.current = false;
+      return;
+    }
+    const delay = search.trim() ? 320 : 0;
+    const t = setTimeout(() => {
+      void refetchAggregates();
+    }, delay);
+    return () => clearTimeout(t);
+  }, [budgetMonth, locationKeyFilter, search, ownerFilter, refetchAggregates]);
 
   useEffect(() => {
     if (skipInitialBudgetMonthEffect.current) {
@@ -91,55 +126,6 @@ export function DashboardContent({
     }
     return ids;
   }, [events, checklistStats]);
-
-  const metrics = useMemo(() => {
-    const today = startOfDay(new Date());
-    const upcoming = events.filter(
-      (e) =>
-        !isBefore(parseISO(e.date), today) &&
-        e.status !== "completed"
-    );
-
-    const completions: number[] = [];
-    for (const event of events) {
-      const stats = checklistStats[event.id];
-      if (stats && stats.total > 0) {
-        completions.push((stats.completed / stats.total) * 100);
-      }
-    }
-    const avgCompletion =
-      completions.length > 0
-        ? Math.round(completions.reduce((a, b) => a + b, 0) / completions.length)
-        : 0;
-
-    const scores: number[] = [];
-    const statusWeight: Record<string, number> = {
-      idea: 0,
-      planning: 0.2,
-      in_progress: 0.4,
-      ready_for_execution: 0.7,
-      live_event: 0.9,
-      completed: 1.0,
-    };
-    for (const event of events) {
-      const stats = checklistStats[event.id];
-      const checkPct = stats && stats.total > 0 ? stats.completed / stats.total : 0;
-      const statusPct = statusWeight[event.status] ?? 0;
-      scores.push((checkPct * 0.7 + statusPct * 0.3) * 10);
-    }
-    const avgScore =
-      scores.length > 0
-        ? scores.reduce((a, b) => a + b, 0) / scores.length
-        : 0;
-
-    return {
-      upcomingCount: upcoming.length,
-      atRiskCount: atRiskIds.size,
-      avgCompletion,
-      avgScore,
-      totalEvents: events.length,
-    };
-  }, [events, checklistStats, atRiskIds]);
 
   const filteredEvents = useMemo(() => {
     return events.filter((event) => {
@@ -181,6 +167,7 @@ export function DashboardContent({
     );
     try {
       await apiPatchEvent(eventId, { status: newStatus });
+      void refetchAggregates();
     } catch {
       setEvents(previous);
     }
@@ -227,16 +214,17 @@ export function DashboardContent({
 
       {currentView !== "analytics" && (
         <DashboardMetrics
-          upcomingCount={metrics.upcomingCount}
-          atRiskCount={metrics.atRiskCount}
-          avgCompletion={metrics.avgCompletion}
-          avgScore={metrics.avgScore}
-          totalEvents={metrics.totalEvents}
+          upcomingCount={aggregates.metrics.upcomingCount}
+          atRiskCount={aggregates.metrics.atRiskCount}
+          avgCompletion={aggregates.metrics.avgCompletion}
+          avgScore={aggregates.metrics.avgScore}
+          totalEvents={aggregates.metrics.totalEvents}
         />
       )}
 
       <BudgetSummaryCard
         events={events}
+        plannedSpend={aggregates.budget.plannedSpend}
         monthlyBudgets={monthlyBudgets}
         budgetMonth={budgetMonth}
         onBudgetMonthChange={setBudgetMonth}
@@ -256,14 +244,11 @@ export function DashboardContent({
       />
 
       {currentView !== "analytics" && (
-        <RoiTrendsCard events={filteredEvents} />
+        <RoiTrendsCard trends={aggregates.filtered.roiTrends} />
       )}
 
       {currentView === "analytics" && (
-        <AnalyticsDashboard
-          events={filteredEvents}
-          checklistStats={checklistStats}
-        />
+        <AnalyticsDashboard aggregate={aggregates.filtered} />
       )}
 
       {currentView === "kanban" && (
