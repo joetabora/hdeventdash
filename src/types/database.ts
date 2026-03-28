@@ -243,12 +243,10 @@ export type ChecklistSection = (typeof CHECKLIST_SECTIONS)[number];
 
 export const DEFAULT_CHECKLIST_ITEMS: Record<ChecklistSection, string[]> = {
   "Booking & Logistics": [
-    "Venue booked and confirmed",
-    "Permits and licenses secured",
-    "Insurance coverage verified",
-    "Equipment rental arranged",
-    "Catering/food vendors confirmed",
-    "Transportation/parking plan set",
+    "Entertainment/Music",
+    "Catering/food vendor",
+    "Merchant vendor",
+    "Decor/Misc Materials",
   ],
   "Marketing & Promotion": [
     "Event flyer/graphics created",

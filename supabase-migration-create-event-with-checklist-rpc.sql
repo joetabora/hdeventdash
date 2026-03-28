@@ -68,12 +68,10 @@ BEGIN
     x.sort_order
   FROM (
     VALUES
-      ('Booking & Logistics'::text, 'Venue booked and confirmed'::text, 0),
-      ('Booking & Logistics', 'Permits and licenses secured', 1),
-      ('Booking & Logistics', 'Insurance coverage verified', 2),
-      ('Booking & Logistics', 'Equipment rental arranged', 3),
-      ('Booking & Logistics', 'Catering/food vendors confirmed', 4),
-      ('Booking & Logistics', 'Transportation/parking plan set', 5),
+      ('Booking & Logistics'::text, 'Entertainment/Music'::text, 0),
+      ('Booking & Logistics', 'Catering/food vendor', 1),
+      ('Booking & Logistics', 'Merchant vendor', 2),
+      ('Booking & Logistics', 'Decor/Misc Materials', 3),
       ('Marketing & Promotion', 'Event flyer/graphics created', 0),
       ('Marketing & Promotion', 'Social media posts scheduled', 1),
       ('Marketing & Promotion', 'Email blast sent to mailing list', 2),
