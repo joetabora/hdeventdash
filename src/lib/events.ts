@@ -173,6 +173,8 @@ export async function createEvent(
     event_type?: EventType | null;
     planned_budget?: number | null;
     actual_budget?: number | null;
+    event_goals?: string | null;
+    core_activities?: string | null;
   }
 ) {
   const { data, error } = await supabase.rpc("create_event_with_checklist", {
@@ -187,6 +189,8 @@ export async function createEvent(
     p_event_type: event.event_type ?? null,
     p_planned_budget: event.planned_budget ?? null,
     p_actual_budget: event.actual_budget ?? null,
+    p_event_goals: event.event_goals ?? null,
+    p_core_activities: event.core_activities ?? null,
   });
   if (error) throw error;
   const row = Array.isArray(data) ? data[0] : data;

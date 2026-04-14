@@ -22,6 +22,8 @@ create table public.events (
   recap_notes text,
   sales_estimate numeric,
   is_archived boolean not null default false,
+  event_goals text,
+  core_activities text,
   created_at timestamptz default now() not null,
   updated_at timestamptz default now() not null
 );

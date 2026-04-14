@@ -44,6 +44,8 @@ export function NewEventClient({
       event_type: EventType | null;
       planned_budget: number | null;
       actual_budget: number | null;
+      event_goals: string | null;
+      core_activities: string | null;
     }) => {
       const event = await apiCreateEvent({
         name: data.name,
@@ -56,6 +58,8 @@ export function NewEventClient({
         event_type: data.event_type,
         planned_budget: data.planned_budget,
         actual_budget: data.actual_budget,
+        event_goals: data.event_goals,
+        core_activities: data.core_activities,
       });
       router.push(`/events/${event.id}`);
     },

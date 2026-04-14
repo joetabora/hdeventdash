@@ -50,6 +50,8 @@ interface EventFormProps {
     event_type: EventType | null;
     planned_budget: number | null;
     actual_budget: number | null;
+    event_goals: string | null;
+    core_activities: string | null;
   }) => Promise<void>;
   onCancel?: () => void;
   submitLabel?: string;
@@ -81,6 +83,8 @@ export function EventForm({
   const [status, setStatus] = useState<EventStatus>(event?.status || "idea");
   const [description, setDescription] = useState(event?.description || "");
   const [onedriveLink, setOnedriveLink] = useState(event?.onedrive_link || "");
+  const [eventGoals, setEventGoals] = useState(event?.event_goals || "");
+  const [coreActivities, setCoreActivities] = useState(event?.core_activities || "");
   const [eventType, setEventType] = useState<EventType | "">(
     (event?.event_type as EventType | undefined) ?? ""
   );
@@ -237,6 +241,8 @@ export function EventForm({
         actual_budget: canEditBudget
           ? numOrNull(actualBudget)
           : (event?.actual_budget ?? null),
+        event_goals: eventGoals.trim() || null,
+        core_activities: coreActivities.trim() || null,
       })
     );
   }
@@ -292,6 +298,22 @@ export function EventForm({
           { value: "", label: "Not set" },
           ...EVENT_TYPES,
         ]}
+      />
+
+      <Textarea
+        label="Event Purpose & Goals"
+        value={eventGoals}
+        onChange={(e) => setEventGoals(e.target.value)}
+        placeholder="e.g. Drive dealership traffic, increase sales in MotorClothes & Parts, GOAL: 35 QR Scans"
+        rows={3}
+      />
+
+      <Textarea
+        label="Core Activities"
+        value={coreActivities}
+        onChange={(e) => setCoreActivities(e.target.value)}
+        placeholder="e.g. Food & Refreshments, Entertainment (DJ/live band), Bike wash & test rides, Raffles & giveaways"
+        rows={3}
       />
 
       {canEditBudget && (

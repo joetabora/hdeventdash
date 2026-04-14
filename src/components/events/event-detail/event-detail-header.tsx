@@ -341,6 +341,26 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
               {event.description}
             </p>
           )}
+          {event.event_goals && (
+            <div className="mt-3 pt-3 border-t border-harley-gray/50">
+              <p className="text-[11px] uppercase tracking-wide text-harley-text-muted font-semibold mb-1.5">
+                Purpose &amp; Goals
+              </p>
+              <p className="text-sm text-harley-text leading-relaxed whitespace-pre-line">
+                {event.event_goals}
+              </p>
+            </div>
+          )}
+          {event.core_activities && (
+            <div className="mt-3 pt-3 border-t border-harley-gray/50">
+              <p className="text-[11px] uppercase tracking-wide text-harley-text-muted font-semibold mb-1.5">
+                Core Activities
+              </p>
+              <p className="text-sm text-harley-text leading-relaxed whitespace-pre-line">
+                {event.core_activities}
+              </p>
+            </div>
+          )}
           {canManageEvents && budgetSummaryForEventMonth && (
             <div className="mt-3 pt-3 border-t border-harley-gray/50">
               {budgetSummaryForEventMonth.cap > 0 &&

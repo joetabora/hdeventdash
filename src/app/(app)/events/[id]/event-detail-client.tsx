@@ -155,27 +155,9 @@ export function EventDetailClient({
         />
 
         <CollapsibleSection
-          key={`ai-${c.event.id}`}
-          icon={<Sparkles className="w-4.5 h-4.5" />}
-          title="AI Assistant"
-          autoOpenOnDesktop
-          mobileCollapsed
-          deferHeavyContent
-        >
-          <DynamicAiAssistant event={c.event} />
-        </CollapsibleSection>
-
-        <EventCommentsModule
-          eventId={c.event.id}
-          comments={c.comments}
-          canManageEvents={c.canManageEvents}
-          onCommentsInvalidate={() => void c.refetch.comments()}
-        />
-
-        <CollapsibleSection
           key={`roi-${c.event.id}`}
           icon={<DollarSign className="w-4.5 h-4.5" />}
-          title="ROI & outcomes"
+          title="ROI & Metrics"
           autoOpenOnDesktop
           mobileCollapsed
           deferHeavyContent
@@ -201,6 +183,24 @@ export function EventDetailClient({
             />
           </CollapsibleSection>
         )}
+
+        <EventCommentsModule
+          eventId={c.event.id}
+          comments={c.comments}
+          canManageEvents={c.canManageEvents}
+          onCommentsInvalidate={() => void c.refetch.comments()}
+        />
+
+        <CollapsibleSection
+          key={`ai-${c.event.id}`}
+          icon={<Sparkles className="w-4.5 h-4.5" />}
+          title="AI Assistant"
+          autoOpenOnDesktop
+          mobileCollapsed
+          deferHeavyContent
+        >
+          <DynamicAiAssistant event={c.event} />
+        </CollapsibleSection>
       </div>
 
       {c.canManageEvents && (

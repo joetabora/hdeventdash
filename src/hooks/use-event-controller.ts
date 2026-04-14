@@ -176,6 +176,8 @@ export function useEventController(
       event_type: EventType | null;
       planned_budget: number | null;
       actual_budget: number | null;
+      event_goals: string | null;
+      core_activities: string | null;
     }) => {
       if (!event) return;
       const updated = await apiPatchEvent(event.id, {
@@ -185,6 +187,8 @@ export function useEventController(
         event_type: data.event_type,
         planned_budget: data.planned_budget,
         actual_budget: data.actual_budget,
+        event_goals: data.event_goals,
+        core_activities: data.core_activities,
       });
       setEditModalOpen(false);
       setEvent(updated);

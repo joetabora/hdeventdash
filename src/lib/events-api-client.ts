@@ -23,6 +23,8 @@ export type CreateEventApiBody = {
   event_type?: EventType | null;
   planned_budget?: number | null;
   actual_budget?: number | null;
+  event_goals?: string | null;
+  core_activities?: string | null;
 };
 
 export async function apiCreateEvent(body: CreateEventApiBody): Promise<Event> {

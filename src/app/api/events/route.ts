@@ -25,6 +25,8 @@ export async function POST(request: Request) {
     event_type,
     planned_budget,
     actual_budget,
+    event_goals,
+    core_activities,
   } = parsed.data;
 
   try {
@@ -40,6 +42,8 @@ export async function POST(request: Request) {
       event_type: event_type ?? null,
       planned_budget: planned_budget ?? null,
       actual_budget: actual_budget ?? null,
+      event_goals: event_goals ?? null,
+      core_activities: core_activities ?? null,
     });
     return NextResponse.json(row);
   } catch (e) {

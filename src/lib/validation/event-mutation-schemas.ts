@@ -58,6 +58,8 @@ export const eventCreateSchema = z
     event_type: z.union([eventTypeSchema, z.null()]).optional(),
     planned_budget: z.union([moneyNonneg, z.null()]).optional(),
     actual_budget: z.union([moneyNonneg, z.null()]).optional(),
+    event_goals: z.union([z.string().max(20000), z.null()]).optional(),
+    core_activities: z.union([z.string().max(20000), z.null()]).optional(),
   })
   .strict();
 
@@ -92,6 +94,8 @@ export const eventManagerPatchSchema = z
     event_type: z.union([eventTypeSchema, z.null()]).optional(),
     planned_budget: z.union([moneyNonneg, z.null()]).optional(),
     actual_budget: z.union([moneyNonneg, z.null()]).optional(),
+    event_goals: z.union([z.string().max(20000), z.null()]).optional(),
+    core_activities: z.union([z.string().max(20000), z.null()]).optional(),
   })
   .strict()
   .refine((o) => Object.keys(o).length > 0, { message: "No fields to update" });

@@ -90,6 +90,10 @@ export interface Event {
   /** Planned / actual spend (optional until budgets migration) */
   planned_budget?: number | null;
   actual_budget?: number | null;
+  /** Event Purpose & Goals (playbook) */
+  event_goals?: string | null;
+  /** Core Activities from Event Framework (playbook) */
+  core_activities?: string | null;
 }
 
 /** Org cap for a calendar month and location_key (matches event.location_key). */
@@ -233,42 +237,93 @@ export interface EventVendorWithEvent extends EventVendor {
 }
 
 export const CHECKLIST_SECTIONS = [
-  "Booking & Logistics",
-  "Marketing & Promotion",
-  "Internal Alignment",
-  "Sales & Experience",
+  "Pre-Event Preparation",
+  "Checklist / Materials",
+  "Event Week Flow",
+  "Post-Event Follow-Up",
+  "Roles & Responsibilities",
+  "Metrics for Success",
 ] as const;
 
 export type ChecklistSection = (typeof CHECKLIST_SECTIONS)[number];
 
 export const DEFAULT_CHECKLIST_ITEMS: Record<ChecklistSection, string[]> = {
-  "Booking & Logistics": [
-    "Entertainment/Music",
-    "Catering/food vendor",
-    "Merchant vendor",
-    "Decor/Misc Materials",
+  "Pre-Event Preparation": [
+    "Finalize theme & core activities",
+    "Secure outside vendors (food truck, band, charity, etc.)",
+    "Entertainment/Music booked",
+    "Catering/food vendor confirmed",
+    "Merchant vendor confirmed",
+    "Decor/Misc materials sourced",
+    "Permits/approvals submitted (food, music, raffles)",
+    "Request marketing assets from Chryssi/SPM (dates, details, media types)",
+    "Flyer created (print & digital)",
+    "Social media graphics created (FB/IG, stories, reels)",
+    "CRM email segment prepared",
+    "Website event listing updated with SEO description",
+    "Share event details with team managers",
+    "Assign staff roles (grill, games, raffles, etc.)",
+    "Create layout (indoor/outdoor) and present to managers",
   ],
-  "Marketing & Promotion": [
-    "Event flyer/graphics created",
-    "Social media posts scheduled",
-    "Email blast sent to mailing list",
-    "Local media/press outreach done",
-    "Signage and banners prepared",
-    "Website/landing page updated",
+  "Checklist / Materials": [
+    "Tent",
+    "Tables",
+    "Tablecloths",
+    "Chairs",
+    "FB graphic (1200×1200) posted",
+    "IG graphic (1080×1920) posted",
+    "Web banner",
+    "Email graphic",
+    "Email script",
+    "Phone script",
+    "Text script",
+    "Text blast sent",
+    "Motorcycle staged",
+    "Flyers printed",
+    "Bounce back cash",
+    "Giveaway keyword set up",
+    "Giveaway item",
+    "Other swag",
+    "iPad",
+    "Poster sign/holder",
+    "Guitar",
+    "Balloons",
+    "Flags",
   ],
-  "Internal Alignment": [
-    "Staff roles and shifts assigned",
-    "Pre-event team meeting scheduled",
-    "Volunteer coordination complete",
-    "Emergency/safety plan reviewed",
-    "Communication channels set up",
+  "Event Week Flow": [
+    "Monday: Post 'This Week at HD' teaser on socials",
+    "Tuesday: Send CRM email blast",
+    "Tuesday: Place catering/DoorDash orders",
+    "Wednesday: Push mid-week teaser ('3 Days Away!')",
+    "Friday: 'Happening Tomorrow' post + reminder email",
+    "Friday: Confirm vendors and deliveries",
+    "Friday: Prepare prize, table & signage",
+    "Saturday setup: Tents",
+    "Saturday setup: Grill",
+    "Saturday setup: Tables & signage",
+    "Saturday setup: Prize entry station",
+    "Saturday: Staff reminders sent",
+    "Saturday: Capture photo/video content",
   ],
-  "Sales & Experience": [
-    "Product inventory prepared",
-    "POS/payment systems tested",
-    "Demo bikes/products staged",
-    "Customer experience flow mapped",
-    "Giveaways/swag prepared",
-    "Follow-up plan for leads defined",
+  "Post-Event Follow-Up": [
+    "Within 24h: Post event photos/videos ('Thanks for riding out!')",
+    "Within 24h: Collect raffle entries & track leads in CRM",
+    "Within 3 days: Send follow-up email (thanks + promote next event)",
+    "Manager meeting: Share recap (attendance, leads, sales impact)",
+  ],
+  "Roles & Responsibilities": [
+    "Marketing lead assigned",
+    "Sales team roles assigned",
+    "Service team roles assigned",
+    "MotorClothes team roles assigned",
+    "GM/Owner briefed",
+    "Volunteers/charities confirmed",
+  ],
+  "Metrics for Success": [
+    "Event attendance (foot traffic) recorded",
+    "Leads captured (entries/keywords collected)",
+    "Sales lift tracked (MotorClothes, Parts, Sales during event)",
+    "Social media engagement reviewed (reach, comments, shares)",
+    "Customer feedback collected",
   ],
 };
