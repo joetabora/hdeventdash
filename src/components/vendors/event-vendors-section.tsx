@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/input";
 import { formatUsd } from "@/lib/format-currency";
 import { Loader2, UserMinus, ExternalLink, DollarSign } from "lucide-react";
+import { showError } from "@/lib/toast";
 
 interface EventVendorsSectionProps {
   eventId: string;
@@ -107,6 +108,7 @@ export function EventVendorsSection({
       onUpdate();
     } catch (err) {
       console.error(err);
+      showError("Failed to attach vendor.");
     } finally {
       setAttaching(false);
     }
@@ -124,6 +126,7 @@ export function EventVendorsSection({
       body: JSON.stringify(patch),
     }).catch((err) => {
       console.error(err);
+      showError("Failed to update vendor.");
       if (prev) {
         const revert: Partial<EventVendorWithVendor> = {};
         for (const k of Object.keys(patch)) {
@@ -144,6 +147,7 @@ export function EventVendorsSection({
       method: "DELETE",
     }).catch((err) => {
       console.error(err);
+      showError("Failed to remove vendor.");
       onUpdate();
     });
   }

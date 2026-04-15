@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Save, Loader2, Users, Bike } from "lucide-react";
+import { showError } from "@/lib/toast";
 
 interface EventRoiSectionProps {
   event: Event;
@@ -85,6 +86,7 @@ export function EventRoiSection({
       onUpdate();
     } catch (err) {
       console.error("Failed to save ROI:", err);
+      showError("Failed to save ROI data.");
     } finally {
       setSaving(false);
     }

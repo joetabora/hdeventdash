@@ -14,12 +14,13 @@ import { Event, MonthlyBudget } from "@/types/database";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, Trash2, Plus } from "lucide-react";
+import { showError } from "@/lib/toast";
 
 function formatPct(n: number): string {
   return `${n.toFixed(n >= 100 && n % 1 < 0.05 ? 0 : 1)}%`;
 }
 
-const DIVIDER = "border-t border-[#2a2a2a]";
+const DIVIDER = "border-t border-harley-gray";
 
 const statusCopy: Record<
   BudgetCardStatus,
@@ -35,13 +36,13 @@ const statusCopy: Record<
     label: "Approaching limit",
     dot: "bg-harley-orange",
     bar: "bg-harley-orange",
-    barGlow: "shadow-[0_0_10px_rgba(255,102,0,0.3)]",
+    barGlow: "shadow-[0_0_10px_var(--color-harley-orange)/0.3]",
   },
   danger: {
     label: "Over budget",
     dot: "bg-harley-danger",
     bar: "bg-harley-danger",
-    barGlow: "shadow-[0_0_12px_rgba(240,80,80,0.35)]",
+    barGlow: "shadow-[0_0_12px_var(--color-harley-danger)/0.35]",
   },
   no_budget: {
     label: "No cap set",
@@ -120,6 +121,7 @@ export function BudgetSummaryCard({
       onBudgetsUpdated();
     } catch (err) {
       console.error(err);
+      showError("Failed to save budget.");
     } finally {
       setSaving(false);
     }
@@ -135,6 +137,7 @@ export function BudgetSummaryCard({
       onBudgetsUpdated();
     } catch (err) {
       console.error(err);
+      showError("Failed to delete budget.");
     } finally {
       setBusyId(null);
     }
@@ -157,6 +160,7 @@ export function BudgetSummaryCard({
       onBudgetsUpdated();
     } catch (err) {
       console.error(err);
+      showError("Failed to save budget.");
     } finally {
       setBusyId(null);
     }
@@ -277,7 +281,7 @@ export function BudgetSummaryCard({
       </div>
 
       {canManageBudgets && (
-        <div className={`border-t border-[#2a2a2a] px-6 py-5 md:px-8 md:py-6 bg-harley-black/30`}>
+        <div className={`border-t border-harley-gray px-6 py-5 md:px-8 md:py-6 bg-harley-black/30`}>
           <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-harley-text-muted">
             Manage caps
           </p>

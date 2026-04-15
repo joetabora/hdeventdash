@@ -14,6 +14,7 @@ const pageTitles: Record<string, string> = {
   "/dashboard": "Events Dashboard",
   "/budget": "Budget",
   "/events/new": "Create New Event",
+  "/vendors": "Vendors",
   "/admin/users": "User Management",
 };
 
@@ -28,7 +29,9 @@ function TopHeaderInner({ onMenuToggle, userEmail }: TopHeaderProps) {
     dashboardView === "analytics"
       ? "Analytics"
       : pageTitles[pathname] ||
-        (pathname.startsWith("/events/") ? "Event Details" : "Dashboard");
+        (pathname.startsWith("/events/") ? "Event Details"
+        : pathname.startsWith("/vendors/") ? "Vendor Details"
+        : "Dashboard");
 
   async function handleSignOut() {
     const supabase = getSupabaseBrowserClient();
@@ -73,7 +76,7 @@ function TopHeaderInner({ onMenuToggle, userEmail }: TopHeaderProps) {
               className="fixed inset-0 z-10"
               onClick={() => setMenuOpen(false)}
             />
-            <div className="absolute right-0 mt-2 w-56 bg-harley-dark rounded-xl border border-harley-gray shadow-[0_8px_24px_rgba(0,0,0,0.55)] z-20 py-1">
+            <div className="absolute right-0 mt-2 w-56 bg-harley-dark rounded-xl border border-harley-gray shadow-[var(--shadow-elevated)] z-20 py-1">
               <div className="px-4 py-3 border-b border-harley-gray">
                 <p className="text-xs text-harley-text-muted">Signed in as</p>
                 <p className="text-sm text-harley-text font-medium truncate">

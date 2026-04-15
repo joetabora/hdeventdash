@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Archive, Save, Loader2 } from "lucide-react";
+import { showError } from "@/lib/toast";
 
 interface EventRecapProps {
   event: Event;
@@ -35,6 +36,7 @@ export function EventRecap({ event, onUpdate, canEdit = true }: EventRecapProps)
       onUpdate();
     } catch (err) {
       console.error("Failed to save recap:", err);
+      showError("Failed to save recap.");
     } finally {
       setSaving(false);
     }
@@ -55,6 +57,7 @@ export function EventRecap({ event, onUpdate, canEdit = true }: EventRecapProps)
       onUpdate();
     } catch (err) {
       console.error("Failed to archive:", err);
+      showError("Failed to archive event.");
     }
   }
 

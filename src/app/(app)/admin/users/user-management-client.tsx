@@ -21,6 +21,7 @@ import {
   AlertTriangle,
   Briefcase,
 } from "lucide-react";
+import { showError } from "@/lib/toast";
 
 type AdminUsersPayload = {
   users: ManagedUserDto[];
@@ -115,6 +116,7 @@ export function UserManagementClient({
         "Failed to update role:",
         isApiError(err) ? err.message : err
       );
+      showError("Failed to update user role.");
     }
   }
 
@@ -135,6 +137,7 @@ export function UserManagementClient({
         "Failed to delete role:",
         isApiError(err) ? err.message : err
       );
+      showError("Failed to remove user.");
     }
   }
 

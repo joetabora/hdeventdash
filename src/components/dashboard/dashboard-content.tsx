@@ -215,7 +215,12 @@ export function DashboardContent({
         <CalendarView events={filteredEvents} />
       )}
       {currentView === "list" && (
-        <ListView events={filteredEvents} atRiskIds={atRiskIds} />
+        <ListView
+          events={filteredEvents}
+          atRiskIds={atRiskIds}
+          hasFilters={!!(search || locationKeyFilter || ownerFilter)}
+          onClearFilters={() => { setSearch(""); setLocationKeyFilter(""); setOwnerFilter(""); }}
+        />
       )}
     </div>
   );

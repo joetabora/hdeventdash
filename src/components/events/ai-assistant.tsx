@@ -28,6 +28,7 @@ import {
   RefreshCw,
   Share2,
 } from "lucide-react";
+import { showError } from "@/lib/toast";
 
 interface AiAssistantProps {
   event: Event;
@@ -61,6 +62,7 @@ export function AiAssistant({ event }: AiAssistantProps) {
       setPlan(result);
     } catch (err) {
       console.error("Generation failed:", err);
+      showError("AI generation failed. Please try again.");
     } finally {
       setLoading(null);
     }
@@ -75,6 +77,7 @@ export function AiAssistant({ event }: AiAssistantProps) {
       );
     } catch (err) {
       console.error(err);
+      showError("AI generation failed.");
     } finally {
       setLoading(null);
     }
@@ -91,6 +94,7 @@ export function AiAssistant({ event }: AiAssistantProps) {
       );
     } catch (err) {
       console.error(err);
+      showError("AI generation failed.");
     } finally {
       setLoading(null);
     }
@@ -107,6 +111,7 @@ export function AiAssistant({ event }: AiAssistantProps) {
       );
     } catch (err) {
       console.error(err);
+      showError("AI generation failed.");
     } finally {
       setLoading(null);
     }
@@ -174,6 +179,7 @@ export function AiAssistant({ event }: AiAssistantProps) {
       );
     } catch (err) {
       console.error(err);
+      showError("AI generation failed.");
     } finally {
       setItemLoadingId(null);
     }
@@ -198,6 +204,7 @@ export function AiAssistant({ event }: AiAssistantProps) {
       );
     } catch (err) {
       console.error(err);
+      showError("AI generation failed.");
     } finally {
       setItemLoadingId(null);
     }
@@ -222,6 +229,7 @@ export function AiAssistant({ event }: AiAssistantProps) {
       );
     } catch (err) {
       console.error(err);
+      showError("AI generation failed.");
     } finally {
       setItemLoadingId(null);
     }

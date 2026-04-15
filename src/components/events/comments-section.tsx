@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Trash2, Send } from "lucide-react";
 import { formatDistanceToNow, parseISO } from "date-fns";
+import { showError } from "@/lib/toast";
 
 interface CommentsSectionProps {
   eventId: string;
@@ -40,6 +41,7 @@ export function CommentsSection({
       onUpdate();
     } catch (err) {
       console.error("Failed to add comment:", err);
+      showError("Failed to post comment.");
     } finally {
       setSubmitting(false);
     }
@@ -51,6 +53,7 @@ export function CommentsSection({
       onUpdate();
     } catch (err) {
       console.error("Failed to delete comment:", err);
+      showError("Failed to delete comment.");
     }
   }
 
@@ -85,7 +88,7 @@ export function CommentsSection({
               {canDelete && (
                 <button
                   onClick={() => handleDelete(comment.id)}
-                  className="md:opacity-0 md:group-hover:opacity-100 p-1.5 text-harley-text-muted hover:text-harley-danger transition-all shrink-0 rounded-md"
+                  className="md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 p-1.5 text-harley-text-muted hover:text-harley-danger transition-all shrink-0 rounded-md"
                 >
                   <Trash2 className="w-4 h-4 md:w-3.5 md:h-3.5" />
                 </button>

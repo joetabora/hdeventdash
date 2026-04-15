@@ -30,6 +30,7 @@ import {
   Loader2,
   Eye,
 } from "lucide-react";
+import { showError } from "@/lib/toast";
 
 interface DocumentManagerProps {
   eventId: string;
@@ -60,9 +61,7 @@ export function DocumentManager({
       onUpdate();
     } catch (err) {
       console.error("Upload failed:", err);
-      window.alert(
-        err instanceof Error ? err.message : "Upload failed."
-      );
+      showError(err instanceof Error ? err.message : "Upload failed.");
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -76,6 +75,7 @@ export function DocumentManager({
       onUpdate();
     } catch (err) {
       console.error("Delete failed:", err);
+      showError("Failed to delete document.");
     }
   }
 
@@ -186,7 +186,7 @@ export function DocumentManager({
                   </span>
                 </div>
               </div>
-              <div className="flex items-center gap-0.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center gap-0.5 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity">
                 <button
                   type="button"
                   onClick={() => void handleView(doc)}

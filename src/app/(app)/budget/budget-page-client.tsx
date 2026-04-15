@@ -16,6 +16,7 @@ import type { DashboardAggregates } from "@/lib/dashboard-aggregates";
 import { useAppRole } from "@/contexts/app-role-context";
 import { apiFetchJson } from "@/lib/api/api-fetch-json";
 import { Filter, Wallet } from "lucide-react";
+import { showError } from "@/lib/toast";
 
 export function BudgetPageClient({
   initialEvents,
@@ -144,6 +145,7 @@ export function BudgetPageClient({
       void refetchAggregates();
     } catch (e) {
       console.error(e);
+      showError("Failed to copy previous month's budgets.");
     } finally {
       setCopying(false);
     }

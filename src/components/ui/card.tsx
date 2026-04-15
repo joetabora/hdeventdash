@@ -1,6 +1,6 @@
 import { forwardRef, HTMLAttributes } from "react";
 
-type CardPadding = "none" | "sm" | "md" | "lg" | "xl";
+type CardPadding = "none" | "xs" | "sm" | "md" | "lg" | "xl";
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
   padding?: CardPadding;
@@ -10,6 +10,7 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 
 const paddingStyles: Record<CardPadding, string> = {
   none: "",
+  xs: "p-3.5",
   sm: "p-4",
   md: "p-5",
   lg: "p-6",
@@ -24,11 +25,11 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
     return (
       <div
         ref={ref}
-        className={`bg-harley-dark rounded-xl border border-harley-gray shadow-[0_1px_2px_rgba(0,0,0,0.45)] transition-all duration-200 ${
+        className={`bg-harley-dark rounded-xl border border-harley-gray shadow-[var(--shadow-card)] transition-all duration-200 ${
           paddingStyles[padding]
         } ${
           hover
-            ? "hover:border-harley-gray-lighter/50 hover:shadow-[0_2px_8px_rgba(0,0,0,0.5)] hover:-translate-y-[1px]"
+            ? "hover:border-harley-gray-lighter/50 hover:shadow-[var(--shadow-elevated)] hover:-translate-y-[1px]"
             : ""
         } ${interactive ? "cursor-pointer active:scale-[0.99] active:translate-y-0" : ""} ${className}`}
         {...props}

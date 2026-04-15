@@ -22,6 +22,7 @@ import {
   FileCheck,
   Loader2,
 } from "lucide-react";
+import { showError } from "@/lib/toast";
 
 interface SwapMeetSectionProps {
   eventId: string;
@@ -70,6 +71,7 @@ export function SwapMeetSection({
       setNewSize("10x10");
     } catch (err) {
       console.error(err);
+      showError("Failed to add swap meet spot.");
       onUpdate();
     } finally {
       setAdding(false);
@@ -85,6 +87,7 @@ export function SwapMeetSection({
     onOptimisticPatch?.(spotId, { [field]: value });
     apiPatchSwapMeetSpot(eventId, spotId, { [field]: value }).catch((err) => {
       console.error(err);
+      showError("Failed to update spot.");
       if (prev) {
         onOptimisticPatch?.(spotId, { [field]: (prev as unknown as Record<string, unknown>)[field] as string });
       }
@@ -97,6 +100,7 @@ export function SwapMeetSection({
     onOptimisticRemove?.(spotId);
     apiDeleteSwapMeetSpot(eventId, spotId).catch((err) => {
       console.error(err);
+      showError("Failed to remove spot.");
       onUpdate();
     });
   }
@@ -108,6 +112,7 @@ export function SwapMeetSection({
       onUpdate();
     } catch (err) {
       console.error(err);
+      showError("Failed to upload waiver.");
     } finally {
       setUploadingSpotId(null);
     }

@@ -10,13 +10,30 @@ import { MapPin, User, ExternalLink, AlertTriangle } from "lucide-react";
 interface ListViewProps {
   events: Event[];
   atRiskIds: Set<string>;
+  hasFilters?: boolean;
+  onClearFilters?: () => void;
 }
 
-export function ListView({ events, atRiskIds }: ListViewProps) {
+export function ListView({ events, atRiskIds, hasFilters, onClearFilters }: ListViewProps) {
   if (events.length === 0) {
     return (
       <div className="text-center py-12 text-harley-text-muted">
-        No events found. Create your first event to get started!
+        {hasFilters ? (
+          <>
+            <p>No events match your filters.</p>
+            {onClearFilters && (
+              <button
+                type="button"
+                onClick={onClearFilters}
+                className="mt-2 text-sm text-harley-orange hover:underline"
+              >
+                Clear filters
+              </button>
+            )}
+          </>
+        ) : (
+          "No events found. Create your first event to get started!"
+        )}
       </div>
     );
   }

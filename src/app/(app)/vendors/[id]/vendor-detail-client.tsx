@@ -23,6 +23,7 @@ import { useFormSubmitState } from "@/hooks/use-form-submit-state";
 import { useAppRole } from "@/contexts/app-role-context";
 import { apiFetchJson } from "@/lib/api/api-fetch-json";
 import { ArrowLeft, Trash2, CalendarDays, MapPin } from "lucide-react";
+import { showError } from "@/lib/toast";
 import { format, parseISO } from "date-fns";
 
 export function VendorDetailClient({
@@ -77,6 +78,7 @@ export function VendorDetailClient({
       router.refresh();
     } catch (err) {
       console.error(err);
+      showError("Failed to delete vendor.");
     }
   }
 

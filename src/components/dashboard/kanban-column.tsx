@@ -29,7 +29,7 @@ export function KanbanColumn({
       ref={setNodeRef}
       className={`flex flex-col rounded-xl border transition-all duration-200 min-h-[calc(100vh-16rem)] ${
         isOver
-          ? "border-harley-orange/60 bg-harley-orange/[0.03] shadow-[inset_0_0_20px_rgba(242,101,34,0.04)]"
+          ? "border-harley-orange/60 bg-harley-orange/[0.03] shadow-[inset_0_0_20px_var(--color-harley-orange)/0.04]"
           : "border-harley-gray/60 bg-harley-black/60"
       }`}
     >

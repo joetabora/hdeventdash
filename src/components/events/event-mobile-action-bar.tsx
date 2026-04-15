@@ -16,6 +16,7 @@ import {
   MessageSquarePlus,
   Loader2,
 } from "lucide-react";
+import { showError } from "@/lib/toast";
 
 interface EventMobileActionBarProps {
   eventId: string;
@@ -57,6 +58,7 @@ export function EventMobileActionBar({
       setTaskModalOpen(false);
     } catch (e) {
       console.error(e);
+      showError("Failed to complete task.");
     } finally {
       setTogglingId(null);
     }
@@ -73,9 +75,7 @@ export function EventMobileActionBar({
       onAfterMediaChange?.();
     } catch (err) {
       console.error("Upload failed:", err);
-      window.alert(
-        err instanceof Error ? err.message : "Upload failed."
-      );
+      showError(err instanceof Error ? err.message : "Upload failed.");
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -93,6 +93,7 @@ export function EventMobileActionBar({
       onAfterCommentChange?.();
     } catch (err) {
       console.error(err);
+      showError("Failed to post comment.");
     } finally {
       setCommentSubmitting(false);
     }

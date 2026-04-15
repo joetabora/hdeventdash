@@ -21,6 +21,7 @@ import {
   apiPatchEvent,
 } from "@/lib/events-api-client";
 import type { EventStatus, EventType } from "@/types/database";
+import { showError } from "@/lib/toast";
 
 export function useEventController(
   eventId: string,
@@ -151,26 +152,41 @@ export function useEventController(
 
   const handleToggleLiveMode = useCallback(async () => {
     if (!event) return;
-    const updated = await apiPatchEvent(event.id, {
-      is_live_mode: !event.is_live_mode,
-    });
-    setEvent(updated);
+    try {
+      const updated = await apiPatchEvent(event.id, {
+        is_live_mode: !event.is_live_mode,
+      });
+      setEvent(updated);
+    } catch (err) {
+      console.error("Failed to toggle live mode:", err);
+      showError("Failed to toggle live mode.");
+    }
   }, [event, setEvent]);
 
   const handleToggleSwapMeet = useCallback(async (enabled: boolean) => {
     if (!event) return;
-    const updated = await apiPatchEvent(event.id, {
-      has_swap_meet: enabled,
-    });
-    setEvent(updated);
-    if (enabled) void refetch.swapMeetSpots();
+    try {
+      const updated = await apiPatchEvent(event.id, {
+        has_swap_meet: enabled,
+      });
+      setEvent(updated);
+      if (enabled) void refetch.swapMeetSpots();
+    } catch (err) {
+      console.error("Failed to update swap meet:", err);
+      showError("Failed to update swap meet.");
+    }
   }, [event, setEvent, refetch]);
 
   const handleStatusChange = useCallback(
     async (newStatus: EventStatus) => {
       if (!event) return;
-      const updated = await apiPatchEvent(event.id, { status: newStatus });
-      setEvent(updated);
+      try {
+        const updated = await apiPatchEvent(event.id, { status: newStatus });
+        setEvent(updated);
+      } catch (err) {
+        console.error("Failed to update status:", err);
+        showError("Failed to update status.");
+      }
     },
     [event, setEvent]
   );
@@ -195,23 +211,28 @@ export function useEventController(
       rsvp_link: string | null;
     }) => {
       if (!event) return;
-      const updated = await apiPatchEvent(event.id, {
-        ...data,
-        status: data.status as EventStatus,
-        onedrive_link: data.onedrive_link || null,
-        event_type: data.event_type,
-        planned_budget: data.planned_budget,
-        actual_budget: data.actual_budget,
-        event_goals: data.event_goals,
-        core_activities: data.core_activities,
-        giveaway_description: data.giveaway_description,
-        giveaway_link: data.giveaway_link,
-        rsvp_incentive: data.rsvp_incentive,
-        rsvp_link: data.rsvp_link,
-      });
-      setEditModalOpen(false);
-      setEvent(updated);
-      void refetch.budgetContextForMonth(eventDateToYearMonth(updated.date));
+      try {
+        const updated = await apiPatchEvent(event.id, {
+          ...data,
+          status: data.status as EventStatus,
+          onedrive_link: data.onedrive_link || null,
+          event_type: data.event_type,
+          planned_budget: data.planned_budget,
+          actual_budget: data.actual_budget,
+          event_goals: data.event_goals,
+          core_activities: data.core_activities,
+          giveaway_description: data.giveaway_description,
+          giveaway_link: data.giveaway_link,
+          rsvp_incentive: data.rsvp_incentive,
+          rsvp_link: data.rsvp_link,
+        });
+        setEditModalOpen(false);
+        setEvent(updated);
+        void refetch.budgetContextForMonth(eventDateToYearMonth(updated.date));
+      } catch (err) {
+        console.error("Failed to save event:", err);
+        showError("Failed to save event.");
+      }
     },
     [event, setEvent, refetch]
   );
@@ -224,8 +245,13 @@ export function useEventController(
       )
     )
       return;
-    await apiDeleteEvent(event.id);
-    router.push("/dashboard");
+    try {
+      await apiDeleteEvent(event.id);
+      router.push("/dashboard");
+    } catch (err) {
+      console.error("Failed to delete event:", err);
+      showError("Failed to delete event.");
+    }
   }, [event, router]);
 
   return {

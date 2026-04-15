@@ -27,6 +27,7 @@ import {
   FileText,
   X,
 } from "lucide-react";
+import { showError } from "@/lib/toast";
 
 interface MediaGalleryProps {
   eventId: string;
@@ -98,9 +99,7 @@ export function MediaGallery({
       onUpdate();
     } catch (err) {
       console.error("Media upload failed:", err);
-      window.alert(
-        err instanceof Error ? err.message : "Upload failed."
-      );
+      showError(err instanceof Error ? err.message : "Upload failed.");
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -114,6 +113,7 @@ export function MediaGallery({
       onUpdate();
     } catch (err) {
       console.error("Delete failed:", err);
+      showError("Failed to delete media.");
     }
   }
 
