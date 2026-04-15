@@ -15,6 +15,7 @@ import {
   getEventMedia,
 } from "@/lib/events";
 import { apiFetchJson } from "@/lib/api/api-fetch-json";
+import { apiFetchSwapMeetSpots } from "@/lib/events-api-client";
 import type { EventBudgetPeer } from "@/lib/budgets";
 import type {
   Event,
@@ -24,6 +25,7 @@ import type {
   EventMedia,
   EventVendorWithVendor,
   MonthlyBudget,
+  SwapMeetSpot,
 } from "@/types/database";
 
 export type EventDetailServerBundle = {
@@ -34,8 +36,8 @@ export type EventDetailServerBundle = {
   media: EventMedia[];
   eventVendors: EventVendorWithVendor[];
   budgetPeers: EventBudgetPeer[];
-  /** Monthly venue caps for the event date’s calendar month (same scope as budgetPeers). */
   monthlyBudgetsForEventMonth: MonthlyBudget[];
+  swapMeetSpots: SwapMeetSpot[];
 };
 
 export function useEventDetailData(
@@ -52,6 +54,7 @@ export function useEventDetailData(
   const [budgetPeers, setBudgetPeers] = useState(initial.budgetPeers);
   const [monthlyBudgetsForEventMonth, setMonthlyBudgetsForEventMonth] =
     useState(initial.monthlyBudgetsForEventMonth);
+  const [swapMeetSpots, setSwapMeetSpots] = useState(initial.swapMeetSpots);
 
   const refetch = useMemo(
     () => ({
@@ -96,6 +99,13 @@ export function useEventDetailData(
           setMonthlyBudgetsForEventMonth([]);
         }
       },
+      swapMeetSpots: async () => {
+        try {
+          setSwapMeetSpots(await apiFetchSwapMeetSpots(eventId));
+        } catch {
+          setSwapMeetSpots([]);
+        }
+      },
     }),
     [eventId]
   );
@@ -110,6 +120,7 @@ export function useEventDetailData(
     eventVendors,
     budgetPeers,
     monthlyBudgetsForEventMonth,
+    swapMeetSpots,
     refetch,
   };
 }

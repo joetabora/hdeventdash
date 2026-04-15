@@ -39,6 +39,7 @@ export function useEventController(
     budgetPeers,
     monthlyBudgetsForEventMonth,
     eventVendors,
+    swapMeetSpots,
     refetch,
   } = useEventDetailData(eventId, initial);
 
@@ -178,6 +179,10 @@ export function useEventController(
       actual_budget: number | null;
       event_goals: string | null;
       core_activities: string | null;
+      giveaway_description: string | null;
+      giveaway_link: string | null;
+      rsvp_incentive: string | null;
+      rsvp_link: string | null;
     }) => {
       if (!event) return;
       const updated = await apiPatchEvent(event.id, {
@@ -189,6 +194,10 @@ export function useEventController(
         actual_budget: data.actual_budget,
         event_goals: data.event_goals,
         core_activities: data.core_activities,
+        giveaway_description: data.giveaway_description,
+        giveaway_link: data.giveaway_link,
+        rsvp_incentive: data.rsvp_incentive,
+        rsvp_link: data.rsvp_link,
       });
       setEditModalOpen(false);
       setEvent(updated);
@@ -219,6 +228,7 @@ export function useEventController(
     budgetPeers,
     monthlyBudgetsForEventMonth,
     eventVendors,
+    swapMeetSpots,
     refetch,
     eventMonthYearMonth,
     budgetSummaryForEventMonth,

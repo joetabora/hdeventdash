@@ -7,6 +7,7 @@ import {
   getEventComments,
   getEventMedia,
   getEventBudgetSummariesForMonth,
+  getSwapMeetSpots,
 } from "@/lib/events";
 import {
   eventDateToYearMonth,
@@ -43,6 +44,7 @@ export default async function EventDetailPage({
     initialEventVendors,
     initialBudgetPeers,
     initialMonthlyBudgetsForEventMonth,
+    initialSwapMeetSpots,
   ] = await Promise.all([
     getChecklistItems(supabase, id),
     getEventDocuments(supabase, id),
@@ -56,6 +58,7 @@ export default async function EventDetailPage({
       supabase,
       budgetMonthToDbDate(budgetMonth)
     ).catch(() => []),
+    getSwapMeetSpots(supabase, id).catch(() => []),
   ]);
 
   const eventDetailClientKey = eventDetailBundleFingerprint({
@@ -67,6 +70,7 @@ export default async function EventDetailPage({
     eventVendors: initialEventVendors,
     budgetPeers: initialBudgetPeers,
     monthlyBudgetsForEventMonth: initialMonthlyBudgetsForEventMonth,
+    swapMeetSpots: initialSwapMeetSpots,
   });
 
   return (
@@ -81,6 +85,7 @@ export default async function EventDetailPage({
       initialEventVendors={initialEventVendors}
       initialBudgetPeers={initialBudgetPeers}
       initialMonthlyBudgetsForEventMonth={initialMonthlyBudgetsForEventMonth}
+      initialSwapMeetSpots={initialSwapMeetSpots}
     />
   );
 }

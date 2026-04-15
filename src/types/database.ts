@@ -94,6 +94,14 @@ export interface Event {
   event_goals?: string | null;
   /** Core Activities from Event Framework (playbook) */
   core_activities?: string | null;
+  /** Giveaway description (playbook promotions) */
+  giveaway_description?: string | null;
+  /** Link to giveaway/QR site (e.g. Mixer) */
+  giveaway_link?: string | null;
+  /** RSVP incentive description */
+  rsvp_incentive?: string | null;
+  /** Link to RSVP site */
+  rsvp_link?: string | null;
 }
 
 /** Org cap for a calendar month and location_key (matches event.location_key). */
@@ -131,6 +139,9 @@ export type DocumentTag =
   | "flyer"
   | "photo"
   | "receipt"
+  | "w9"
+  | "liability_waiver"
+  | "layout"
   | "other";
 
 export const DOCUMENT_TAGS: { value: DocumentTag; label: string }[] = [
@@ -139,6 +150,9 @@ export const DOCUMENT_TAGS: { value: DocumentTag; label: string }[] = [
   { value: "flyer", label: "Flyer" },
   { value: "photo", label: "Photo" },
   { value: "receipt", label: "Receipt" },
+  { value: "w9", label: "W-9" },
+  { value: "liability_waiver", label: "Liability Waiver" },
+  { value: "layout", label: "Layout / Floor Plan" },
   { value: "other", label: "Other" },
 ];
 
@@ -200,6 +214,14 @@ export const VENDOR_PARTICIPATION_STATUSES: {
   { value: "cancelled", label: "Cancelled" },
 ];
 
+export const VENDOR_CATEGORY_PRESETS = [
+  "Food Truck",
+  "Entertainment / Band",
+  "Merchandise Vendor",
+  "Charity / Nonprofit",
+  "Other",
+] as const;
+
 /** Organization vendor directory entry */
 export interface Vendor {
   id: string;
@@ -223,6 +245,8 @@ export interface EventVendor {
   role: string;
   participation_status: VendorParticipationStatus;
   notes: string;
+  agreed_fee: number | null;
+  fee_notes: string;
   detached_at: string | null;
   created_at: string;
   updated_at: string;
@@ -234,6 +258,25 @@ export interface EventVendorWithVendor extends EventVendor {
 
 export interface EventVendorWithEvent extends EventVendor {
   event: Pick<Event, "id" | "name" | "date" | "status" | "location">;
+}
+
+export type SwapMeetSpotSize = "10x10" | "10x20";
+
+export const SWAP_MEET_SPOT_SIZES: { value: SwapMeetSpotSize; label: string }[] = [
+  { value: "10x10", label: "10×10" },
+  { value: "10x20", label: "10×20" },
+];
+
+export interface SwapMeetSpot {
+  id: string;
+  event_id: string;
+  name: string;
+  phone: string;
+  email: string;
+  spot_size: SwapMeetSpotSize;
+  waiver_file_path: string | null;
+  waiver_file_name: string | null;
+  created_at: string;
 }
 
 export const CHECKLIST_SECTIONS = [

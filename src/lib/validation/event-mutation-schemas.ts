@@ -60,6 +60,10 @@ export const eventCreateSchema = z
     actual_budget: z.union([moneyNonneg, z.null()]).optional(),
     event_goals: z.union([z.string().max(20000), z.null()]).optional(),
     core_activities: z.union([z.string().max(20000), z.null()]).optional(),
+    giveaway_description: z.union([z.string().max(5000), z.null()]).optional(),
+    giveaway_link: z.union([z.string().max(2000), z.null()]).optional(),
+    rsvp_incentive: z.union([z.string().max(5000), z.null()]).optional(),
+    rsvp_link: z.union([z.string().max(2000), z.null()]).optional(),
   })
   .strict();
 
@@ -96,6 +100,10 @@ export const eventManagerPatchSchema = z
     actual_budget: z.union([moneyNonneg, z.null()]).optional(),
     event_goals: z.union([z.string().max(20000), z.null()]).optional(),
     core_activities: z.union([z.string().max(20000), z.null()]).optional(),
+    giveaway_description: z.union([z.string().max(5000), z.null()]).optional(),
+    giveaway_link: z.union([z.string().max(2000), z.null()]).optional(),
+    rsvp_incentive: z.union([z.string().max(5000), z.null()]).optional(),
+    rsvp_link: z.union([z.string().max(2000), z.null()]).optional(),
   })
   .strict()
   .refine((o) => Object.keys(o).length > 0, { message: "No fields to update" });
@@ -152,3 +160,24 @@ export const commentCreateSchema = z
     content: z.string().trim().min(1).max(10_000),
   })
   .strict();
+
+const swapMeetSpotSizeSchema = z.enum(["10x10", "10x20"]);
+
+export const swapMeetSpotCreateSchema = z
+  .object({
+    name: z.string().trim().min(1).max(500),
+    phone: z.string().max(50).default(""),
+    email: z.string().max(320).default(""),
+    spot_size: swapMeetSpotSizeSchema,
+  })
+  .strict();
+
+export const swapMeetSpotPatchSchema = z
+  .object({
+    name: z.string().trim().min(1).max(500).optional(),
+    phone: z.string().max(50).optional(),
+    email: z.string().max(320).optional(),
+    spot_size: swapMeetSpotSizeSchema.optional(),
+  })
+  .strict()
+  .refine((o) => Object.keys(o).length > 0, { message: "No fields to update" });

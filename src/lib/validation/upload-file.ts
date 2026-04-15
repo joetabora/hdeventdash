@@ -1,9 +1,9 @@
 /** Max size for event document / media uploads (bytes). */
 export const EVENT_FILE_UPLOAD_MAX_BYTES = 15 * 1024 * 1024;
 
-/** HTML `accept` hint: images (no SVG) + PDF only. */
+/** HTML `accept` hint: images (no SVG) + PDF + Office docs. */
 export const EVENT_UPLOAD_ACCEPT_ATTR =
-  "application/pdf,image/jpeg,image/png,image/gif,image/webp,image/bmp,image/avif,.pdf,.jpg,.jpeg,.png,.gif,.webp,.bmp,.avif,.tif,.tiff,.heic,.heif";
+  "application/pdf,image/jpeg,image/png,image/gif,image/webp,image/bmp,image/avif,.pdf,.jpg,.jpeg,.png,.gif,.webp,.bmp,.avif,.tif,.tiff,.heic,.heif,.doc,.docx,.xls,.xlsx";
 
 const ALLOWED_IMAGE_MIME = new Set([
   "image/jpeg",
@@ -30,9 +30,19 @@ const IMAGE_EXTENSIONS = new Set([
   ".heif",
 ]);
 
+const OFFICE_MIME = new Set([
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+]);
+
+const OFFICE_EXTENSIONS = new Set([".doc", ".docx", ".xls", ".xlsx"]);
+
 const ALLOWED_EXTENSIONS = new Set([
   ".pdf",
   ...IMAGE_EXTENSIONS,
+  ...OFFICE_EXTENSIONS,
 ]);
 
 /** Executables, scripts, HTML, SVG, and other disallowed extensions. */
@@ -149,12 +159,19 @@ export function validateEventUploadFile(file: File): void {
     return;
   }
 
+  if (OFFICE_MIME.has(mime)) {
+    if (ext && !OFFICE_EXTENSIONS.has(ext)) {
+      throw new Error("File extension does not match an allowed Office type.");
+    }
+    return;
+  }
+
   if (mime === "" || mime === "application/octet-stream") {
     if (ALLOWED_EXTENSIONS.has(ext)) {
       return;
     }
-    throw new Error("Only images and PDF files are allowed.");
+    throw new Error("Only images, PDFs, and Office documents are allowed.");
   }
 
-  throw new Error("Only images and PDF files are allowed.");
+  throw new Error("Only images, PDFs, and Office documents are allowed.");
 }

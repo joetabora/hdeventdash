@@ -113,6 +113,9 @@ export function DocumentManager({
     flyer: "orange",
     photo: "success",
     receipt: "default",
+    w9: "muted",
+    liability_waiver: "warning",
+    layout: "orange",
     other: "default",
   };
 

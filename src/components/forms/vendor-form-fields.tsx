@@ -2,6 +2,7 @@
 
 import { Input, Textarea } from "@/components/ui/input";
 import type { Vendor } from "@/types/database";
+import { VENDOR_CATEGORY_PRESETS } from "@/types/database";
 
 export type VendorFormValues = {
   name: string;
@@ -70,12 +71,21 @@ export function VendorFormFields({ values, onChange }: VendorFormFieldsProps) {
         placeholder="Company or vendor name"
       />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Input
-          label="Category"
-          value={values.category}
-          onChange={set("category")}
-          placeholder="e.g. Catering, AV, sponsor"
-        />
+        <div>
+          <label className="block text-sm text-harley-text-muted mb-1.5">Category</label>
+          <input
+            list="vendor-category-presets"
+            className="w-full px-4 py-2.5 rounded-lg bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text placeholder-harley-text-muted/60 focus:outline-none focus:border-harley-orange/70 focus:ring-1 focus:ring-harley-orange/20"
+            value={values.category}
+            onChange={set("category")}
+            placeholder="Select or type custom…"
+          />
+          <datalist id="vendor-category-presets">
+            {VENDOR_CATEGORY_PRESETS.map((c) => (
+              <option key={c} value={c} />
+            ))}
+          </datalist>
+        </div>
         <Input
           label="Contact name"
           value={values.contact_name}

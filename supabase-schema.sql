@@ -24,6 +24,10 @@ create table public.events (
   is_archived boolean not null default false,
   event_goals text,
   core_activities text,
+  giveaway_description text,
+  giveaway_link text,
+  rsvp_incentive text,
+  rsvp_link text,
   created_at timestamptz default now() not null,
   updated_at timestamptz default now() not null
 );
@@ -49,7 +53,7 @@ create table public.event_documents (
   file_name text not null,
   file_path text not null,
   file_size integer not null default 0,
-  tag text not null default 'other' check (tag in ('contract', 'invoice', 'flyer', 'photo', 'receipt', 'other')),
+  tag text not null default 'other' check (tag in ('contract', 'invoice', 'flyer', 'photo', 'receipt', 'w9', 'liability_waiver', 'layout', 'other')),
   uploaded_by text not null default '',
   created_at timestamptz default now() not null
 );

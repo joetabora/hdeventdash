@@ -10,6 +10,8 @@ import type {
   ChecklistSection,
   DocumentTag,
   MediaTag,
+  SwapMeetSpot,
+  SwapMeetSpotSize,
 } from "@/types/database";
 
 export type CreateEventApiBody = {
@@ -25,6 +27,10 @@ export type CreateEventApiBody = {
   actual_budget?: number | null;
   event_goals?: string | null;
   core_activities?: string | null;
+  giveaway_description?: string | null;
+  giveaway_link?: string | null;
+  rsvp_incentive?: string | null;
+  rsvp_link?: string | null;
 };
 
 export async function apiCreateEvent(body: CreateEventApiBody): Promise<Event> {
@@ -161,6 +167,66 @@ export async function apiDeleteMedia(
 ): Promise<void> {
   await apiFetchJson<{ ok: boolean }>(
     `/api/events/${eventId}/media/${mediaId}`,
+    { method: "DELETE" }
+  );
+}
+
+// Swap Meet Spots
+
+export async function apiFetchSwapMeetSpots(
+  eventId: string
+): Promise<SwapMeetSpot[]> {
+  const res = await apiFetchJson<{ spots: SwapMeetSpot[] }>(
+    `/api/events/${eventId}/swap-meet`
+  );
+  return res.spots;
+}
+
+export async function apiAddSwapMeetSpot(
+  eventId: string,
+  body: { name: string; phone?: string; email?: string; spot_size: SwapMeetSpotSize }
+): Promise<SwapMeetSpot> {
+  return apiFetchJson<SwapMeetSpot>(`/api/events/${eventId}/swap-meet`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function apiPatchSwapMeetSpot(
+  eventId: string,
+  spotId: string,
+  body: Record<string, unknown>
+): Promise<SwapMeetSpot> {
+  return apiFetchJson<SwapMeetSpot>(
+    `/api/events/${eventId}/swap-meet/${spotId}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }
+  );
+}
+
+export async function apiUploadSwapMeetWaiver(
+  eventId: string,
+  spotId: string,
+  file: File
+): Promise<SwapMeetSpot> {
+  const fd = new FormData();
+  fd.append("waiver", file);
+  return apiFetchJson<SwapMeetSpot>(
+    `/api/events/${eventId}/swap-meet/${spotId}`,
+    { method: "PATCH", body: fd }
+  );
+}
+
+export async function apiDeleteSwapMeetSpot(
+  eventId: string,
+  spotId: string
+): Promise<void> {
+  await apiFetchJson<{ ok: boolean }>(
+    `/api/events/${eventId}/swap-meet/${spotId}`,
     { method: "DELETE" }
   );
 }

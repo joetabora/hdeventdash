@@ -168,6 +168,8 @@ export async function attachVendorToEvent(
     role?: string;
     participation_status?: VendorParticipationStatus;
     notes?: string;
+    agreed_fee?: number | null;
+    fee_notes?: string;
   }
 ): Promise<EventVendor> {
   const { data, error } = await supabase
@@ -179,6 +181,8 @@ export async function attachVendorToEvent(
         role: payload.role ?? "",
         participation_status: payload.participation_status ?? "invited",
         notes: payload.notes ?? "",
+        agreed_fee: payload.agreed_fee ?? null,
+        fee_notes: payload.fee_notes ?? "",
         detached_at: null,
       },
       { onConflict: "event_id,vendor_id" }
@@ -193,7 +197,7 @@ export async function updateEventVendor(
   supabase: SupabaseClient,
   linkId: string,
   updates: Partial<
-    Pick<EventVendor, "role" | "participation_status" | "notes">
+    Pick<EventVendor, "role" | "participation_status" | "notes" | "agreed_fee" | "fee_notes">
   >
 ) {
   const { data, error } = await supabase

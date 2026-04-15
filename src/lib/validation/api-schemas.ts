@@ -16,6 +16,7 @@ const BUDGET_LOCATION_MAX = 500;
 
 const EVENT_VENDOR_ROLE_MAX = 500;
 const EVENT_VENDOR_NOTES_MAX = 10_000;
+const EVENT_VENDOR_FEE_NOTES_MAX = 5_000;
 
 export function isHttpsUrl(s: string): boolean {
   try {
@@ -117,12 +118,16 @@ export const vendorParticipationStatusSchema = z.enum([
   "cancelled",
 ]);
 
+const moneyNonnegVendor = z.number().finite().min(0).max(BUDGET_AMOUNT_MAX);
+
 export const attachEventVendorSchema = z
   .object({
     vendor_id: z.uuid(),
     role: trimmed(EVENT_VENDOR_ROLE_MAX).default(""),
     notes: trimmed(EVENT_VENDOR_NOTES_MAX).default(""),
     participation_status: vendorParticipationStatusSchema.optional(),
+    agreed_fee: z.union([moneyNonnegVendor, z.null()]).optional(),
+    fee_notes: trimmed(EVENT_VENDOR_FEE_NOTES_MAX).default(""),
   })
   .strict();
 
@@ -131,13 +136,12 @@ export const eventVendorPatchSchema = z
     role: trimmed(EVENT_VENDOR_ROLE_MAX).optional(),
     notes: trimmed(EVENT_VENDOR_NOTES_MAX).optional(),
     participation_status: vendorParticipationStatusSchema.optional(),
+    agreed_fee: z.union([moneyNonnegVendor, z.null()]).optional(),
+    fee_notes: trimmed(EVENT_VENDOR_FEE_NOTES_MAX).optional(),
   })
   .strict()
   .refine(
-    (o) =>
-      o.role !== undefined ||
-      o.notes !== undefined ||
-      o.participation_status !== undefined,
+    (o) => Object.keys(o).length > 0,
     "No valid fields to update."
   );
 

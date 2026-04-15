@@ -17,7 +17,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/input";
-import { Loader2, UserMinus, ExternalLink } from "lucide-react";
+import { formatUsd } from "@/lib/format-currency";
+import { Loader2, UserMinus, ExternalLink, DollarSign } from "lucide-react";
 
 interface EventVendorsSectionProps {
   eventId: string;
@@ -109,7 +110,7 @@ export function EventVendorsSection({
 
   async function patchLink(
     linkId: string,
-    patch: Partial<{ role: string; notes: string; participation_status: VendorParticipationStatus }>
+    patch: Partial<{ role: string; notes: string; participation_status: VendorParticipationStatus; agreed_fee: number | null; fee_notes: string }>
   ) {
     setBusyLinkId(linkId);
     try {
@@ -263,11 +264,15 @@ export function EventVendorsSection({
                           {vendorParticipationLabel(row.participation_status)}
                         </Badge>
                       </div>
-                      {(v.category || v.contact_name) && (
-                        <p className="text-xs text-harley-text-muted mt-1">
-                          {[v.category, v.contact_name].filter(Boolean).join(" · ")}
-                        </p>
-                      )}
+                      <p className="text-xs text-harley-text-muted mt-1">
+                        {[v.category, v.contact_name].filter(Boolean).join(" · ")}
+                        {row.agreed_fee != null && row.agreed_fee > 0 && (
+                          <>
+                            {(v.category || v.contact_name) ? " · " : ""}
+                            <span className="text-harley-orange font-medium">{formatUsd(row.agreed_fee)}</span>
+                          </>
+                        )}
+                      </p>
                     </div>
                     {canMutate && (
                       <Button
@@ -322,6 +327,49 @@ export function EventVendorsSection({
                           }
                         />
                       </div>
+                      <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[10px] uppercase tracking-wide text-harley-text-muted mb-1">
+                            <DollarSign className="w-3 h-3 inline -mt-0.5 mr-0.5" />
+                            Agreed Fee
+                          </label>
+                          <input
+                            type="number"
+                            min={0}
+                            step={0.01}
+                            disabled={busy}
+                            className="w-full px-3 py-2 rounded-lg bg-harley-black/30 border border-harley-gray-lighter/40 text-sm text-harley-text focus:outline-none focus:border-harley-orange/60 disabled:opacity-50"
+                            defaultValue={row.agreed_fee != null ? String(row.agreed_fee) : ""}
+                            key={`${row.id}-fee-${row.updated_at}`}
+                            placeholder="0.00"
+                            onBlur={(e) => {
+                              const raw = e.target.value.trim();
+                              const next = raw === "" ? null : Number(raw);
+                              const prev = row.agreed_fee ?? null;
+                              if (next !== prev) {
+                                patchLink(row.id, { agreed_fee: Number.isFinite(next) ? next : null });
+                              }
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] uppercase tracking-wide text-harley-text-muted mb-1">
+                            Fee Notes
+                          </label>
+                          <input
+                            disabled={busy}
+                            className="w-full px-3 py-2 rounded-lg bg-harley-black/30 border border-harley-gray-lighter/40 text-sm text-harley-text focus:outline-none focus:border-harley-orange/60 disabled:opacity-50"
+                            defaultValue={row.fee_notes}
+                            key={`${row.id}-fee-notes-${row.updated_at}`}
+                            placeholder="e.g. with sound: $800 / without: $500"
+                            onBlur={(e) => {
+                              if (e.target.value !== row.fee_notes) {
+                                patchLink(row.id, { fee_notes: e.target.value });
+                              }
+                            }}
+                          />
+                        </div>
+                      </div>
                       <div className="mt-2">
                         <label className="block text-[10px] uppercase tracking-wide text-harley-text-muted mb-1">
                           Notes
@@ -344,6 +392,13 @@ export function EventVendorsSection({
                       {row.role && (
                         <p>
                           <span className="text-harley-text-muted/80">Role:</span> {row.role}
+                        </p>
+                      )}
+                      {row.agreed_fee != null && row.agreed_fee > 0 && (
+                        <p className="flex items-center gap-1 text-harley-orange">
+                          <DollarSign className="w-3.5 h-3.5" />
+                          {formatUsd(row.agreed_fee)}
+                          {row.fee_notes ? <span className="text-harley-text-muted ml-1">— {row.fee_notes}</span> : null}
                         </p>
                       )}
                       {row.notes && <p className="whitespace-pre-wrap">{row.notes}</p>}

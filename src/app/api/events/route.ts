@@ -27,6 +27,10 @@ export async function POST(request: Request) {
     actual_budget,
     event_goals,
     core_activities,
+    giveaway_description,
+    giveaway_link,
+    rsvp_incentive,
+    rsvp_link,
   } = parsed.data;
 
   try {
@@ -44,6 +48,10 @@ export async function POST(request: Request) {
       actual_budget: actual_budget ?? null,
       event_goals: event_goals ?? null,
       core_activities: core_activities ?? null,
+      giveaway_description: giveaway_description ?? null,
+      giveaway_link: giveaway_link ?? null,
+      rsvp_incentive: rsvp_incentive ?? null,
+      rsvp_link: rsvp_link ?? null,
     });
     return NextResponse.json(row);
   } catch (e) {

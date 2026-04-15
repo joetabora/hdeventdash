@@ -7,6 +7,7 @@ import type {
   EventMedia,
   EventVendorWithVendor,
   MonthlyBudget,
+  SwapMeetSpot,
 } from "@/types/database";
 
 function sortById<T extends { id: string }>(rows: T[]): T[] {
@@ -26,6 +27,7 @@ export function eventDetailBundleFingerprint(input: {
   eventVendors: EventVendorWithVendor[];
   budgetPeers: EventBudgetPeer[];
   monthlyBudgetsForEventMonth: MonthlyBudget[];
+  swapMeetSpots: SwapMeetSpot[];
 }): string {
   const {
     event,
@@ -36,6 +38,7 @@ export function eventDetailBundleFingerprint(input: {
     eventVendors,
     budgetPeers,
     monthlyBudgetsForEventMonth,
+    swapMeetSpots,
   } = input;
 
   const parts = [
@@ -97,6 +100,14 @@ export function eventDetailBundleFingerprint(input: {
         b.id,
         b.budget_amount,
         b.updated_at,
+      ])
+    ),
+    JSON.stringify(
+      sortById(swapMeetSpots).map((s) => [
+        s.id,
+        s.name,
+        s.spot_size,
+        s.waiver_file_name,
       ])
     ),
   ];

@@ -73,7 +73,7 @@ export async function POST(
   const parsed = parseWithSchema(attachEventVendorSchema, raw.body);
   if (!parsed.ok) return parsed.response;
 
-  const { vendor_id, role, notes, participation_status } = parsed.data;
+  const { vendor_id, role, notes, participation_status, agreed_fee, fee_notes } = parsed.data;
 
   const { data: vendor, error: vError } = await ctx.supabase
     .from("vendors")
@@ -95,6 +95,8 @@ export async function POST(
       vendor_id,
       role,
       notes,
+      agreed_fee: agreed_fee ?? null,
+      fee_notes: fee_notes ?? "",
       ...(participation_status ? { participation_status } : {}),
     });
     return NextResponse.json(link);

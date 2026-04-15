@@ -46,6 +46,10 @@ export function NewEventClient({
       actual_budget: number | null;
       event_goals: string | null;
       core_activities: string | null;
+      giveaway_description: string | null;
+      giveaway_link: string | null;
+      rsvp_incentive: string | null;
+      rsvp_link: string | null;
     }) => {
       const event = await apiCreateEvent({
         name: data.name,
@@ -60,6 +64,10 @@ export function NewEventClient({
         actual_budget: data.actual_budget,
         event_goals: data.event_goals,
         core_activities: data.core_activities,
+        giveaway_description: data.giveaway_description,
+        giveaway_link: data.giveaway_link,
+        rsvp_incentive: data.rsvp_incentive,
+        rsvp_link: data.rsvp_link,
       });
       router.push(`/events/${event.id}`);
     },

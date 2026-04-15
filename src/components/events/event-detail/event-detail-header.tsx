@@ -28,6 +28,8 @@ import {
   ClipboardList,
   ChevronDown,
   Wallet,
+  Gift,
+  Ticket,
 } from "lucide-react";
 
 export type EventDetailHeaderLiveProps = {
@@ -359,6 +361,51 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
               <p className="text-sm text-harley-text leading-relaxed whitespace-pre-line">
                 {event.core_activities}
               </p>
+            </div>
+          )}
+          {(event.giveaway_description || event.rsvp_incentive) && (
+            <div className="mt-3 pt-3 border-t border-harley-gray/50 space-y-2.5">
+              <p className="text-[11px] uppercase tracking-wide text-harley-text-muted font-semibold">
+                Promotions
+              </p>
+              {event.giveaway_description && (
+                <div className="flex items-start gap-2 text-sm">
+                  <Gift className="w-4 h-4 text-harley-orange shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-harley-text leading-relaxed">{event.giveaway_description}</p>
+                    {event.giveaway_link && (
+                      <a
+                        href={event.giveaway_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-harley-orange hover:text-harley-orange-light text-xs inline-flex items-center gap-1 mt-0.5"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        Giveaway link
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+              {event.rsvp_incentive && (
+                <div className="flex items-start gap-2 text-sm">
+                  <Ticket className="w-4 h-4 text-harley-orange shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-harley-text leading-relaxed">{event.rsvp_incentive}</p>
+                    {event.rsvp_link && (
+                      <a
+                        href={event.rsvp_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-harley-orange hover:text-harley-orange-light text-xs inline-flex items-center gap-1 mt-0.5"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        RSVP link
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
           {canManageEvents && budgetSummaryForEventMonth && (

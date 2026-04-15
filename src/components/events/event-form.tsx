@@ -52,6 +52,10 @@ interface EventFormProps {
     actual_budget: number | null;
     event_goals: string | null;
     core_activities: string | null;
+    giveaway_description: string | null;
+    giveaway_link: string | null;
+    rsvp_incentive: string | null;
+    rsvp_link: string | null;
   }) => Promise<void>;
   onCancel?: () => void;
   submitLabel?: string;
@@ -85,6 +89,10 @@ export function EventForm({
   const [onedriveLink, setOnedriveLink] = useState(event?.onedrive_link || "");
   const [eventGoals, setEventGoals] = useState(event?.event_goals || "");
   const [coreActivities, setCoreActivities] = useState(event?.core_activities || "");
+  const [giveawayDescription, setGiveawayDescription] = useState(event?.giveaway_description || "");
+  const [giveawayLink, setGiveawayLink] = useState(event?.giveaway_link || "");
+  const [rsvpIncentive, setRsvpIncentive] = useState(event?.rsvp_incentive || "");
+  const [rsvpLink, setRsvpLink] = useState(event?.rsvp_link || "");
   const [eventType, setEventType] = useState<EventType | "">(
     (event?.event_type as EventType | undefined) ?? ""
   );
@@ -243,6 +251,10 @@ export function EventForm({
           : (event?.actual_budget ?? null),
         event_goals: eventGoals.trim() || null,
         core_activities: coreActivities.trim() || null,
+        giveaway_description: giveawayDescription.trim() || null,
+        giveaway_link: giveawayLink.trim() || null,
+        rsvp_incentive: rsvpIncentive.trim() || null,
+        rsvp_link: rsvpLink.trim() || null,
       })
     );
   }
@@ -315,6 +327,40 @@ export function EventForm({
         placeholder="e.g. Food & Refreshments, Entertainment (DJ/live band), Bike wash & test rides, Raffles & giveaways"
         rows={3}
       />
+
+      <div className="space-y-3 p-4 rounded-lg border border-harley-gray/30 bg-harley-gray-light/5">
+        <p className="text-xs font-semibold text-harley-text-muted uppercase tracking-wide">
+          Promotions
+        </p>
+        <Textarea
+          label="Giveaway"
+          value={giveawayDescription}
+          onChange={(e) => setGiveawayDescription(e.target.value)}
+          placeholder='e.g. Win a $500 gift card — enter via QR code at the event'
+          rows={2}
+        />
+        <Input
+          label="Giveaway / QR Link"
+          type="url"
+          value={giveawayLink}
+          onChange={(e) => setGiveawayLink(e.target.value)}
+          placeholder="https://mixer.com/..."
+        />
+        <Textarea
+          label="RSVP Incentive"
+          value={rsvpIncentive}
+          onChange={(e) => setRsvpIncentive(e.target.value)}
+          placeholder='e.g. First 30 to RSVP get a free food ticket'
+          rows={2}
+        />
+        <Input
+          label="RSVP Link"
+          type="url"
+          value={rsvpLink}
+          onChange={(e) => setRsvpLink(e.target.value)}
+          placeholder="https://..."
+        />
+      </div>
 
       {canEditBudget && (
         <div className="space-y-3 p-4 rounded-lg border border-harley-orange/25 bg-harley-orange/5">

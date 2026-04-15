@@ -22,13 +22,16 @@ import {
   EventMedia,
   EventVendorWithVendor,
   MonthlyBudget,
+  SwapMeetSpot,
 } from "@/types/database";
 import type { EventBudgetPeer } from "@/lib/budgets";
 import { useEventController } from "@/hooks/use-event-controller";
+import { SwapMeetSection } from "@/components/events/swap-meet-section";
 import {
   BarChart3,
   DollarSign,
   Sparkles,
+  Store,
 } from "lucide-react";
 
 export type EventDetailClientProps = {
@@ -41,6 +44,7 @@ export type EventDetailClientProps = {
   initialEventVendors: EventVendorWithVendor[];
   initialBudgetPeers: EventBudgetPeer[];
   initialMonthlyBudgetsForEventMonth: MonthlyBudget[];
+  initialSwapMeetSpots: SwapMeetSpot[];
 };
 
 export function EventDetailClient({
@@ -53,6 +57,7 @@ export function EventDetailClient({
   initialEventVendors,
   initialBudgetPeers,
   initialMonthlyBudgetsForEventMonth,
+  initialSwapMeetSpots,
 }: EventDetailClientProps) {
   const c = useEventController(eventId, {
     event: initialEvent,
@@ -63,6 +68,7 @@ export function EventDetailClient({
     eventVendors: initialEventVendors,
     budgetPeers: initialBudgetPeers,
     monthlyBudgetsForEventMonth: initialMonthlyBudgetsForEventMonth,
+    swapMeetSpots: initialSwapMeetSpots,
   });
 
   if (!c.event) {
@@ -144,6 +150,24 @@ export function EventDetailClient({
           canMutate={c.canManageEvents}
           onEventVendorsInvalidate={() => void c.refetch.eventVendors()}
         />
+
+        {(c.swapMeetSpots.length > 0 || c.canManageEvents) && (
+          <CollapsibleSection
+            key={`swap-meet-${c.event.id}`}
+            icon={<Store className="w-4.5 h-4.5" />}
+            title="Swap Meet Spots"
+            count={c.swapMeetSpots.length}
+            autoOpenOnDesktop
+            mobileCollapsed
+          >
+            <SwapMeetSection
+              eventId={c.event.id}
+              spots={c.swapMeetSpots}
+              canMutate={c.canManageEvents}
+              onUpdate={() => void c.refetch.swapMeetSpots()}
+            />
+          </CollapsibleSection>
+        )}
 
         <EventDetailMedia
           eventId={c.event.id}

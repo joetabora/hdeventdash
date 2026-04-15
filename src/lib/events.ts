@@ -8,6 +8,8 @@ import {
   EventComment,
   EventMedia,
   ChecklistSection,
+  SwapMeetSpot,
+  SwapMeetSpotSize,
   DocumentTag,
   MediaTag,
 } from "@/types/database";
@@ -175,6 +177,10 @@ export async function createEvent(
     actual_budget?: number | null;
     event_goals?: string | null;
     core_activities?: string | null;
+    giveaway_description?: string | null;
+    giveaway_link?: string | null;
+    rsvp_incentive?: string | null;
+    rsvp_link?: string | null;
   }
 ) {
   const { data, error } = await supabase.rpc("create_event_with_checklist", {
@@ -197,7 +203,18 @@ export async function createEvent(
   if (!row || typeof row !== "object") {
     throw new Error("create_event_with_checklist returned no row");
   }
-  return row as Event;
+  const created = row as Event;
+
+  const promoFields: Record<string, unknown> = {};
+  if (event.giveaway_description) promoFields.giveaway_description = event.giveaway_description;
+  if (event.giveaway_link) promoFields.giveaway_link = event.giveaway_link;
+  if (event.rsvp_incentive) promoFields.rsvp_incentive = event.rsvp_incentive;
+  if (event.rsvp_link) promoFields.rsvp_link = event.rsvp_link;
+
+  if (Object.keys(promoFields).length > 0) {
+    return updateEvent(supabase, created.id, promoFields as Partial<Event>);
+  }
+  return created;
 }
 
 export async function updateEvent(
@@ -486,5 +503,91 @@ export async function deleteMedia(supabase: SupabaseClient, media: EventMedia) {
     .delete()
     .eq("id", media.id);
   if (error) throw error;
+}
+
+// Swap Meet Spots
+
+export async function getSwapMeetSpots(
+  supabase: SupabaseClient,
+  eventId: string
+): Promise<SwapMeetSpot[]> {
+  const { data, error } = await supabase
+    .from("swap_meet_spots")
+    .select("*")
+    .eq("event_id", eventId)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as SwapMeetSpot[];
+}
+
+export async function addSwapMeetSpot(
+  supabase: SupabaseClient,
+  eventId: string,
+  spot: { name: string; phone?: string; email?: string; spot_size: SwapMeetSpotSize }
+): Promise<SwapMeetSpot> {
+  const { data, error } = await supabase
+    .from("swap_meet_spots")
+    .insert({
+      event_id: eventId,
+      name: spot.name,
+      phone: spot.phone ?? "",
+      email: spot.email ?? "",
+      spot_size: spot.spot_size,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return data as SwapMeetSpot;
+}
+
+export async function updateSwapMeetSpot(
+  supabase: SupabaseClient,
+  spotId: string,
+  updates: Partial<Pick<SwapMeetSpot, "name" | "phone" | "email" | "spot_size">>
+): Promise<SwapMeetSpot> {
+  const { data, error } = await supabase
+    .from("swap_meet_spots")
+    .update(updates)
+    .eq("id", spotId)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as SwapMeetSpot;
+}
+
+export async function deleteSwapMeetSpot(
+  supabase: SupabaseClient,
+  spotId: string
+) {
+  const { error } = await supabase
+    .from("swap_meet_spots")
+    .delete()
+    .eq("id", spotId);
+  if (error) throw error;
+}
+
+export async function uploadSwapMeetWaiver(
+  supabase: SupabaseClient,
+  organizationId: string,
+  eventId: string,
+  spotId: string,
+  file: File
+): Promise<SwapMeetSpot> {
+  const ts = Date.now();
+  const filePath = `${organizationId}/${eventId}/swap-meet-waivers/${ts}-${file.name}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(EVENT_DOCUMENTS_BUCKET)
+    .upload(filePath, file, { upsert: false });
+  if (uploadError) throw uploadError;
+
+  const { data, error } = await supabase
+    .from("swap_meet_spots")
+    .update({ waiver_file_path: filePath, waiver_file_name: file.name })
+    .eq("id", spotId)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as SwapMeetSpot;
 }
 
