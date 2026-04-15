@@ -102,6 +102,8 @@ export interface Event {
   rsvp_incentive?: string | null;
   /** Link to RSVP site */
   rsvp_link?: string | null;
+  /** Whether this event includes a swap meet section */
+  has_swap_meet?: boolean;
 }
 
 /** Org cap for a calendar month and location_key (matches event.location_key). */

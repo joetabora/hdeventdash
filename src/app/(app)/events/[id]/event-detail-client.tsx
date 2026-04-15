@@ -27,11 +27,14 @@ import {
 import type { EventBudgetPeer } from "@/lib/budgets";
 import { useEventController } from "@/hooks/use-event-controller";
 import { SwapMeetSection } from "@/components/events/swap-meet-section";
+import { Button } from "@/components/ui/button";
 import {
   BarChart3,
   DollarSign,
+  Plus,
   Sparkles,
   Store,
+  X,
 } from "lucide-react";
 
 export type EventDetailClientProps = {
@@ -151,7 +154,7 @@ export function EventDetailClient({
           onEventVendorsInvalidate={() => void c.refetch.eventVendors()}
         />
 
-        {(c.swapMeetSpots.length > 0 || c.canManageEvents) && (
+        {c.event.has_swap_meet ? (
           <CollapsibleSection
             key={`swap-meet-${c.event.id}`}
             icon={<Store className="w-4.5 h-4.5" />}
@@ -159,6 +162,18 @@ export function EventDetailClient({
             count={c.swapMeetSpots.length}
             autoOpenOnDesktop
             mobileCollapsed
+            headerAction={
+              c.canManageEvents ? (
+                <button
+                  type="button"
+                  className="text-harley-text-muted hover:text-harley-danger transition-colors p-1 -m-1"
+                  title="Remove Swap Meet section"
+                  onClick={() => void c.handleToggleSwapMeet(false)}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              ) : undefined
+            }
           >
             <SwapMeetSection
               eventId={c.event.id}
@@ -167,7 +182,19 @@ export function EventDetailClient({
               onUpdate={() => void c.refetch.swapMeetSpots()}
             />
           </CollapsibleSection>
-        )}
+        ) : c.canManageEvents ? (
+          <div className="flex justify-center py-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-harley-text-muted hover:text-harley-orange"
+              onClick={() => void c.handleToggleSwapMeet(true)}
+            >
+              <Plus className="w-4 h-4" />
+              Add Swap Meet
+            </Button>
+          </div>
+        ) : null}
 
         <EventDetailMedia
           eventId={c.event.id}

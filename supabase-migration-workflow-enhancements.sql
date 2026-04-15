@@ -12,7 +12,11 @@ COMMENT ON COLUMN public.event_vendors.agreed_fee IS
 COMMENT ON COLUMN public.event_vendors.fee_notes IS
   'Fee option notes (e.g. "with sound: $800 / without: $500").';
 
--- 2. Event Promotion Fields
+-- 2. Swap Meet opt-in flag
+ALTER TABLE public.events
+  ADD COLUMN IF NOT EXISTS has_swap_meet boolean NOT NULL DEFAULT false;
+
+-- 3. Event Promotion Fields
 ALTER TABLE public.events
   ADD COLUMN IF NOT EXISTS giveaway_description text,
   ADD COLUMN IF NOT EXISTS giveaway_link text,

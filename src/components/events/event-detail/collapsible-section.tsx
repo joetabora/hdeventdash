@@ -24,6 +24,7 @@ export function CollapsibleSection({
   deferHeavyContent = false,
   /** Passed to IntersectionObserver `rootMargin` when `deferHeavyContent` is set. */
   heavyActivationMargin = "200px",
+  headerAction,
   children,
 }: {
   icon: React.ReactNode;
@@ -34,6 +35,8 @@ export function CollapsibleSection({
   mobileCollapsed?: boolean;
   deferHeavyContent?: boolean;
   heavyActivationMargin?: string;
+  /** Optional element rendered at the right edge of the header (e.g. remove button). */
+  headerAction?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(
@@ -98,6 +101,15 @@ export function CollapsibleSection({
           </span>
         )}
         <div className="flex-1 border-t border-harley-gray/40 ml-2" />
+        {headerAction && (
+          <span
+            className="shrink-0"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") e.stopPropagation(); }}
+          >
+            {headerAction}
+          </span>
+        )}
         <ChevronDown
           className={`w-4 h-4 text-harley-text-muted transition-transform duration-200 ${
             open ? "rotate-0" : "-rotate-90"

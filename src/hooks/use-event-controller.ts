@@ -156,6 +156,15 @@ export function useEventController(
     setEvent(updated);
   }, [event, setEvent]);
 
+  const handleToggleSwapMeet = useCallback(async (enabled: boolean) => {
+    if (!event) return;
+    const updated = await apiPatchEvent(event.id, {
+      has_swap_meet: enabled,
+    });
+    setEvent(updated);
+    if (enabled) void refetch.swapMeetSpots();
+  }, [event, setEvent, refetch]);
+
   const handleStatusChange = useCallback(
     async (newStatus: EventStatus) => {
       if (!event) return;
@@ -248,6 +257,7 @@ export function useEventController(
     onBudgetContextInvalidate,
     checklistEstimatedTotal,
     handleToggleLiveMode,
+    handleToggleSwapMeet,
     handleStatusChange,
     handleEditSubmit,
     handleDelete,

@@ -28,6 +28,7 @@ create table public.events (
   giveaway_link text,
   rsvp_incentive text,
   rsvp_link text,
+  has_swap_meet boolean not null default false,
   created_at timestamptz default now() not null,
   updated_at timestamptz default now() not null
 );
