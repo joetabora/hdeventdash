@@ -25,6 +25,8 @@ interface EventVendorsSectionProps {
   eventVendors: EventVendorWithVendor[];
   onUpdate: () => void;
   canMutate: boolean;
+  onOptimisticPatch?: (linkId: string, updates: Partial<EventVendorWithVendor>) => void;
+  onOptimisticRemove?: (linkId: string) => void;
 }
 
 export function EventVendorsSection({
@@ -32,12 +34,14 @@ export function EventVendorsSection({
   eventVendors,
   onUpdate,
   canMutate,
+  onOptimisticPatch,
+  onOptimisticRemove,
 }: EventVendorsSectionProps) {
   const [vendorId, setVendorId] = useState("");
   const [attachRole, setAttachRole] = useState("");
   const [attachNotes, setAttachNotes] = useState("");
   const [attaching, setAttaching] = useState(false);
-  const [busyLinkId, setBusyLinkId] = useState<string | null>(null);
+  
 
   const [vendorSearch, setVendorSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -108,40 +112,40 @@ export function EventVendorsSection({
     }
   }
 
-  async function patchLink(
+  function patchLink(
     linkId: string,
     patch: Partial<{ role: string; notes: string; participation_status: VendorParticipationStatus; agreed_fee: number | null; fee_notes: string }>
   ) {
-    setBusyLinkId(linkId);
-    try {
-      await apiFetchJson(`/api/events/${eventId}/vendors/${linkId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(patch),
-      });
-      onUpdate();
-    } catch (err) {
+    const prev = eventVendors.find((v) => v.id === linkId);
+    onOptimisticPatch?.(linkId, patch as Partial<EventVendorWithVendor>);
+    apiFetchJson(`/api/events/${eventId}/vendors/${linkId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(patch),
+    }).catch((err) => {
       console.error(err);
-    } finally {
-      setBusyLinkId(null);
-    }
+      if (prev) {
+        const revert: Partial<EventVendorWithVendor> = {};
+        for (const k of Object.keys(patch)) {
+          (revert as unknown as Record<string, unknown>)[k] = (prev as unknown as Record<string, unknown>)[k];
+        }
+        onOptimisticPatch?.(linkId, revert);
+      }
+      onUpdate();
+    });
   }
 
-  async function handleDetach(linkId: string) {
+  function handleDetach(linkId: string) {
     if (!confirm("Remove this vendor from the event? Their participation stays in history on their profile.")) {
       return;
     }
-    setBusyLinkId(linkId);
-    try {
-      await apiFetchJson(`/api/events/${eventId}/vendors/${linkId}`, {
-        method: "DELETE",
-      });
-      onUpdate();
-    } catch (err) {
+    onOptimisticRemove?.(linkId);
+    apiFetchJson(`/api/events/${eventId}/vendors/${linkId}`, {
+      method: "DELETE",
+    }).catch((err) => {
       console.error(err);
-    } finally {
-      setBusyLinkId(null);
-    }
+      onUpdate();
+    });
   }
 
   return (
@@ -242,7 +246,6 @@ export function EventVendorsSection({
       ) : (
         <ul className="space-y-3">
           {eventVendors.map((row) => {
-            const busy = busyLinkId === row.id;
             const v = row.vendor;
             return (
               <li key={row.id}>
@@ -280,13 +283,8 @@ export function EventVendorsSection({
                         size="sm"
                         className="shrink-0 text-harley-text-muted hover:text-harley-danger"
                         onClick={() => handleDetach(row.id)}
-                        disabled={busy}
                       >
-                        {busy ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <UserMinus className="w-4 h-4" />
-                        )}
+                        <UserMinus className="w-4 h-4" />
                         Remove
                       </Button>
                     )}
@@ -300,8 +298,7 @@ export function EventVendorsSection({
                             Role
                           </label>
                           <input
-                            disabled={busy}
-                            className="w-full px-3 py-2 rounded-lg bg-harley-black/30 border border-harley-gray-lighter/40 text-sm text-harley-text focus:outline-none focus:border-harley-orange/60 disabled:opacity-50"
+                            className="w-full px-3 py-2 rounded-lg bg-harley-black/30 border border-harley-gray-lighter/40 text-sm text-harley-text focus:outline-none focus:border-harley-orange/60"
                             defaultValue={row.role}
                             key={`${row.id}-role-${row.updated_at}`}
                             onBlur={(e) => {
@@ -318,7 +315,6 @@ export function EventVendorsSection({
                             label: o.label,
                           }))}
                           value={row.participation_status}
-                          disabled={busy}
                           onChange={(e) =>
                             patchLink(row.id, {
                               participation_status: e.target
@@ -337,8 +333,7 @@ export function EventVendorsSection({
                             type="number"
                             min={0}
                             step={0.01}
-                            disabled={busy}
-                            className="w-full px-3 py-2 rounded-lg bg-harley-black/30 border border-harley-gray-lighter/40 text-sm text-harley-text focus:outline-none focus:border-harley-orange/60 disabled:opacity-50"
+                            className="w-full px-3 py-2 rounded-lg bg-harley-black/30 border border-harley-gray-lighter/40 text-sm text-harley-text focus:outline-none focus:border-harley-orange/60"
                             defaultValue={row.agreed_fee != null ? String(row.agreed_fee) : ""}
                             key={`${row.id}-fee-${row.updated_at}`}
                             placeholder="0.00"
@@ -357,8 +352,7 @@ export function EventVendorsSection({
                             Fee Notes
                           </label>
                           <input
-                            disabled={busy}
-                            className="w-full px-3 py-2 rounded-lg bg-harley-black/30 border border-harley-gray-lighter/40 text-sm text-harley-text focus:outline-none focus:border-harley-orange/60 disabled:opacity-50"
+                            className="w-full px-3 py-2 rounded-lg bg-harley-black/30 border border-harley-gray-lighter/40 text-sm text-harley-text focus:outline-none focus:border-harley-orange/60"
                             defaultValue={row.fee_notes}
                             key={`${row.id}-fee-notes-${row.updated_at}`}
                             placeholder="e.g. with sound: $800 / without: $500"
@@ -375,8 +369,7 @@ export function EventVendorsSection({
                           Notes
                         </label>
                         <textarea
-                          disabled={busy}
-                          className="w-full min-h-[72px] px-3 py-2 rounded-lg bg-harley-black/30 border border-harley-gray-lighter/40 text-sm text-harley-text focus:outline-none focus:border-harley-orange/60 resize-y disabled:opacity-50"
+                          className="w-full min-h-[72px] px-3 py-2 rounded-lg bg-harley-black/30 border border-harley-gray-lighter/40 text-sm text-harley-text focus:outline-none focus:border-harley-orange/60 resize-y"
                           defaultValue={row.notes}
                           key={`${row.id}-notes-${row.updated_at}`}
                           onBlur={(e) => {

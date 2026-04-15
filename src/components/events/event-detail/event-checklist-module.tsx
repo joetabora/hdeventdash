@@ -12,6 +12,7 @@ export function EventChecklistModule({
   checklist,
   canManageEvents,
   onChecklistInvalidate,
+  onOptimisticPatch,
   onBudgetContextInvalidate,
   atRisk,
   allChecklistComplete,
@@ -21,6 +22,7 @@ export function EventChecklistModule({
   checklist: ChecklistItem[];
   canManageEvents: boolean;
   onChecklistInvalidate: () => void;
+  onOptimisticPatch?: (itemId: string, updates: Partial<ChecklistItem>) => void;
   onBudgetContextInvalidate?: () => void;
   atRisk?: boolean;
   allChecklistComplete?: boolean;
@@ -34,6 +36,7 @@ export function EventChecklistModule({
         items={items}
         eventId={eventId}
         onUpdate={onChecklistInvalidate}
+        onOptimisticPatch={onOptimisticPatch}
         onBudgetContextInvalidate={onBudgetContextInvalidate}
         liveMode={mode === "live"}
         allowStructureEdit={canManageEvents}

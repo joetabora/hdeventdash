@@ -56,9 +56,7 @@ export function DocumentManager({
 
     setUploading(true);
     try {
-      for (const file of Array.from(files)) {
-        await apiUploadDocument(eventId, file, selectedTag);
-      }
+      await Promise.all(Array.from(files).map((file) => apiUploadDocument(eventId, file, selectedTag)));
       onUpdate();
     } catch (err) {
       console.error("Upload failed:", err);

@@ -99,6 +99,7 @@ export function EventDetailClient({
             checklist={c.checklist}
             canManageEvents={c.canManageEvents}
             onChecklistInvalidate={c.onChecklistInvalidate}
+            onOptimisticPatch={c.localPatch.checklistItem}
             onBudgetContextInvalidate={c.onBudgetContextInvalidate}
             atRisk={c.atRisk}
             allChecklistComplete={c.allChecklistComplete}
@@ -144,6 +145,7 @@ export function EventDetailClient({
           checklist={c.checklist}
           canManageEvents={c.canManageEvents}
           onChecklistInvalidate={c.onChecklistInvalidate}
+          onOptimisticPatch={c.localPatch.checklistItem}
           onBudgetContextInvalidate={c.onBudgetContextInvalidate}
         />
 
@@ -152,6 +154,8 @@ export function EventDetailClient({
           eventVendors={c.eventVendors}
           canMutate={c.canManageEvents}
           onEventVendorsInvalidate={() => void c.refetch.eventVendors()}
+          onOptimisticPatch={c.localPatch.eventVendor}
+          onOptimisticRemove={c.localPatch.removeEventVendor}
         />
 
         {c.event.has_swap_meet ? (
@@ -180,6 +184,9 @@ export function EventDetailClient({
               spots={c.swapMeetSpots}
               canMutate={c.canManageEvents}
               onUpdate={() => void c.refetch.swapMeetSpots()}
+              onOptimisticPatch={c.localPatch.swapMeetSpot}
+              onOptimisticAdd={c.localPatch.addSwapMeetSpot}
+              onOptimisticRemove={c.localPatch.removeSwapMeetSpot}
             />
           </CollapsibleSection>
         ) : c.canManageEvents ? (

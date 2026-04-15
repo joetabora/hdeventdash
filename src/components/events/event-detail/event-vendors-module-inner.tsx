@@ -8,11 +8,15 @@ export function EventVendorsModuleInner({
   eventVendors,
   canMutate,
   onEventVendorsInvalidate,
+  onOptimisticPatch,
+  onOptimisticRemove,
 }: {
   eventId: string;
   eventVendors: EventVendorWithVendor[];
   canMutate: boolean;
   onEventVendorsInvalidate: () => void;
+  onOptimisticPatch?: (linkId: string, updates: Partial<EventVendorWithVendor>) => void;
+  onOptimisticRemove?: (linkId: string) => void;
 }) {
   return (
     <EventVendorsSection
@@ -20,6 +24,8 @@ export function EventVendorsModuleInner({
       eventVendors={eventVendors}
       onUpdate={onEventVendorsInvalidate}
       canMutate={canMutate}
+      onOptimisticPatch={onOptimisticPatch}
+      onOptimisticRemove={onOptimisticRemove}
     />
   );
 }

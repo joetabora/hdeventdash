@@ -40,6 +40,7 @@ export function useEventController(
     monthlyBudgetsForEventMonth,
     eventVendors,
     swapMeetSpots,
+    localPatch,
     refetch,
   } = useEventDetailData(eventId, initial);
 
@@ -238,6 +239,7 @@ export function useEventController(
     monthlyBudgetsForEventMonth,
     eventVendors,
     swapMeetSpots,
+    localPatch,
     refetch,
     eventMonthYearMonth,
     budgetSummaryForEventMonth,

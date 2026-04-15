@@ -29,6 +29,8 @@ interface ChecklistSectionProps {
   items: ChecklistItem[];
   eventId: string;
   onUpdate: () => void;
+  /** Optimistically patch a single checklist item in local state (no network). */
+  onOptimisticPatch?: (itemId: string, updates: Partial<ChecklistItem>) => void;
   /** Refetch monthly budget peers when line-item costs change (managers). */
   onBudgetContextInvalidate?: () => void;
   /** Event Live Mode: larger touch targets, no add/delete/details */
@@ -42,6 +44,7 @@ export function ChecklistSectionComponent({
   items,
   eventId,
   onUpdate,
+  onOptimisticPatch,
   onBudgetContextInvalidate,
   liveMode = false,
   allowStructureEdit = true,
@@ -53,11 +56,13 @@ export function ChecklistSectionComponent({
   const progress = items.length > 0 ? (checkedCount / items.length) * 100 : 0;
   const allowCostEdit = allowStructureEdit && !liveMode;
 
-  async function handleToggle(item: ChecklistItem) {
-    await apiPatchChecklistItem(eventId, item.id, {
-      is_checked: !item.is_checked,
+  function handleToggle(item: ChecklistItem) {
+    const next = !item.is_checked;
+    onOptimisticPatch?.(item.id, { is_checked: next });
+    apiPatchChecklistItem(eventId, item.id, { is_checked: next }).catch(() => {
+      onOptimisticPatch?.(item.id, { is_checked: item.is_checked });
+      onUpdate();
     });
-    onUpdate();
   }
 
   async function handleAddItem() {
@@ -78,27 +83,35 @@ export function ChecklistSectionComponent({
     onBudgetContextInvalidate?.();
   }
 
-  async function handleAssigneeChange(item: ChecklistItem, assignee: string) {
-    await apiPatchChecklistItem(eventId, item.id, {
-      assignee: assignee || null,
+  function handleAssigneeChange(item: ChecklistItem, assignee: string) {
+    const val = assignee || null;
+    onOptimisticPatch?.(item.id, { assignee: val });
+    apiPatchChecklistItem(eventId, item.id, { assignee: val }).catch(() => {
+      onOptimisticPatch?.(item.id, { assignee: item.assignee });
+      onUpdate();
     });
-    onUpdate();
   }
 
-  async function handleCommentChange(item: ChecklistItem, comment: string) {
-    await apiPatchChecklistItem(eventId, item.id, {
-      comment: comment || null,
+  function handleCommentChange(item: ChecklistItem, comment: string) {
+    const val = comment || null;
+    onOptimisticPatch?.(item.id, { comment: val });
+    apiPatchChecklistItem(eventId, item.id, { comment: val }).catch(() => {
+      onOptimisticPatch?.(item.id, { comment: item.comment });
+      onUpdate();
     });
-    onUpdate();
   }
 
-  async function commitEstimatedCost(item: ChecklistItem, raw: string) {
+  function commitEstimatedCost(item: ChecklistItem, raw: string) {
     const trimmed = raw.trim();
     if (trimmed === "") {
       if (item.estimated_cost == null) return;
-      await apiPatchChecklistItem(eventId, item.id, { estimated_cost: null });
-      onUpdate();
-      onBudgetContextInvalidate?.();
+      onOptimisticPatch?.(item.id, { estimated_cost: null });
+      apiPatchChecklistItem(eventId, item.id, { estimated_cost: null })
+        .then(() => onBudgetContextInvalidate?.())
+        .catch(() => {
+          onOptimisticPatch?.(item.id, { estimated_cost: item.estimated_cost });
+          onUpdate();
+        });
       return;
     }
     const n = Number(trimmed);
@@ -106,9 +119,13 @@ export function ChecklistSectionComponent({
     const toStore = n === 0 ? null : n;
     const prev = item.estimated_cost ?? null;
     if (prev === toStore) return;
-    await apiPatchChecklistItem(eventId, item.id, { estimated_cost: toStore });
-    onUpdate();
-    onBudgetContextInvalidate?.();
+    onOptimisticPatch?.(item.id, { estimated_cost: toStore });
+    apiPatchChecklistItem(eventId, item.id, { estimated_cost: toStore })
+      .then(() => onBudgetContextInvalidate?.())
+      .catch(() => {
+        onOptimisticPatch?.(item.id, { estimated_cost: item.estimated_cost });
+        onUpdate();
+      });
   }
 
   return (

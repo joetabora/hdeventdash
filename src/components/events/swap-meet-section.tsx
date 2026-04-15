@@ -28,6 +28,9 @@ interface SwapMeetSectionProps {
   spots: SwapMeetSpot[];
   canMutate: boolean;
   onUpdate: () => void;
+  onOptimisticPatch?: (spotId: string, updates: Partial<SwapMeetSpot>) => void;
+  onOptimisticAdd?: (spot: SwapMeetSpot) => void;
+  onOptimisticRemove?: (spotId: string) => void;
 }
 
 export function SwapMeetSection({
@@ -35,9 +38,11 @@ export function SwapMeetSection({
   spots,
   canMutate,
   onUpdate,
+  onOptimisticPatch,
+  onOptimisticAdd,
+  onOptimisticRemove,
 }: SwapMeetSectionProps) {
   const [adding, setAdding] = useState(false);
-  const [busyId, setBusyId] = useState<string | null>(null);
 
   const [newName, setNewName] = useState("");
   const [newPhone, setNewPhone] = useState("");
@@ -52,51 +57,48 @@ export function SwapMeetSection({
     if (!newName.trim()) return;
     setAdding(true);
     try {
-      await apiAddSwapMeetSpot(eventId, {
+      const created = await apiAddSwapMeetSpot(eventId, {
         name: newName.trim(),
         phone: newPhone.trim(),
         email: newEmail.trim(),
         spot_size: newSize,
       });
+      onOptimisticAdd?.(created);
       setNewName("");
       setNewPhone("");
       setNewEmail("");
       setNewSize("10x10");
-      onUpdate();
     } catch (err) {
       console.error(err);
+      onUpdate();
     } finally {
       setAdding(false);
     }
   }
 
-  async function handlePatch(
+  function handlePatch(
     spotId: string,
     field: string,
     value: string
   ) {
-    setBusyId(spotId);
-    try {
-      await apiPatchSwapMeetSpot(eventId, spotId, { [field]: value });
-      onUpdate();
-    } catch (err) {
+    const prev = spots.find((s) => s.id === spotId);
+    onOptimisticPatch?.(spotId, { [field]: value });
+    apiPatchSwapMeetSpot(eventId, spotId, { [field]: value }).catch((err) => {
       console.error(err);
-    } finally {
-      setBusyId(null);
-    }
+      if (prev) {
+        onOptimisticPatch?.(spotId, { [field]: (prev as unknown as Record<string, unknown>)[field] as string });
+      }
+      onUpdate();
+    });
   }
 
-  async function handleDelete(spotId: string) {
+  function handleDelete(spotId: string) {
     if (!confirm("Remove this swap meet spot?")) return;
-    setBusyId(spotId);
-    try {
-      await apiDeleteSwapMeetSpot(eventId, spotId);
-      onUpdate();
-    } catch (err) {
+    onOptimisticRemove?.(spotId);
+    apiDeleteSwapMeetSpot(eventId, spotId).catch((err) => {
       console.error(err);
-    } finally {
-      setBusyId(null);
-    }
+      onUpdate();
+    });
   }
 
   async function handleWaiverUpload(spotId: string, file: File) {
@@ -178,7 +180,6 @@ export function SwapMeetSection({
       ) : (
         <div className="space-y-2">
           {spots.map((spot) => {
-            const busy = busyId === spot.id;
             const uploading = uploadingSpotId === spot.id;
             return (
               <Card key={spot.id} className="!p-3.5">
@@ -190,8 +191,7 @@ export function SwapMeetSection({
                           <div>
                             <label className="block text-[10px] uppercase tracking-wide text-harley-text-muted mb-0.5">Name</label>
                             <input
-                              disabled={busy}
-                              className="w-full px-2.5 py-1.5 rounded-lg bg-harley-black/30 border border-harley-gray-lighter/40 text-sm text-harley-text focus:outline-none focus:border-harley-orange/60 disabled:opacity-50"
+                              className="w-full px-2.5 py-1.5 rounded-lg bg-harley-black/30 border border-harley-gray-lighter/40 text-sm text-harley-text focus:outline-none focus:border-harley-orange/60"
                               defaultValue={spot.name}
                               key={`${spot.id}-name`}
                               onBlur={(e) => {
@@ -202,8 +202,7 @@ export function SwapMeetSection({
                           <div>
                             <label className="block text-[10px] uppercase tracking-wide text-harley-text-muted mb-0.5">Phone</label>
                             <input
-                              disabled={busy}
-                              className="w-full px-2.5 py-1.5 rounded-lg bg-harley-black/30 border border-harley-gray-lighter/40 text-sm text-harley-text focus:outline-none focus:border-harley-orange/60 disabled:opacity-50"
+                              className="w-full px-2.5 py-1.5 rounded-lg bg-harley-black/30 border border-harley-gray-lighter/40 text-sm text-harley-text focus:outline-none focus:border-harley-orange/60"
                               defaultValue={spot.phone}
                               key={`${spot.id}-phone`}
                               onBlur={(e) => {
@@ -214,8 +213,7 @@ export function SwapMeetSection({
                           <div>
                             <label className="block text-[10px] uppercase tracking-wide text-harley-text-muted mb-0.5">Email</label>
                             <input
-                              disabled={busy}
-                              className="w-full px-2.5 py-1.5 rounded-lg bg-harley-black/30 border border-harley-gray-lighter/40 text-sm text-harley-text focus:outline-none focus:border-harley-orange/60 disabled:opacity-50"
+                              className="w-full px-2.5 py-1.5 rounded-lg bg-harley-black/30 border border-harley-gray-lighter/40 text-sm text-harley-text focus:outline-none focus:border-harley-orange/60"
                               defaultValue={spot.email}
                               key={`${spot.id}-email`}
                               onBlur={(e) => {
@@ -229,7 +227,6 @@ export function SwapMeetSection({
                             label=""
                             options={SWAP_MEET_SPOT_SIZES}
                             value={spot.spot_size}
-                            disabled={busy}
                             onChange={(e) => handlePatch(spot.id, "spot_size", e.target.value)}
                           />
                           {spot.waiver_file_name ? (
@@ -291,7 +288,6 @@ export function SwapMeetSection({
                       size="sm"
                       className="shrink-0 text-harley-text-muted hover:text-harley-danger"
                       onClick={() => handleDelete(spot.id)}
-                      disabled={busy}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
