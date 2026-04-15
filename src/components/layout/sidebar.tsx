@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense } from "react";
-import Link from "next/link";
 import {
   usePathname,
   useSearchParams,
@@ -10,7 +9,10 @@ import {
 import { useAppRole } from "@/contexts/app-role-context";
 import { buttonStyles } from "@/components/ui/button";
 import {
-  Zap,
+  SidebarLogoLink,
+  SidebarNavLink,
+} from "@/components/layout/sidebar-nav-link";
+import {
   LayoutGrid,
   Calendar,
   List,
@@ -78,36 +80,32 @@ function SidebarNav({
       {navItems.map((item) => {
         const isActive = isNavItemActive(pathname, searchParams, item.href);
         return (
-          <Link
+          <SidebarNavLink
             key={item.href}
             href={item.href}
             onClick={onClose}
-            className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${
+            icon={item.icon}
+            label={item.label}
+            className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-100 ${
               isActive
                 ? "bg-harley-orange/15 text-harley-orange"
-                : "text-harley-text-muted hover:bg-harley-gray-light/30 hover:text-harley-text hover:translate-x-0.5"
+                : "text-harley-text-muted hover:bg-harley-gray-light/30 hover:text-harley-text"
             }`}
-          >
-            <item.icon
-              className={`w-4 h-4 transition-transform duration-150 ${isActive ? "" : "group-hover:scale-110"}`}
-            />
-            {item.label}
-          </Link>
+          />
         );
       })}
       {canManageEvents && (
-        <Link
+        <SidebarNavLink
           href="/vendors"
           onClick={onClose}
-          className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${
+          icon={Store}
+          label="Vendors"
+          className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-100 ${
             pathname === "/vendors" || pathname.startsWith("/vendors/")
               ? "bg-harley-orange/15 text-harley-orange"
-              : "text-harley-text-muted hover:bg-harley-gray-light/30 hover:text-harley-text hover:translate-x-0.5"
+              : "text-harley-text-muted hover:bg-harley-gray-light/30 hover:text-harley-text"
           }`}
-        >
-          <Store className="w-4 h-4" />
-          Vendors
-        </Link>
+        />
       )}
       {isAdmin && (
         <>
@@ -117,19 +115,18 @@ function SidebarNav({
           {adminItems.map((item) => {
             const isActive = pathname === item.href;
             return (
-              <Link
+              <SidebarNavLink
                 key={item.href}
                 href={item.href}
                 onClick={onClose}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${
+                icon={item.icon}
+                label={item.label}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-100 ${
                   isActive
                     ? "bg-harley-orange/15 text-harley-orange"
-                    : "text-harley-text-muted hover:bg-harley-gray-light/30 hover:text-harley-text hover:translate-x-0.5"
+                    : "text-harley-text-muted hover:bg-harley-gray-light/30 hover:text-harley-text"
                 }`}
-              >
-                <item.icon className="w-4 h-4" />
-                {item.label}
-              </Link>
+              />
             );
           })}
         </>
@@ -158,16 +155,7 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
         }`}
       >
         <div className="h-16 flex items-center justify-between px-5 border-b border-harley-gray shrink-0">
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-2.5"
-            onClick={onClose}
-          >
-            <Zap className="w-6 h-6 text-harley-orange" />
-            <span className="text-lg font-bold text-harley-text tracking-tight">
-              Harley Events
-            </span>
-          </Link>
+          <SidebarLogoLink onClick={onClose} />
           <button
             type="button"
             onClick={onClose}
@@ -179,14 +167,13 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
 
         {canManageEvents && (
           <div className="px-4 pt-5 pb-2">
-            <Link
+            <SidebarNavLink
               href="/events/new"
               onClick={onClose}
+              icon={PlusCircle}
+              label="New Event"
               className={`${buttonStyles.primary("md")} w-full`}
-            >
-              <PlusCircle className="w-4 h-4" />
-              New Event
-            </Link>
+            />
           </div>
         )}
 
