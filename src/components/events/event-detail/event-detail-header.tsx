@@ -52,6 +52,7 @@ export type EventBudgetMonthSummary = {
   locationLabel: string;
   thisEventPlanned: number;
   checklistLineSpend: number;
+  vendorFeeTotal: number;
   thisEventCommitted: number;
   totalCommittedInMonth: number;
   /** null when no monthly cap (cap === 0). */
@@ -471,16 +472,21 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
                   <p className="text-xs text-harley-text-muted/90 mt-3 leading-relaxed">
                     This event:{" "}
                     {formatUsd(budgetSummaryForEventMonth.thisEventPlanned)}{" "}
-                    planned +{" "}
-                    {formatUsd(budgetSummaryForEventMonth.checklistLineSpend)}{" "}
-                    checklist · Other events:{" "}
+                    planned
+                    {budgetSummaryForEventMonth.checklistLineSpend > 0 && (
+                      <> + {formatUsd(budgetSummaryForEventMonth.checklistLineSpend)} checklist</>
+                    )}
+                    {budgetSummaryForEventMonth.vendorFeeTotal > 0 && (
+                      <> + {formatUsd(budgetSummaryForEventMonth.vendorFeeTotal)} vendor fees</>
+                    )}
+                    {" "}· Other events:{" "}
                     {formatUsd(budgetSummaryForEventMonth.othersPlanned)}
                   </p>
                   <p className="text-[11px] text-harley-text-muted/70 mt-2 leading-relaxed">
                     Set planned budget in{" "}
                     <span className="text-harley-text-muted">Edit event</span>;
-                    add line-item costs in checklist details (pencil). Updates
-                    here are live.
+                    add line-item costs in checklist details (pencil);
+                    vendor agreed fees also count. Updates here are live.
                   </p>
                 </div>
               ) : (

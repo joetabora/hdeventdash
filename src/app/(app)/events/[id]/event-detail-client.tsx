@@ -275,6 +275,7 @@ export function EventDetailClient({
             prefetchedMonthlyBudgets={c.monthlyBudgetsForEventMonth}
             prefetchedForYearMonth={c.eventMonthYearMonth}
             checklistEstimatedTotalForEvent={c.checklistEstimatedTotal}
+            vendorFeeTotalForEvent={c.vendorFeeTotal}
             onBudgetPeersMonthChange={c.onBudgetPeersMonthChange}
             onSubmit={c.handleEditSubmit}
             onCancel={() => c.setEditModalOpen(false)}

@@ -39,6 +39,8 @@ interface EventFormProps {
   prefetchedForYearMonth?: string | null;
   /** Sum of checklist line estimated costs for this event (edit flow); included in cap math with planned budget. */
   checklistEstimatedTotalForEvent?: number;
+  /** Sum of vendor agreed fees for this event; included in cap math. */
+  vendorFeeTotalForEvent?: number;
   onSubmit: (data: {
     name: string;
     date: string;
@@ -75,6 +77,7 @@ export function EventForm({
   prefetchedMonthlyBudgets,
   prefetchedForYearMonth = null,
   checklistEstimatedTotalForEvent = 0,
+  vendorFeeTotalForEvent = 0,
   onBudgetPeersMonthChange,
   onSubmit,
   onCancel,
@@ -170,7 +173,8 @@ export function EventForm({
     }
     const thisPlanned = numOrNull(plannedBudget) ?? 0;
     const checklistLineSpend = Math.max(0, checklistEstimatedTotalForEvent);
-    const thisCommitted = thisPlanned + checklistLineSpend;
+    const vendorFees = Math.max(0, vendorFeeTotalForEvent);
+    const thisCommitted = thisPlanned + checklistLineSpend + vendorFees;
     const cap = effectiveMonthlyCapForEvent(capBudgetRows, locationKey);
     const singleVenueMonth = capBudgetRows.length === 1;
     const othersPlanned = sumOthersPlannedForMonth(
@@ -197,12 +201,13 @@ export function EventForm({
     locationKey,
     plannedBudget,
     checklistEstimatedTotalForEvent,
+    vendorFeeTotalForEvent,
     event?.id,
   ]);
 
   useEffect(() => {
     void Promise.resolve().then(() => setBudgetOverrideConfirmed(false));
-  }, [date, location, plannedBudget, yearMonth, checklistEstimatedTotalForEvent]);
+  }, [date, location, plannedBudget, yearMonth, checklistEstimatedTotalForEvent, vendorFeeTotalForEvent]);
 
   useEffect(() => {
     if (!canEditBudget || !onBudgetPeersMonthChange) return;

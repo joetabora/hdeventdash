@@ -62,6 +62,11 @@ export function useEventController(
     if (eventMonthYearMonth) void refetch.budgetContextForMonth(eventMonthYearMonth);
   }, [eventMonthYearMonth, refetch]);
 
+  const vendorFeeTotal = useMemo(
+    () => eventVendors.reduce((s, v) => s + (Number(v.agreed_fee) || 0), 0),
+    [eventVendors]
+  );
+
   const budgetSummaryForEventMonth = useMemo(() => {
     if (!event || !canManageEvents || !eventMonthYearMonth) return null;
     const key =
@@ -80,7 +85,7 @@ export function useEventController(
     );
     const thisEventPlanned = Number(event.planned_budget) || 0;
     const checklistLineSpend = sumChecklistEstimatedCost(checklist);
-    const thisEventCommitted = thisEventPlanned + checklistLineSpend;
+    const thisEventCommitted = thisEventPlanned + checklistLineSpend + vendorFeeTotal;
     const totalCommittedInMonth = othersPlanned + thisEventCommitted;
     const remaining =
       cap > 0 ? cap - totalCommittedInMonth : null;
@@ -93,6 +98,7 @@ export function useEventController(
       locationLabel: event.location?.trim() ?? "",
       thisEventPlanned,
       checklistLineSpend,
+      vendorFeeTotal,
       thisEventCommitted,
       totalCommittedInMonth,
       remaining,
@@ -100,6 +106,8 @@ export function useEventController(
   }, [
     event,
     checklist,
+    eventVendors,
+    vendorFeeTotal,
     canManageEvents,
     eventMonthYearMonth,
     monthlyBudgetsForEventMonth,
@@ -284,6 +292,7 @@ export function useEventController(
     onChecklistInvalidate,
     onBudgetContextInvalidate,
     checklistEstimatedTotal,
+    vendorFeeTotal,
     handleToggleLiveMode,
     handleToggleSwapMeet,
     handleStatusChange,
