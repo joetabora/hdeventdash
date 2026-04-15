@@ -23,6 +23,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { SavedCheck } from "@/components/ui/saved-check";
+import { useSavedFields } from "@/hooks/use-saved-fields";
 
 interface ChecklistSectionProps {
   section: ChecklistSectionType;
@@ -55,6 +57,7 @@ export function ChecklistSectionComponent({
   const checkedCount = items.filter((i) => i.is_checked).length;
   const progress = items.length > 0 ? (checkedCount / items.length) * 100 : 0;
   const allowCostEdit = allowStructureEdit && !liveMode;
+  const { saved, flash } = useSavedFields();
 
   function handleToggle(item: ChecklistItem) {
     const next = !item.is_checked;
@@ -86,19 +89,23 @@ export function ChecklistSectionComponent({
   function handleAssigneeChange(item: ChecklistItem, assignee: string) {
     const val = assignee || null;
     onOptimisticPatch?.(item.id, { assignee: val });
-    apiPatchChecklistItem(eventId, item.id, { assignee: val }).catch(() => {
-      onOptimisticPatch?.(item.id, { assignee: item.assignee });
-      onUpdate();
-    });
+    apiPatchChecklistItem(eventId, item.id, { assignee: val })
+      .then(() => flash(`${item.id}-assignee`))
+      .catch(() => {
+        onOptimisticPatch?.(item.id, { assignee: item.assignee });
+        onUpdate();
+      });
   }
 
   function handleCommentChange(item: ChecklistItem, comment: string) {
     const val = comment || null;
     onOptimisticPatch?.(item.id, { comment: val });
-    apiPatchChecklistItem(eventId, item.id, { comment: val }).catch(() => {
-      onOptimisticPatch?.(item.id, { comment: item.comment });
-      onUpdate();
-    });
+    apiPatchChecklistItem(eventId, item.id, { comment: val })
+      .then(() => flash(`${item.id}-comment`))
+      .catch(() => {
+        onOptimisticPatch?.(item.id, { comment: item.comment });
+        onUpdate();
+      });
   }
 
   function commitEstimatedCost(item: ChecklistItem, raw: string) {
@@ -107,7 +114,7 @@ export function ChecklistSectionComponent({
       if (item.estimated_cost == null) return;
       onOptimisticPatch?.(item.id, { estimated_cost: null });
       apiPatchChecklistItem(eventId, item.id, { estimated_cost: null })
-        .then(() => onBudgetContextInvalidate?.())
+        .then(() => { onBudgetContextInvalidate?.(); flash(`${item.id}-cost`); })
         .catch(() => {
           onOptimisticPatch?.(item.id, { estimated_cost: item.estimated_cost });
           onUpdate();
@@ -121,7 +128,7 @@ export function ChecklistSectionComponent({
     if (prev === toStore) return;
     onOptimisticPatch?.(item.id, { estimated_cost: toStore });
     apiPatchChecklistItem(eventId, item.id, { estimated_cost: toStore })
-      .then(() => onBudgetContextInvalidate?.())
+      .then(() => { onBudgetContextInvalidate?.(); flash(`${item.id}-cost`); })
       .catch(() => {
         onOptimisticPatch?.(item.id, { estimated_cost: item.estimated_cost });
         onUpdate();
@@ -194,6 +201,7 @@ export function ChecklistSectionComponent({
               onAssigneeChange={(val) => handleAssigneeChange(item, val)}
               onCommentChange={(val) => handleCommentChange(item, val)}
               onEstimatedCostBlur={(raw) => commitEstimatedCost(item, raw)}
+              savedFields={saved}
             />
           ))}
 
@@ -250,6 +258,7 @@ function ChecklistItemRow({
   onAssigneeChange,
   onCommentChange,
   onEstimatedCostBlur,
+  savedFields,
 }: {
   item: ChecklistItem;
   liveMode: boolean;
@@ -260,6 +269,7 @@ function ChecklistItemRow({
   onAssigneeChange: (val: string) => void;
   onCommentChange: (val: string) => void;
   onEstimatedCostBlur: (raw: string) => void | Promise<void>;
+  savedFields: Set<string>;
 }) {
   const [showDetails, setShowDetails] = useState(false);
   const [justChecked, setJustChecked] = useState(false);
@@ -434,9 +444,10 @@ function ChecklistItemRow({
               placeholder="Assign to..."
               className="flex-1 px-3 py-2 md:px-2 md:py-1 rounded-lg md:rounded bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-sm md:text-xs placeholder-harley-text-muted/60 focus:outline-none focus:border-harley-orange/70 transition-all duration-150"
             />
+            <SavedCheck visible={savedFields.has(`${item.id}-assignee`)} />
           </div>
-          <div className="flex items-start gap-2">
-            <MessageSquare className="w-4 h-4 md:w-3.5 md:h-3.5 text-harley-text-muted shrink-0 mt-2 md:mt-1" />
+          <div className="flex items-center gap-2">
+            <MessageSquare className="w-4 h-4 md:w-3.5 md:h-3.5 text-harley-text-muted shrink-0" />
             <input
               type="text"
               value={commentInput}
@@ -445,22 +456,26 @@ function ChecklistItemRow({
               placeholder="Add a note..."
               className="flex-1 px-3 py-2 md:px-2 md:py-1 rounded-lg md:rounded bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-sm md:text-xs placeholder-harley-text-muted/60 focus:outline-none focus:border-harley-orange/70 transition-all duration-150"
             />
+            <SavedCheck visible={savedFields.has(`${item.id}-comment`)} />
           </div>
-          <div className="flex items-start gap-2">
-            <DollarSign className="w-4 h-4 md:w-3.5 md:h-3.5 text-harley-text-muted shrink-0 mt-2 md:mt-1" />
+          <div className="flex items-center gap-2">
+            <DollarSign className="w-4 h-4 md:w-3.5 md:h-3.5 text-harley-text-muted shrink-0" />
             {allowCostEdit ? (
               <div className="flex-1 space-y-1">
-                <input
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  inputMode="decimal"
-                  value={costInput}
-                  onChange={(e) => setCostInput(e.target.value)}
-                  onBlur={() => void onEstimatedCostBlur(costInput)}
-                  placeholder="Estimated cost ($)"
-                  className="w-full px-3 py-2 md:px-2 md:py-1 rounded-lg md:rounded bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-sm md:text-xs placeholder-harley-text-muted/60 focus:outline-none focus:border-harley-orange/70 transition-all duration-150"
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    inputMode="decimal"
+                    value={costInput}
+                    onChange={(e) => setCostInput(e.target.value)}
+                    onBlur={() => void onEstimatedCostBlur(costInput)}
+                    placeholder="Estimated cost ($)"
+                    className="flex-1 px-3 py-2 md:px-2 md:py-1 rounded-lg md:rounded bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-sm md:text-xs placeholder-harley-text-muted/60 focus:outline-none focus:border-harley-orange/70 transition-all duration-150"
+                  />
+                  <SavedCheck visible={savedFields.has(`${item.id}-cost`)} />
+                </div>
                 <p className="text-[10px] text-harley-text-muted/80 leading-snug">
                   Counts toward this event&apos;s month venue budget with planned
                   budget.

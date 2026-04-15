@@ -22,7 +22,9 @@ import {
   FileCheck,
   Loader2,
 } from "lucide-react";
-import { showError } from "@/lib/toast";
+import { showError, showSuccess } from "@/lib/toast";
+import { SavedCheck } from "@/components/ui/saved-check";
+import { useSavedFields } from "@/hooks/use-saved-fields";
 
 interface SwapMeetSectionProps {
   eventId: string;
@@ -44,6 +46,7 @@ export function SwapMeetSection({
   onOptimisticRemove,
 }: SwapMeetSectionProps) {
   const [adding, setAdding] = useState(false);
+  const { saved, flash } = useSavedFields();
 
   const [newName, setNewName] = useState("");
   const [newPhone, setNewPhone] = useState("");
@@ -69,6 +72,7 @@ export function SwapMeetSection({
       setNewPhone("");
       setNewEmail("");
       setNewSize("10x10");
+      showSuccess("Spot added.");
     } catch (err) {
       console.error(err);
       showError("Failed to add swap meet spot.");
@@ -85,14 +89,16 @@ export function SwapMeetSection({
   ) {
     const prev = spots.find((s) => s.id === spotId);
     onOptimisticPatch?.(spotId, { [field]: value });
-    apiPatchSwapMeetSpot(eventId, spotId, { [field]: value }).catch((err) => {
-      console.error(err);
-      showError("Failed to update spot.");
-      if (prev) {
-        onOptimisticPatch?.(spotId, { [field]: (prev as unknown as Record<string, unknown>)[field] as string });
-      }
-      onUpdate();
-    });
+    apiPatchSwapMeetSpot(eventId, spotId, { [field]: value })
+      .then(() => flash(`${spotId}-${field}`))
+      .catch((err) => {
+        console.error(err);
+        showError("Failed to update spot.");
+        if (prev) {
+          onOptimisticPatch?.(spotId, { [field]: (prev as unknown as Record<string, unknown>)[field] as string });
+        }
+        onUpdate();
+      });
   }
 
   function handleDelete(spotId: string) {
@@ -194,7 +200,10 @@ export function SwapMeetSection({
                       <div className="space-y-2">
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                           <div>
-                            <label className="block text-[10px] uppercase tracking-wide text-harley-text-muted mb-0.5">Name</label>
+                            <div className="flex items-center justify-between mb-0.5">
+                              <label className="text-[10px] uppercase tracking-wide text-harley-text-muted">Name</label>
+                              <SavedCheck visible={saved.has(`${spot.id}-name`)} />
+                            </div>
                             <input
                               className="w-full px-2.5 py-1.5 rounded-lg bg-harley-black/30 border border-harley-gray-lighter/40 text-sm text-harley-text focus:outline-none focus:border-harley-orange/60"
                               defaultValue={spot.name}
@@ -205,7 +214,10 @@ export function SwapMeetSection({
                             />
                           </div>
                           <div>
-                            <label className="block text-[10px] uppercase tracking-wide text-harley-text-muted mb-0.5">Phone</label>
+                            <div className="flex items-center justify-between mb-0.5">
+                              <label className="text-[10px] uppercase tracking-wide text-harley-text-muted">Phone</label>
+                              <SavedCheck visible={saved.has(`${spot.id}-phone`)} />
+                            </div>
                             <input
                               className="w-full px-2.5 py-1.5 rounded-lg bg-harley-black/30 border border-harley-gray-lighter/40 text-sm text-harley-text focus:outline-none focus:border-harley-orange/60"
                               defaultValue={spot.phone}
@@ -216,7 +228,10 @@ export function SwapMeetSection({
                             />
                           </div>
                           <div>
-                            <label className="block text-[10px] uppercase tracking-wide text-harley-text-muted mb-0.5">Email</label>
+                            <div className="flex items-center justify-between mb-0.5">
+                              <label className="text-[10px] uppercase tracking-wide text-harley-text-muted">Email</label>
+                              <SavedCheck visible={saved.has(`${spot.id}-email`)} />
+                            </div>
                             <input
                               className="w-full px-2.5 py-1.5 rounded-lg bg-harley-black/30 border border-harley-gray-lighter/40 text-sm text-harley-text focus:outline-none focus:border-harley-orange/60"
                               defaultValue={spot.email}

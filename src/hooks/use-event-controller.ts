@@ -21,7 +21,7 @@ import {
   apiPatchEvent,
 } from "@/lib/events-api-client";
 import type { EventStatus, EventType } from "@/types/database";
-import { showError } from "@/lib/toast";
+import { showError, errorMessage } from "@/lib/toast";
 
 export function useEventController(
   eventId: string,
@@ -159,7 +159,7 @@ export function useEventController(
       setEvent(updated);
     } catch (err) {
       console.error("Failed to toggle live mode:", err);
-      showError("Failed to toggle live mode.");
+      showError(errorMessage(err, "Failed to toggle live mode."));
     }
   }, [event, setEvent]);
 
@@ -173,7 +173,7 @@ export function useEventController(
       if (enabled) void refetch.swapMeetSpots();
     } catch (err) {
       console.error("Failed to update swap meet:", err);
-      showError("Failed to update swap meet.");
+      showError(errorMessage(err, "Failed to update swap meet."));
     }
   }, [event, setEvent, refetch]);
 
@@ -185,7 +185,7 @@ export function useEventController(
         setEvent(updated);
       } catch (err) {
         console.error("Failed to update status:", err);
-        showError("Failed to update status.");
+        showError(errorMessage(err, "Failed to update status."));
       }
     },
     [event, setEvent]
@@ -231,7 +231,7 @@ export function useEventController(
         void refetch.budgetContextForMonth(eventDateToYearMonth(updated.date));
       } catch (err) {
         console.error("Failed to save event:", err);
-        showError("Failed to save event.");
+        showError(errorMessage(err, "Failed to save event."));
       }
     },
     [event, setEvent, refetch]

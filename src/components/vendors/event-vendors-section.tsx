@@ -17,9 +17,11 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/input";
+import { SavedCheck } from "@/components/ui/saved-check";
+import { useSavedFields } from "@/hooks/use-saved-fields";
 import { formatUsd } from "@/lib/format-currency";
 import { Loader2, UserMinus, ExternalLink, DollarSign } from "lucide-react";
-import { showError } from "@/lib/toast";
+import { showError, showSuccess } from "@/lib/toast";
 
 interface EventVendorsSectionProps {
   eventId: string;
@@ -88,6 +90,15 @@ export function EventVendorsSection({
     [availableVendors]
   );
 
+  const { saved, flash } = useSavedFields();
+
+  // Clear stale selection if the vendor was removed from the list (just attached)
+  useEffect(() => {
+    if (vendorId && !availableVendors.some((v) => v.id === vendorId)) {
+      setVendorId("");
+    }
+  }, [vendorId, availableVendors]);
+
   async function handleAttach(e: React.FormEvent) {
     e.preventDefault();
     if (!vendorId) return;
@@ -102,10 +113,10 @@ export function EventVendorsSection({
           notes: attachNotes,
         }),
       });
+      const attachedName = availableVendors.find((v) => v.id === vendorId)?.name ?? "Vendor";
       setVendorId("");
-      setAttachRole("");
-      setAttachNotes("");
       onUpdate();
+      showSuccess(`${attachedName} attached.`);
     } catch (err) {
       console.error(err);
       showError("Failed to attach vendor.");
@@ -116,7 +127,8 @@ export function EventVendorsSection({
 
   function patchLink(
     linkId: string,
-    patch: Partial<{ role: string; notes: string; participation_status: VendorParticipationStatus; agreed_fee: number | null; fee_notes: string }>
+    patch: Partial<{ role: string; notes: string; participation_status: VendorParticipationStatus; agreed_fee: number | null; fee_notes: string }>,
+    flashKey?: string
   ) {
     const prev = eventVendors.find((v) => v.id === linkId);
     onOptimisticPatch?.(linkId, patch as Partial<EventVendorWithVendor>);
@@ -124,18 +136,20 @@ export function EventVendorsSection({
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(patch),
-    }).catch((err) => {
-      console.error(err);
-      showError("Failed to update vendor.");
-      if (prev) {
-        const revert: Partial<EventVendorWithVendor> = {};
-        for (const k of Object.keys(patch)) {
-          (revert as unknown as Record<string, unknown>)[k] = (prev as unknown as Record<string, unknown>)[k];
+    })
+      .then(() => { if (flashKey) flash(flashKey); })
+      .catch((err) => {
+        console.error(err);
+        showError("Failed to update vendor.");
+        if (prev) {
+          const revert: Partial<EventVendorWithVendor> = {};
+          for (const k of Object.keys(patch)) {
+            (revert as unknown as Record<string, unknown>)[k] = (prev as unknown as Record<string, unknown>)[k];
+          }
+          onOptimisticPatch?.(linkId, revert);
         }
-        onOptimisticPatch?.(linkId, revert);
-      }
-      onUpdate();
-    });
+        onUpdate();
+      });
   }
 
   function handleDetach(linkId: string) {
@@ -189,7 +203,7 @@ export function EventVendorsSection({
                 value={vendorId}
                 onChange={(e) => setVendorId(e.target.value)}
                 required
-                disabled={availableVendors.length === 0 || searchLoading}
+                disabled={availableVendors.length === 0 && !searchLoading}
               />
               <div>
                 <label className="block text-sm text-harley-text-muted mb-1.5">
@@ -216,9 +230,7 @@ export function EventVendorsSection({
             </div>
             <Button
               type="submit"
-              disabled={
-                attaching || !vendorId || availableVendors.length === 0 || searchLoading
-              }
+              disabled={attaching || !vendorId}
               className="w-full sm:w-auto"
             >
               {attaching ? (
@@ -298,41 +310,53 @@ export function EventVendorsSection({
                     <>
                       <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-[10px] uppercase tracking-wide text-harley-text-muted mb-1">
-                            Role
-                          </label>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="text-[10px] uppercase tracking-wide text-harley-text-muted">
+                              Role
+                            </label>
+                            <SavedCheck visible={saved.has(`${row.id}-role`)} />
+                          </div>
                           <input
                             className="w-full px-3 py-2 rounded-lg bg-harley-black/30 border border-harley-gray-lighter/40 text-sm text-harley-text focus:outline-none focus:border-harley-orange/60"
                             defaultValue={row.role}
                             key={`${row.id}-role-${row.updated_at}`}
                             onBlur={(e) => {
                               if (e.target.value !== row.role) {
-                                patchLink(row.id, { role: e.target.value });
+                                patchLink(row.id, { role: e.target.value }, `${row.id}-role`);
                               }
                             }}
                           />
                         </div>
-                        <Select
-                          label="Participation"
-                          options={VENDOR_PARTICIPATION_STATUSES.map((o) => ({
-                            value: o.value,
-                            label: o.label,
-                          }))}
-                          value={row.participation_status}
-                          onChange={(e) =>
-                            patchLink(row.id, {
-                              participation_status: e.target
-                                .value as VendorParticipationStatus,
-                            })
-                          }
-                        />
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-[10px] uppercase tracking-wide text-harley-text-muted">Participation</span>
+                            <SavedCheck visible={saved.has(`${row.id}-participation`)} />
+                          </div>
+                          <Select
+                            label=""
+                            options={VENDOR_PARTICIPATION_STATUSES.map((o) => ({
+                              value: o.value,
+                              label: o.label,
+                            }))}
+                            value={row.participation_status}
+                            onChange={(e) =>
+                              patchLink(row.id, {
+                                participation_status: e.target
+                                  .value as VendorParticipationStatus,
+                              }, `${row.id}-participation`)
+                            }
+                          />
+                        </div>
                       </div>
                       <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-[10px] uppercase tracking-wide text-harley-text-muted mb-1">
-                            <DollarSign className="w-3 h-3 inline -mt-0.5 mr-0.5" />
-                            Agreed Fee
-                          </label>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="text-[10px] uppercase tracking-wide text-harley-text-muted">
+                              <DollarSign className="w-3 h-3 inline -mt-0.5 mr-0.5" />
+                              Agreed Fee
+                            </label>
+                            <SavedCheck visible={saved.has(`${row.id}-fee`)} />
+                          </div>
                           <input
                             type="number"
                             min={0}
@@ -346,15 +370,18 @@ export function EventVendorsSection({
                               const next = raw === "" ? null : Number(raw);
                               const prev = row.agreed_fee ?? null;
                               if (next !== prev) {
-                                patchLink(row.id, { agreed_fee: Number.isFinite(next) ? next : null });
+                                patchLink(row.id, { agreed_fee: Number.isFinite(next) ? next : null }, `${row.id}-fee`);
                               }
                             }}
                           />
                         </div>
                         <div>
-                          <label className="block text-[10px] uppercase tracking-wide text-harley-text-muted mb-1">
-                            Fee Notes
-                          </label>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="text-[10px] uppercase tracking-wide text-harley-text-muted">
+                              Fee Notes
+                            </label>
+                            <SavedCheck visible={saved.has(`${row.id}-fee-notes`)} />
+                          </div>
                           <input
                             className="w-full px-3 py-2 rounded-lg bg-harley-black/30 border border-harley-gray-lighter/40 text-sm text-harley-text focus:outline-none focus:border-harley-orange/60"
                             defaultValue={row.fee_notes}
@@ -362,23 +389,26 @@ export function EventVendorsSection({
                             placeholder="e.g. with sound: $800 / without: $500"
                             onBlur={(e) => {
                               if (e.target.value !== row.fee_notes) {
-                                patchLink(row.id, { fee_notes: e.target.value });
+                                patchLink(row.id, { fee_notes: e.target.value }, `${row.id}-fee-notes`);
                               }
                             }}
                           />
                         </div>
                       </div>
                       <div className="mt-2">
-                        <label className="block text-[10px] uppercase tracking-wide text-harley-text-muted mb-1">
-                          Notes
-                        </label>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-[10px] uppercase tracking-wide text-harley-text-muted">
+                            Notes
+                          </label>
+                          <SavedCheck visible={saved.has(`${row.id}-notes`)} />
+                        </div>
                         <textarea
                           className="w-full min-h-[72px] px-3 py-2 rounded-lg bg-harley-black/30 border border-harley-gray-lighter/40 text-sm text-harley-text focus:outline-none focus:border-harley-orange/60 resize-y"
                           defaultValue={row.notes}
                           key={`${row.id}-notes-${row.updated_at}`}
                           onBlur={(e) => {
                             if (e.target.value !== row.notes) {
-                              patchLink(row.id, { notes: e.target.value });
+                              patchLink(row.id, { notes: e.target.value }, `${row.id}-notes`);
                             }
                           }}
                         />

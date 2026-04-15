@@ -62,7 +62,14 @@ export async function PATCH(
     return NextResponse.json(row);
   } catch (e) {
     console.error("PATCH /api/events/[eventId]:", e);
-    return NextResponse.json({ error: "Failed to update event." }, { status: 500 });
+    const detail =
+      e && typeof e === "object" && "message" in e
+        ? String((e as { message: string }).message)
+        : "Unknown error";
+    return NextResponse.json(
+      { error: `Failed to update event: ${detail}` },
+      { status: 500 }
+    );
   }
 }
 
