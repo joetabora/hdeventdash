@@ -50,6 +50,11 @@ export function EventVendorsSection({
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [searchResults, setSearchResults] = useState<Vendor[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  /** Keeps the chosen vendor in the dropdown when search results refresh and no longer include them. */
+  const [pinnedAttachVendor, setPinnedAttachVendor] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(vendorSearch.trim()), 350);
@@ -82,22 +87,28 @@ export function EventVendorsSection({
     return searchResults.filter((v) => !active.has(v.id));
   }, [searchResults, eventVendors]);
 
-  const vendorSelectOptions = useMemo(
-    () => [
-      { value: "", label: "Select vendor…" },
-      ...availableVendors.map((v) => ({ value: v.id, label: v.name })),
-    ],
-    [availableVendors]
-  );
+  const vendorSelectOptions = useMemo(() => {
+    const rows = availableVendors.map((v) => ({ value: v.id, label: v.name }));
+    if (
+      pinnedAttachVendor &&
+      vendorId === pinnedAttachVendor.id &&
+      !rows.some((r) => r.value === pinnedAttachVendor.id)
+    ) {
+      rows.push({ value: pinnedAttachVendor.id, label: pinnedAttachVendor.name });
+    }
+    return [{ value: "", label: "Select vendor…" }, ...rows];
+  }, [availableVendors, pinnedAttachVendor, vendorId]);
 
   const { saved, flash } = useSavedFields();
 
-  // Clear stale selection if the vendor was removed from the list (just attached)
+  // Selection is no longer valid once that vendor is attached (e.g. refetch before local clear)
   useEffect(() => {
-    if (vendorId && !availableVendors.some((v) => v.id === vendorId)) {
+    if (!vendorId) return;
+    if (eventVendors.some((r) => r.vendor_id === vendorId)) {
       setVendorId("");
+      setPinnedAttachVendor(null);
     }
-  }, [vendorId, availableVendors]);
+  }, [vendorId, eventVendors]);
 
   async function handleAttach(e: React.FormEvent) {
     e.preventDefault();
@@ -113,8 +124,12 @@ export function EventVendorsSection({
           notes: attachNotes,
         }),
       });
-      const attachedName = availableVendors.find((v) => v.id === vendorId)?.name ?? "Vendor";
+      const attachedName =
+        pinnedAttachVendor?.id === vendorId
+          ? pinnedAttachVendor.name
+          : availableVendors.find((v) => v.id === vendorId)?.name ?? "Vendor";
       setVendorId("");
+      setPinnedAttachVendor(null);
       onUpdate();
       showSuccess(`${attachedName} attached.`);
     } catch (err) {
@@ -201,9 +216,29 @@ export function EventVendorsSection({
                 label="Vendor"
                 options={vendorSelectOptions}
                 value={vendorId}
-                onChange={(e) => setVendorId(e.target.value)}
+                onChange={(e) => {
+                  const id = e.target.value;
+                  setVendorId(id);
+                  if (!id) {
+                    setPinnedAttachVendor(null);
+                  } else {
+                    const v =
+                      availableVendors.find((x) => x.id === id) ??
+                      searchResults.find((x) => x.id === id);
+                    if (v) {
+                      setPinnedAttachVendor({ id: v.id, name: v.name });
+                    } else if (pinnedAttachVendor?.id === id) {
+                      /* keep label when option only exists via pin */
+                    } else {
+                      setPinnedAttachVendor({ id, name: "Vendor" });
+                    }
+                  }
+                }}
                 required
-                disabled={availableVendors.length === 0 && !searchLoading}
+                disabled={
+                  searchLoading ||
+                  (availableVendors.length === 0 && !vendorId)
+                }
               />
               <div>
                 <label className="block text-sm text-harley-text-muted mb-1.5">
