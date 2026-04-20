@@ -3,6 +3,9 @@
 import { useEffect, useRef, useCallback, useId } from "react";
 import { X } from "lucide-react";
 
+/** Initial focus targets this region so we never focus the header close control. */
+const MODAL_BODY_SELECTOR = "[data-modal-body]";
+
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -25,7 +28,12 @@ export function Modal({ isOpen, onClose, title, children, size = "md" }: ModalPr
   const overlayRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
   const titleId = useId();
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   const trapFocus = useCallback((e: KeyboardEvent) => {
     if (e.key !== "Tab") return;
@@ -48,6 +56,9 @@ export function Modal({ isOpen, onClose, title, children, size = "md" }: ModalPr
     }
   }, []);
 
+  // Only depend on `isOpen`. `onClose` must not be a dependency — parents often pass a
+  // new function each render; re-running this effect would steal focus from inputs
+  // (e.g. first focusable is the close button in the header).
   useEffect(() => {
     if (!isOpen) return;
 
@@ -57,12 +68,14 @@ export function Modal({ isOpen, onClose, title, children, size = "md" }: ModalPr
     requestAnimationFrame(() => {
       const panel = panelRef.current;
       if (!panel) return;
-      const first = panel.querySelector<HTMLElement>(FOCUSABLE);
+      const body = panel.querySelector<HTMLElement>(MODAL_BODY_SELECTOR);
+      const scope = body ?? panel;
+      const first = scope.querySelector<HTMLElement>(FOCUSABLE);
       if (first) first.focus();
     });
 
     function handleEscape(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") onCloseRef.current();
     }
 
     document.addEventListener("keydown", handleEscape);
@@ -74,7 +87,7 @@ export function Modal({ isOpen, onClose, title, children, size = "md" }: ModalPr
       document.body.style.overflow = "";
       previousFocusRef.current?.focus();
     };
-  }, [isOpen, onClose, trapFocus]);
+  }, [isOpen, trapFocus]);
 
   if (!isOpen) return null;
 
@@ -103,7 +116,12 @@ export function Modal({ isOpen, onClose, title, children, size = "md" }: ModalPr
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="overflow-y-auto p-5 md:p-6 overscroll-contain">{children}</div>
+        <div
+          data-modal-body
+          className="overflow-y-auto p-5 md:p-6 overscroll-contain"
+        >
+          {children}
+        </div>
       </div>
     </div>
   );
