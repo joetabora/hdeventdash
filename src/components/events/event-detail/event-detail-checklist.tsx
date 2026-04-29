@@ -1,7 +1,7 @@
 "use client";
 
 import { EventChecklistModule } from "@/components/events/event-detail/event-checklist-module";
-import type { ChecklistItem } from "@/types/database";
+import type { ChecklistItem, ChecklistSection } from "@/types/database";
 
 export function EventDetailChecklist({
   mode,
@@ -13,6 +13,8 @@ export function EventDetailChecklist({
   onBudgetContextInvalidate,
   atRisk,
   allChecklistComplete,
+  sectionsFilter,
+  embedded = false,
 }: {
   mode: "live" | "standard";
   eventId: string;
@@ -23,6 +25,8 @@ export function EventDetailChecklist({
   onBudgetContextInvalidate?: () => void;
   atRisk?: boolean;
   allChecklistComplete?: boolean;
+  sectionsFilter?: readonly ChecklistSection[];
+  embedded?: boolean;
 }) {
   return (
     <EventChecklistModule
@@ -35,6 +39,8 @@ export function EventDetailChecklist({
       onBudgetContextInvalidate={onBudgetContextInvalidate}
       atRisk={atRisk}
       allChecklistComplete={allChecklistComplete}
+      sectionsFilter={sectionsFilter}
+      embedded={embedded}
     />
   );
 }

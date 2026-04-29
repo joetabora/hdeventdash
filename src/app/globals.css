@@ -169,3 +169,22 @@ html.event-live-shell header h1 {
     animation: none;
   }
 }
+
+/* Event playbook print: all phases visible; trim chrome */
+@media print {
+  body {
+    background: #fff;
+    color: #111;
+  }
+
+  .print-playbook-root .hidden {
+    display: block !important;
+  }
+
+  .print-playbook-root,
+  .print-playbook-root * {
+    color: #111 !important;
+    border-color: #ccc !important;
+    box-shadow: none !important;
+  }
+}

@@ -9,11 +9,25 @@ import {
 } from "@/lib/validation/event-mutation-schemas";
 import { parseUuidParam, parseWithSchema, readJsonBody } from "@/lib/validation/request-json";
 
+import {
+  normalizePlaybookMarketingDates,
+  type PlaybookMarketing,
+} from "@/lib/playbook-marketing";
+
 function normalizeManagerPatch(
   patch: Record<string, unknown>
 ): Record<string, unknown> {
   const next = { ...patch };
   if (next.onedrive_link === "") next.onedrive_link = null;
+  if (
+    next.playbook_marketing &&
+    typeof next.playbook_marketing === "object" &&
+    !Array.isArray(next.playbook_marketing)
+  ) {
+    next.playbook_marketing = normalizePlaybookMarketingDates(
+      next.playbook_marketing as PlaybookMarketing
+    );
+  }
   return next;
 }
 

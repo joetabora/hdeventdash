@@ -4,6 +4,8 @@ export interface Organization {
   id: string;
   name: string;
   created_at: string;
+  /** Default SPM / art request form URL (per-event override in playbook_marketing). */
+  marketing_art_form_url?: string | null;
 }
 
 export interface OrganizationMember {
@@ -104,6 +106,11 @@ export interface Event {
   rsvp_link?: string | null;
   /** Whether this event includes a swap meet section */
   has_swap_meet?: boolean;
+  /**
+   * Playbook marketing & publishing payload (see `playbookMarketingSchema`).
+   * Typed in app via `getPlaybookMarketing` in `@/lib/playbook-marketing`.
+   */
+  playbook_marketing?: unknown | null;
 }
 
 /** Org cap for a calendar month and location_key (matches event.location_key). */
@@ -306,6 +313,11 @@ export const DEFAULT_CHECKLIST_ITEMS: Record<ChecklistSection, string[]> = {
     "Social media graphics created (FB/IG, stories, reels)",
     "CRM email segment prepared",
     "Website event listing updated with SEO description",
+    "Event → Website: proofread summary, SEO title, and meta description in the page builder",
+    "Event → Website: upload hero/web banners and verify mobile + desktop layouts",
+    "Event → Website: publish (or schedule) and copy the final public URL into Marketing & publish",
+    "Event → Facebook: create the FB event with correct date, time, and address",
+    "Event → Facebook: add cover + key graphics; pin essentials in discussion if needed",
     "Share event details with team managers",
     "Assign staff roles (grill, games, raffles, etc.)",
     "Create layout (indoor/outdoor) and present to managers",

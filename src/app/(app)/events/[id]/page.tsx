@@ -16,6 +16,7 @@ import {
 } from "@/lib/budgets";
 import { getActiveEventVendors } from "@/lib/vendors";
 import type { Event, EventVendorWithVendor } from "@/types/database";
+import { getCurrentOrganization } from "@/lib/organization";
 import { eventDetailBundleFingerprint } from "@/lib/event-detail-bundle-fingerprint";
 import { EventDetailClient } from "./event-detail-client";
 
@@ -45,6 +46,7 @@ export default async function EventDetailPage({
     initialBudgetPeers,
     initialMonthlyBudgetsForEventMonth,
     initialSwapMeetSpots,
+    org,
   ] = await Promise.all([
     getChecklistItems(supabase, id),
     getEventDocuments(supabase, id),
@@ -59,6 +61,7 @@ export default async function EventDetailPage({
       budgetMonthToDbDate(budgetMonth)
     ).catch(() => []),
     getSwapMeetSpots(supabase, id).catch(() => []),
+    getCurrentOrganization(supabase).catch(() => null),
   ]);
 
   const eventDetailClientKey = eventDetailBundleFingerprint({
@@ -86,6 +89,7 @@ export default async function EventDetailPage({
       initialBudgetPeers={initialBudgetPeers}
       initialMonthlyBudgetsForEventMonth={initialMonthlyBudgetsForEventMonth}
       initialSwapMeetSpots={initialSwapMeetSpots}
+      initialOrgMarketingArtFormUrl={org?.marketing_art_form_url ?? null}
     />
   );
 }

@@ -217,22 +217,27 @@ export function useEventController(
       giveaway_link: string | null;
       rsvp_incentive: string | null;
       rsvp_link: string | null;
+      playbook_marketing?: import("@/lib/playbook-marketing").PlaybookMarketing;
     }) => {
       if (!event) return;
       try {
+        const { playbook_marketing, ...rest } = data;
         const updated = await apiPatchEvent(event.id, {
-          ...data,
-          status: data.status as EventStatus,
-          onedrive_link: data.onedrive_link || null,
-          event_type: data.event_type,
-          planned_budget: data.planned_budget,
-          actual_budget: data.actual_budget,
-          event_goals: data.event_goals,
-          core_activities: data.core_activities,
-          giveaway_description: data.giveaway_description,
-          giveaway_link: data.giveaway_link,
-          rsvp_incentive: data.rsvp_incentive,
-          rsvp_link: data.rsvp_link,
+          ...rest,
+          status: rest.status as EventStatus,
+          onedrive_link: rest.onedrive_link || null,
+          event_type: rest.event_type,
+          planned_budget: rest.planned_budget,
+          actual_budget: rest.actual_budget,
+          event_goals: rest.event_goals,
+          core_activities: rest.core_activities,
+          giveaway_description: rest.giveaway_description,
+          giveaway_link: rest.giveaway_link,
+          rsvp_incentive: rest.rsvp_incentive,
+          rsvp_link: rest.rsvp_link,
+          ...(playbook_marketing != null
+            ? { playbook_marketing }
+            : {}),
         });
         setEditModalOpen(false);
         setEvent(updated);

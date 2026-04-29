@@ -102,7 +102,7 @@ export function EventMobileActionBar({
   return (
     <>
       <div
-        className="md:hidden fixed bottom-0 left-0 right-0 z-[35] border-t border-harley-gray/70 bg-harley-dark/95 backdrop-blur-xl shadow-[0_-10px_40px_rgba(0,0,0,0.45)]"
+        className="print:hidden md:hidden fixed bottom-0 left-0 right-0 z-[35] border-t border-harley-gray/70 bg-harley-dark/95 backdrop-blur-xl shadow-[0_-10px_40px_rgba(0,0,0,0.45)]"
         style={{
           paddingBottom: "max(0.65rem, env(safe-area-inset-bottom))",
         }}

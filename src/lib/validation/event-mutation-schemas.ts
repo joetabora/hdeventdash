@@ -12,6 +12,7 @@ import {
   type MediaTag,
 } from "@/types/database";
 import { BUDGET_AMOUNT_MAX } from "@/lib/validation/api-schemas";
+import { playbookMarketingSchema } from "@/lib/playbook-marketing";
 
 const EVENT_STATUS_VALUES = EVENT_STATUSES.map((s) => s.value) as [
   EventStatus,
@@ -105,6 +106,7 @@ export const eventManagerPatchSchema = z
     rsvp_incentive: z.union([z.string().max(5000), z.null()]).optional(),
     rsvp_link: z.union([z.string().max(2000), z.null()]).optional(),
     has_swap_meet: z.boolean().optional(),
+    playbook_marketing: playbookMarketingSchema.optional(),
   })
   .strict()
   .refine((o) => Object.keys(o).length > 0, { message: "No fields to update" });

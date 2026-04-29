@@ -44,6 +44,7 @@ export function eventDetailBundleFingerprint(input: {
   const parts = [
     event.id,
     event.updated_at,
+    JSON.stringify(event.playbook_marketing ?? null),
     JSON.stringify(
       sortById(checklist).map((c) => ({
         i: c.id,

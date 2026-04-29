@@ -180,3 +180,7 @@ $$ language plpgsql;
 create trigger on_events_updated
   before update on public.events
   for each row execute function public.handle_updated_at();
+
+-- Playbook marketing (see supabase-migration-playbook-marketing.sql):
+--   events.playbook_marketing jsonb
+--   organizations.marketing_art_form_url text

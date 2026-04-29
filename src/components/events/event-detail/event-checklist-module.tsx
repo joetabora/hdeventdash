@@ -2,7 +2,11 @@
 
 import { ChecklistSectionComponent } from "@/components/events/checklist-section";
 import { ProgressBar } from "@/components/events/progress-bar";
-import { ChecklistItem, CHECKLIST_SECTIONS } from "@/types/database";
+import {
+  ChecklistItem,
+  CHECKLIST_SECTIONS,
+  type ChecklistSection,
+} from "@/types/database";
 import { AlertTriangle, CheckCircle2, ClipboardList } from "lucide-react";
 import { CollapsibleSection } from "./collapsible-section";
 
@@ -16,6 +20,10 @@ export function EventChecklistModule({
   onBudgetContextInvalidate,
   atRisk,
   allChecklistComplete,
+  /** If set, only these checklist sections are rendered (Playbook phase view). */
+  sectionsFilter,
+  /** When true with standard mode, omit outer "Checklist" collapsible (phase provides context). */
+  embedded = false,
 }: {
   mode: "live" | "standard";
   eventId: string;
@@ -26,8 +34,14 @@ export function EventChecklistModule({
   onBudgetContextInvalidate?: () => void;
   atRisk?: boolean;
   allChecklistComplete?: boolean;
+  sectionsFilter?: readonly ChecklistSection[];
+  embedded?: boolean;
 }) {
-  const sections = CHECKLIST_SECTIONS.map((section) => {
+  const sectionList: readonly ChecklistSection[] = sectionsFilter?.length
+    ? sectionsFilter
+    : CHECKLIST_SECTIONS;
+
+  const sections = sectionList.map((section) => {
     const items = checklist.filter((item) => item.section === section);
     return (
       <ChecklistSectionComponent
@@ -66,6 +80,21 @@ export function EventChecklistModule({
         )}
         <div className="space-y-4 sm:space-y-5 pt-1">{sections}</div>
       </>
+    );
+  }
+
+  if (embedded) {
+    return (
+      <div className="space-y-3">
+        {canManageEvents && (
+          <p className="text-xs text-harley-text-muted leading-relaxed">
+            Open item details to set an optional estimated cost per line. Those
+            amounts roll into the monthly venue budget with this event&apos;s
+            planned budget.
+          </p>
+        )}
+        {sections}
+      </div>
     );
   }
 

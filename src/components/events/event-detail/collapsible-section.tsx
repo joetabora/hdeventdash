@@ -24,6 +24,8 @@ export function CollapsibleSection({
   deferHeavyContent = false,
   /** Passed to IntersectionObserver `rootMargin` when `deferHeavyContent` is set. */
   heavyActivationMargin = "200px",
+  /** Passed to the outer `<section>` for deep-linking / scroll targets. */
+  id,
   headerAction,
   children,
 }: {
@@ -35,6 +37,7 @@ export function CollapsibleSection({
   mobileCollapsed?: boolean;
   deferHeavyContent?: boolean;
   heavyActivationMargin?: string;
+  id?: string;
   /** Optional element rendered at the right edge of the header (e.g. remove button). */
   headerAction?: React.ReactNode;
   children: React.ReactNode;
@@ -79,7 +82,7 @@ export function CollapsibleSection({
   const showBody = open && (!deferHeavyContent || heavyReady);
 
   return (
-    <section ref={sectionRef} className="mb-8 md:mb-10">
+    <section ref={sectionRef} id={id} className="mb-8 md:mb-10">
       <button
         type="button"
         onClick={() => {

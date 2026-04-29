@@ -1,6 +1,6 @@
 "use client";
 
-import type { Dispatch, SetStateAction } from "react";
+import type { Dispatch, SetStateAction, ReactNode } from "react";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import {
@@ -13,6 +13,7 @@ import { Button, buttonStyles } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DaysUntilEvent } from "@/components/events/days-until";
 import { formatUsd } from "@/lib/format-currency";
+import { formatEngagementGoalLine } from "@/lib/playbook-marketing";
 import {
   ArrowLeft,
   Edit,
@@ -30,6 +31,7 @@ import {
   Wallet,
   Gift,
   Ticket,
+  Target,
 } from "lucide-react";
 
 export type EventDetailHeaderLiveProps = {
@@ -76,6 +78,8 @@ export type EventDetailHeaderStandardProps = {
   onDelete: () => void | Promise<void>;
   onStatusChange: (s: EventStatus) => void | Promise<void>;
   budgetSummaryForEventMonth?: EventBudgetMonthSummary | null;
+  /** Sticky playbook phase tabs (desktop event detail). */
+  playbookPhaseNav?: ReactNode;
 };
 
 export type EventDetailHeaderProps =
@@ -170,7 +174,10 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
     onDelete,
     onStatusChange,
     budgetSummaryForEventMonth = null,
+    playbookPhaseNav,
   } = props;
+
+  const engagementLine = formatEngagementGoalLine(event);
 
   return (
     <>
@@ -263,6 +270,11 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
               </span>
             </div>
           </div>
+          {playbookPhaseNav ? (
+            <div className="px-4 pb-3 md:px-5 pt-1 border-t border-harley-gray/40">
+              {playbookPhaseNav}
+            </div>
+          ) : null}
         </Card>
       </div>
 
@@ -354,6 +366,17 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
               </p>
             </div>
           )}
+          {engagementLine ? (
+            <div className="mt-3 pt-3 border-t border-harley-gray/50">
+              <p className="text-[11px] uppercase tracking-wide text-harley-text-muted font-semibold mb-1.5">
+                Engagement goal
+              </p>
+              <p className="text-sm text-harley-orange font-medium inline-flex items-center gap-1.5">
+                <Target className="w-4 h-4 shrink-0" />
+                {engagementLine}
+              </p>
+            </div>
+          ) : null}
           {event.core_activities && (
             <div className="mt-3 pt-3 border-t border-harley-gray/50">
               <p className="text-[11px] uppercase tracking-wide text-harley-text-muted font-semibold mb-1.5">

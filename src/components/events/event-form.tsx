@@ -24,6 +24,12 @@ import {
 } from "@/lib/budgets";
 import { normalizeLocationKey } from "@/lib/location-key";
 import { formatUsd } from "@/lib/format-currency";
+import {
+  getPlaybookMarketing,
+  mergeAssetRequestsWithCatalog,
+  normalizePlaybookMarketingDates,
+  type PlaybookMarketing,
+} from "@/lib/playbook-marketing";
 import { AlertTriangle } from "lucide-react";
 
 interface EventFormProps {
@@ -41,6 +47,8 @@ interface EventFormProps {
   checklistEstimatedTotalForEvent?: number;
   /** Sum of vendor agreed fees for this event; included in cap math. */
   vendorFeeTotalForEvent?: number;
+  /** Org default art form link (shown as hint when editing). */
+  orgMarketingArtFormUrl?: string | null;
   onSubmit: (data: {
     name: string;
     date: string;
@@ -58,6 +66,7 @@ interface EventFormProps {
     giveaway_link: string | null;
     rsvp_incentive: string | null;
     rsvp_link: string | null;
+    playbook_marketing?: PlaybookMarketing;
   }) => Promise<void>;
   onCancel?: () => void;
   submitLabel?: string;
@@ -82,6 +91,7 @@ export function EventForm({
   onSubmit,
   onCancel,
   submitLabel = "Create Event",
+  orgMarketingArtFormUrl = null,
 }: EventFormProps) {
   const [name, setName] = useState(event?.name || "");
   const [date, setDate] = useState(event?.date || "");
@@ -105,13 +115,19 @@ export function EventForm({
   const [actualBudget, setActualBudget] = useState(
     event?.actual_budget != null ? String(event.actual_budget) : ""
   );
-  const { pending, error, setError, clearError, run } = useFormSubmitState();
+  const [playbookDraft, setPlaybookDraft] = useState<PlaybookMarketing>(() =>
+    getPlaybookMarketing({
+      playbook_marketing: event?.playbook_marketing ?? null,
+    })
+  );
+
   const [fetchedMonthlyBudgets, setFetchedMonthlyBudgets] = useState<
     MonthlyBudget[]
   >([]);
   const [budgetsLoading, setBudgetsLoading] = useState(false);
   const [budgetOverrideConfirmed, setBudgetOverrideConfirmed] = useState(false);
   const skipNextBudgetMonthFetch = useRef(true);
+  const { pending, error, setError, clearError, run } = useFormSubmitState();
 
   const yearMonth =
     date.length >= 7 ? eventDateToYearMonth(date) : null;
@@ -238,8 +254,8 @@ export function EventForm({
       );
       return;
     }
-    await run(() =>
-      onSubmit({
+    await run(() => {
+      const basePayload = {
         name: name.trim(),
         date,
         location: location.trim(),
@@ -260,8 +276,24 @@ export function EventForm({
         giveaway_link: giveawayLink.trim() || null,
         rsvp_incentive: rsvpIncentive.trim() || null,
         rsvp_link: rsvpLink.trim() || null,
-      })
-    );
+      };
+      return onSubmit(
+        event?.id
+          ? {
+              ...basePayload,
+              playbook_marketing: normalizePlaybookMarketingDates({
+                ...getPlaybookMarketing({
+                  playbook_marketing: event.playbook_marketing ?? null,
+                }),
+                ...playbookDraft,
+                asset_requests: mergeAssetRequestsWithCatalog(
+                  playbookDraft.asset_requests
+                ),
+              }),
+            }
+          : basePayload
+      );
+    });
   }
 
   return (
@@ -366,6 +398,206 @@ export function EventForm({
           placeholder="https://..."
         />
       </div>
+
+      {event?.id ? (
+        <div className="space-y-3 p-4 rounded-lg border border-harley-gray/30 bg-harley-gray-light/5">
+          <p className="text-xs font-semibold text-harley-text-muted uppercase tracking-wide">
+            Marketing & publishing (playbook)
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="Engagement goal label"
+              value={playbookDraft.engagement_goal_label ?? ""}
+              onChange={(e) =>
+                setPlaybookDraft((d) => ({
+                  ...d,
+                  engagement_goal_label: e.target.value || null,
+                }))
+              }
+              placeholder='e.g. "QR scans"'
+            />
+            <Input
+              label="Engagement goal target #"
+              type="number"
+              min={0}
+              value={
+                playbookDraft.engagement_goal_target != null
+                  ? String(playbookDraft.engagement_goal_target)
+                  : ""
+              }
+              onChange={(e) => {
+                const t = e.target.value.trim();
+                setPlaybookDraft((d) => ({
+                  ...d,
+                  engagement_goal_target:
+                    t === "" ? null : Math.max(0, parseInt(t, 10) || 0),
+                }));
+              }}
+              placeholder="e.g. 35"
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Input
+              label="Art request sent"
+              type="date"
+              value={
+                playbookDraft.art_request_sent_at &&
+                /^\d{4}-\d{2}-\d{2}$/.test(playbookDraft.art_request_sent_at)
+                  ? playbookDraft.art_request_sent_at
+                  : ""
+              }
+              onChange={(e) =>
+                setPlaybookDraft((d) => ({
+                  ...d,
+                  art_request_sent_at: e.target.value || null,
+                }))
+              }
+            />
+            <Input
+              label="Art finals received"
+              type="date"
+              value={
+                playbookDraft.art_finals_received_at &&
+                /^\d{4}-\d{2}-\d{2}$/.test(
+                  playbookDraft.art_finals_received_at
+                )
+                  ? playbookDraft.art_finals_received_at
+                  : ""
+              }
+              onChange={(e) =>
+                setPlaybookDraft((d) => ({
+                  ...d,
+                  art_finals_received_at: e.target.value || null,
+                }))
+              }
+            />
+            <Input
+              label="PAM map approval"
+              type="date"
+              value={
+                playbookDraft.pam_map_approval_at &&
+                /^\d{4}-\d{2}-\d{2}$/.test(playbookDraft.pam_map_approval_at)
+                  ? playbookDraft.pam_map_approval_at
+                  : ""
+              }
+              onChange={(e) =>
+                setPlaybookDraft((d) => ({
+                  ...d,
+                  pam_map_approval_at: e.target.value || null,
+                }))
+              }
+            />
+          </div>
+          <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
+            <label className="flex items-center gap-2 text-sm text-harley-text cursor-pointer">
+              <input
+                type="checkbox"
+                checked={playbookDraft.canva_web_banner_done ?? false}
+                onChange={(e) =>
+                  setPlaybookDraft((d) => ({
+                    ...d,
+                    canva_web_banner_done: e.target.checked,
+                  }))
+                }
+                className="rounded border-harley-gray-lighter"
+              />
+              Canva web banner done
+            </label>
+            <label className="flex items-center gap-2 text-sm text-harley-text cursor-pointer">
+              <input
+                type="checkbox"
+                checked={playbookDraft.canva_fb_cover_done ?? false}
+                onChange={(e) =>
+                  setPlaybookDraft((d) => ({
+                    ...d,
+                    canva_fb_cover_done: e.target.checked,
+                  }))
+                }
+                className="rounded border-harley-gray-lighter"
+              />
+              Canva Facebook cover done
+            </label>
+          </div>
+          <Input
+            label="Per-event art request form URL"
+            type="url"
+            value={playbookDraft.art_request_form_url ?? ""}
+            onChange={(e) =>
+              setPlaybookDraft((d) => ({
+                ...d,
+                art_request_form_url: e.target.value.trim()
+                  ? e.target.value
+                  : null,
+              }))
+            }
+            placeholder="https://…"
+          />
+          {orgMarketingArtFormUrl ? (
+            <p className="text-[11px] text-harley-text-muted">
+              Org default:{" "}
+              <span className="text-harley-text break-all">
+                {orgMarketingArtFormUrl}
+              </span>
+            </p>
+          ) : null}
+          <Textarea
+            label="Web summary"
+            value={playbookDraft.web_summary ?? ""}
+            onChange={(e) =>
+              setPlaybookDraft((d) => ({
+                ...d,
+                web_summary: e.target.value || null,
+              }))
+            }
+            rows={2}
+          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="SEO meta title"
+              value={playbookDraft.seo_meta_title ?? ""}
+              onChange={(e) =>
+                setPlaybookDraft((d) => ({
+                  ...d,
+                  seo_meta_title: e.target.value || null,
+                }))
+              }
+            />
+            <Input
+              label="Public page URL"
+              type="url"
+              value={playbookDraft.web_page_url ?? ""}
+              onChange={(e) =>
+                setPlaybookDraft((d) => ({
+                  ...d,
+                  web_page_url: e.target.value || null,
+                }))
+              }
+            />
+          </div>
+          <Textarea
+            label="SEO meta description"
+            value={playbookDraft.seo_meta_description ?? ""}
+            onChange={(e) =>
+              setPlaybookDraft((d) => ({
+                ...d,
+                seo_meta_description: e.target.value || null,
+              }))
+            }
+            rows={2}
+          />
+          <Textarea
+            label="Facebook event copy"
+            value={playbookDraft.facebook_event_copy ?? ""}
+            onChange={(e) =>
+              setPlaybookDraft((d) => ({
+                ...d,
+                facebook_event_copy: e.target.value || null,
+              }))
+            }
+            rows={3}
+          />
+        </div>
+      ) : null}
 
       {canEditBudget && (
         <div className="space-y-3 p-4 rounded-lg border border-harley-orange/25 bg-harley-orange/5">
