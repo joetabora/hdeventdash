@@ -14,44 +14,13 @@ export async function POST(request: Request) {
   const parsed = parseWithSchema(eventCreateSchema, raw.body);
   if (!parsed.ok) return parsed.response;
 
-  const {
-    name,
-    date,
-    location,
-    owner,
-    status,
-    description,
-    onedrive_link,
-    event_type,
-    planned_budget,
-    actual_budget,
-    event_goals,
-    core_activities,
-    giveaway_description,
-    giveaway_link,
-    rsvp_incentive,
-    rsvp_link,
-  } = parsed.data;
+  const payload = parsed.data;
 
   try {
     const row = await createEvent(ctx.supabase, {
-      name,
-      date,
-      location,
-      owner,
-      status,
-      description,
-      onedrive_link: onedrive_link?.trim() || undefined,
+      ...payload,
+      onedrive_link: payload.onedrive_link?.trim() || undefined,
       user_id: ctx.user.id,
-      event_type: event_type ?? null,
-      planned_budget: planned_budget ?? null,
-      actual_budget: actual_budget ?? null,
-      event_goals: event_goals ?? null,
-      core_activities: core_activities ?? null,
-      giveaway_description: giveaway_description ?? null,
-      giveaway_link: giveaway_link ?? null,
-      rsvp_incentive: rsvp_incentive ?? null,
-      rsvp_link: rsvp_link ?? null,
     });
     return NextResponse.json(row);
   } catch (e) {

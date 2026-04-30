@@ -30,6 +30,7 @@ import {
   normalizePlaybookMarketingDates,
   type PlaybookMarketing,
 } from "@/lib/playbook-marketing";
+import { sumPlaybookFrameworkCosts } from "@/lib/playbook-workflow";
 import { AlertTriangle } from "lucide-react";
 
 interface EventFormProps {
@@ -183,6 +184,7 @@ export function EventForm({
         othersPlanned: 0,
         thisPlanned: 0,
         checklistLineSpend: 0,
+        playbookFrameworkSpend: 0,
         total: 0,
         exceeds: false,
       };
@@ -190,7 +192,14 @@ export function EventForm({
     const thisPlanned = numOrNull(plannedBudget) ?? 0;
     const checklistLineSpend = Math.max(0, checklistEstimatedTotalForEvent);
     const vendorFees = Math.max(0, vendorFeeTotalForEvent);
-    const thisCommitted = thisPlanned + checklistLineSpend + vendorFees;
+    const playbookFrameworkSpend = sumPlaybookFrameworkCosts(
+      event?.playbook_workflow
+    );
+    const thisCommitted =
+      thisPlanned +
+      checklistLineSpend +
+      vendorFees +
+      playbookFrameworkSpend;
     const cap = effectiveMonthlyCapForEvent(capBudgetRows, locationKey);
     const singleVenueMonth = capBudgetRows.length === 1;
     const othersPlanned = sumOthersPlannedForMonth(
@@ -206,6 +215,7 @@ export function EventForm({
       othersPlanned,
       thisPlanned,
       checklistLineSpend,
+      playbookFrameworkSpend,
       total,
       exceeds,
     };
@@ -219,6 +229,7 @@ export function EventForm({
     checklistEstimatedTotalForEvent,
     vendorFeeTotalForEvent,
     event?.id,
+    event?.playbook_workflow,
   ]);
 
   useEffect(() => {
@@ -629,7 +640,7 @@ export function EventForm({
               {budgetsLoadingEffective
                 ? "Loading monthly cap…"
                 : budgetCheck.cap > 0
-                  ? `Monthly cap for ${yearMonth}${locationTrimmed ? ` · ${locationTrimmed}` : " (all locations combined)"}: ${formatUsd(budgetCheck.cap)} · Other events this month: ${formatUsd(budgetCheck.othersPlanned)}${budgetCheck.checklistLineSpend > 0 ? ` · Checklist estimates (this event): ${formatUsd(budgetCheck.checklistLineSpend)}` : ""}`
+                  ? `Monthly cap for ${yearMonth}${locationTrimmed ? ` · ${locationTrimmed}` : " (all locations combined)"}: ${formatUsd(budgetCheck.cap)} · Other events this month: ${formatUsd(budgetCheck.othersPlanned)}${budgetCheck.checklistLineSpend > 0 ? ` · Checklist estimates (this event): ${formatUsd(budgetCheck.checklistLineSpend)}` : ""}${budgetCheck.playbookFrameworkSpend > 0 ? ` · Playbook activity costs (this event): ${formatUsd(budgetCheck.playbookFrameworkSpend)}` : ""}`
                   : `No monthly cap set for ${yearMonth}${locationTrimmed ? ` at "${locationTrimmed}"` : ""}. Add caps on the Budget page if you want warnings.`}
             </p>
           )}
@@ -649,12 +660,29 @@ export function EventForm({
                         : <> (all locations)</>}{" "}
                       would be{" "}
                       <strong>{formatUsd(budgetCheck.total)}</strong>
-                      {budgetCheck.checklistLineSpend > 0 ? (
+                      {budgetCheck.checklistLineSpend > 0 ||
+                      budgetCheck.playbookFrameworkSpend > 0 ? (
                         <>
                           {" "}
-                          (including{" "}
-                          {formatUsd(budgetCheck.checklistLineSpend)} from
-                          checklist line items)
+                          (including
+                          {budgetCheck.checklistLineSpend > 0 ? (
+                            <>
+                              {" "}
+                              {formatUsd(budgetCheck.checklistLineSpend)} from
+                              checklist line items
+                            </>
+                          ) : null}
+                          {budgetCheck.checklistLineSpend > 0 &&
+                          budgetCheck.playbookFrameworkSpend > 0
+                            ? " and "
+                            : null}
+                          {budgetCheck.playbookFrameworkSpend > 0 ? (
+                            <>
+                              {formatUsd(budgetCheck.playbookFrameworkSpend)}{" "}
+                              from playbook activity lines
+                            </>
+                          ) : null}
+                          )
                         </>
                       ) : null}
                       , over the cap of{" "}

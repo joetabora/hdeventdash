@@ -2,14 +2,16 @@
 
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
-import { apiCreateEvent } from "@/lib/events-api-client";
+import { apiCreateEvent, apiUploadMedia } from "@/lib/events-api-client";
 import { apiFetchJson } from "@/lib/api/api-fetch-json";
-import { EventForm } from "@/components/events/event-form";
+import {
+  NewEventPlaybookForm,
+  type NewEventPlaybookSubmitPayload,
+} from "@/components/events/new-event-playbook-form";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import type { EventBudgetPeer } from "@/lib/budgets";
-import type { EventStatus, EventType } from "@/types/database";
 
 export function NewEventClient({
   initialBudgetPeers,
@@ -33,49 +35,21 @@ export function NewEventClient({
   }, []);
 
   const handleCreate = useCallback(
-    async (data: {
-      name: string;
-      date: string;
-      location: string;
-      owner: string;
-      status: string;
-      description: string;
-      onedrive_link: string;
-      event_type: EventType | null;
-      planned_budget: number | null;
-      actual_budget: number | null;
-      event_goals: string | null;
-      core_activities: string | null;
-      giveaway_description: string | null;
-      giveaway_link: string | null;
-      rsvp_incentive: string | null;
-      rsvp_link: string | null;
-    }) => {
-      const event = await apiCreateEvent({
-        name: data.name,
-        date: data.date,
-        location: data.location,
-        owner: data.owner,
-        status: data.status as EventStatus,
-        description: data.description,
-        onedrive_link: data.onedrive_link || undefined,
-        event_type: data.event_type,
-        planned_budget: data.planned_budget,
-        actual_budget: data.actual_budget,
-        event_goals: data.event_goals,
-        core_activities: data.core_activities,
-        giveaway_description: data.giveaway_description,
-        giveaway_link: data.giveaway_link,
-        rsvp_incentive: data.rsvp_incentive,
-        rsvp_link: data.rsvp_link,
-      });
+    async ({ body, webGraphicFile, pageBannerFile }: NewEventPlaybookSubmitPayload) => {
+      const event = await apiCreateEvent(body);
+      if (webGraphicFile) {
+        await apiUploadMedia(event.id, webGraphicFile, "marketing_asset");
+      }
+      if (pageBannerFile) {
+        await apiUploadMedia(event.id, pageBannerFile, "marketing_asset");
+      }
       router.push(`/events/${event.id}`);
     },
     [router]
   );
 
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-4xl">
       <Link
         href="/dashboard"
         className="inline-flex items-center gap-2 text-sm text-harley-text-muted hover:text-harley-orange mb-6 transition-colors"
@@ -85,8 +59,7 @@ export function NewEventClient({
       </Link>
 
       <Card padding="lg">
-        <EventForm
-          canEditBudget
+        <NewEventPlaybookForm
           allEvents={budgetPeers}
           onBudgetPeersMonthChange={onBudgetPeersMonthChange}
           onSubmit={handleCreate}

@@ -106,10 +106,13 @@ export interface Event {
   rsvp_link?: string | null;
   /** Whether this event includes a swap meet section */
   has_swap_meet?: boolean;
+  /** Event start / end time (display; free text). */
+  event_time_start?: string | null;
+  event_time_end?: string | null;
   /**
-   * Playbook marketing & publishing payload (see `playbookMarketingSchema`).
-   * Typed in app via `getPlaybookMarketing` in `@/lib/playbook-marketing`.
+   * Full-playbook workflow payload (pre-event flags, framework costs, copy prompts, materials grid, roles).
    */
+  playbook_workflow?: unknown | null;
   playbook_marketing?: unknown | null;
 }
 

@@ -54,6 +54,8 @@ export type EventBudgetMonthSummary = {
   locationLabel: string;
   thisEventPlanned: number;
   checklistLineSpend: number;
+  /** Food / vendor / activity / engagement line items from new-event playbook. */
+  playbookFrameworkSpend: number;
   vendorFeeTotal: number;
   thisEventCommitted: number;
   totalCommittedInMonth: number;
@@ -499,6 +501,13 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
                     {budgetSummaryForEventMonth.checklistLineSpend > 0 && (
                       <> + {formatUsd(budgetSummaryForEventMonth.checklistLineSpend)} checklist</>
                     )}
+                    {budgetSummaryForEventMonth.playbookFrameworkSpend > 0 && (
+                      <>
+                        {" "}
+                        + {formatUsd(budgetSummaryForEventMonth.playbookFrameworkSpend)}{" "}
+                        playbook activities
+                      </>
+                    )}
                     {budgetSummaryForEventMonth.vendorFeeTotal > 0 && (
                       <> + {formatUsd(budgetSummaryForEventMonth.vendorFeeTotal)} vendor fees</>
                     )}
@@ -508,8 +517,9 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
                   <p className="text-[11px] text-harley-text-muted/70 mt-2 leading-relaxed">
                     Set planned budget in{" "}
                     <span className="text-harley-text-muted">Edit event</span>;
-                    add line-item costs in checklist details (pencil);
-                    vendor agreed fees also count. Updates here are live.
+                    add line-item costs in checklist details (pencil); playbook
+                    food/vendor/activity lines from the event wizard; vendor agreed
+                    fees also count. Updates here are live.
                   </p>
                 </div>
               ) : (

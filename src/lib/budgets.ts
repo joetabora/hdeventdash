@@ -113,13 +113,16 @@ export type EventBudgetPeer = Pick<
 > & {
   /** Sum of checklist item estimated_cost for this event (from DB). */
   checklist_estimated_total: number;
+  /** Food / vendors / activities / engagement line items from playbook_workflow JSON. */
+  playbook_line_items_total: number;
 };
 
-/** Planned budget + optional checklist line-item estimates (monthly cap math). */
+/** Planned budget + checklist line-item estimates + playbook framework line costs. */
 export function eventBudgetPeerCommittedSpend(e: EventBudgetPeer): number {
   return (
     (Number(e.planned_budget) || 0) +
-    (Number(e.checklist_estimated_total) || 0)
+    (Number(e.checklist_estimated_total) || 0) +
+    (Number(e.playbook_line_items_total) || 0)
   );
 }
 

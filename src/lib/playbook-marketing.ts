@@ -14,6 +14,7 @@ export type PlaybookMarketing = {
   art_request_sent_at?: string | null;
   art_finals_received_at?: string | null;
   pam_map_approval_at?: string | null;
+  pam_map_approval_accepted?: boolean;
   asset_requests?: PlaybookMarketingAssetRequest[];
   web_summary?: string | null;
   seo_meta_title?: string | null;
@@ -29,21 +30,21 @@ export const PLAYBOOK_MARKETING_ASSET_CATALOG: readonly {
   key: string;
   label: string;
 }[] = [
-  { key: "flyer_8_5_11", label: "8.5×11 flyer" },
-  { key: "flyer_2up", label: "2-up flyer" },
-  { key: "poster", label: "Poster" },
-  { key: "web_banner", label: "Web / Google display banner" },
-  { key: "google_banners_set", label: "Google Ads banner set" },
-  { key: "facebook_ig_square", label: "Facebook / IG square (1200×1200)" },
-  { key: "instagram_story", label: "Instagram story (1080×1920)" },
-  { key: "email_blast_graphic", label: "E-blast header graphic" },
-  { key: "tv_slide", label: "In-store TV slide" },
-  { key: "print_menu_board", label: "Counter / menu-board graphic" },
-  { key: "window_cling", label: "Window cling / decal" },
-  { key: "yard_sign", label: "Yard / A-frame sign" },
-  { key: "ticket_flyer", label: "Ticket / handout variant" },
-  { key: "ride_map_graphic", label: "Ride map or directional graphic" },
-  { key: "misc_other", label: "Other (notes)" },
+  { key: "flyer_8_5_11", label: "8.5×11 Flyer" },
+  { key: "flyer_2up", label: "2up Flyer" },
+  { key: "foamboard_22_28", label: "22×28 Foamboard" },
+  { key: "web_banner", label: "Web Banner" },
+  { key: "google_banners", label: "Google Banners" },
+  { key: "fb_event_1920_1005", label: "1920×1005 FB Event" },
+  { key: "fb_cover_828_465", label: "828×465px FB Cover" },
+  { key: "fb_status_1200_1200", label: "1200×1200 FB Status" },
+  { key: "fb_paid_ad_1080_1080", label: "1080×1080 FB Paid Ad" },
+  { key: "ig_stories_1080_1920", label: "1080×1920 IG Stories" },
+  { key: "ig_status_1200_1200", label: "1200×1200 IG Status" },
+  { key: "eblast_850_500", label: "850×500 Eblast Graphic" },
+  { key: "banner_10x3", label: "10'×3' Banner" },
+  { key: "atmospheretv_1920_1080", label: "1920×1080 AtmosphereTV" },
+  { key: "other", label: "Other (notes)" },
 ] as const;
 
 const optionalYmd = z
@@ -79,9 +80,11 @@ export const playbookMarketingSchema = z
     web_page_url: z.union([z.string().max(2000), z.null()]).optional(),
     facebook_event_copy: z.union([z.string().max(20000), z.null()]).optional(),
     canva_web_banner_done: z.boolean().optional(),
-    canva_fb_cover_done: z.boolean().optional(),
-    art_request_form_url: z.union([z.string().max(2000), z.null()]).optional(),
-  })
+  canva_fb_cover_done: z.boolean().optional(),
+  art_request_form_url: z.union([z.string().max(2000), z.null()]).optional(),
+  /** PAM / map approval accepted (in addition to pam_map_approval_at date). */
+  pam_map_approval_accepted: z.boolean().optional(),
+})
   .strict();
 
 export function normalizePlaybookMarketingDates(
@@ -119,7 +122,10 @@ export function mergeAssetRequestsWithCatalog(
   for (const row of stored ?? []) {
     if (row?.key) byKey.set(row.key, { ...row });
   }
-  return PLAYBOOK_MARKETING_ASSET_CATALOG.map(({ key }) => {
+  const catalogKeys = new Set(
+    PLAYBOOK_MARKETING_ASSET_CATALOG.map((a) => a.key)
+  );
+  const fromCatalog = PLAYBOOK_MARKETING_ASSET_CATALOG.map(({ key }) => {
     const existing = byKey.get(key);
     return {
       key,
@@ -127,6 +133,10 @@ export function mergeAssetRequestsWithCatalog(
       notes: existing?.notes ?? null,
     };
   });
+  const orphan = (stored ?? []).filter(
+    (r) => r?.key && !catalogKeys.has(r.key)
+  );
+  return [...fromCatalog, ...orphan];
 }
 
 export function defaultPlaybookMarketing(): PlaybookMarketing {
@@ -145,6 +155,7 @@ export function defaultPlaybookMarketing(): PlaybookMarketing {
     canva_web_banner_done: false,
     canva_fb_cover_done: false,
     art_request_form_url: null,
+    pam_map_approval_accepted: false,
   };
 }
 

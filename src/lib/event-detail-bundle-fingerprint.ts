@@ -45,6 +45,9 @@ export function eventDetailBundleFingerprint(input: {
     event.id,
     event.updated_at,
     JSON.stringify(event.playbook_marketing ?? null),
+    JSON.stringify(event.playbook_workflow ?? null),
+    event.event_time_start ?? "",
+    event.event_time_end ?? "",
     JSON.stringify(
       sortById(checklist).map((c) => ({
         i: c.id,
@@ -94,6 +97,7 @@ export function eventDetailBundleFingerprint(input: {
         e.id,
         e.planned_budget,
         e.checklist_estimated_total,
+        e.playbook_line_items_total,
       ])
     ),
     JSON.stringify(

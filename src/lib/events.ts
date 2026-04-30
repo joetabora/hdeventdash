@@ -18,6 +18,7 @@ import {
   firstDayOfNextCalendarMonth,
   type EventBudgetPeer,
 } from "@/lib/budgets";
+import { sumPlaybookFrameworkCosts } from "@/lib/playbook-workflow";
 import { validateEventUploadFile } from "@/lib/validation/upload-file";
 
 export const EVENT_DOCUMENTS_BUCKET = "event-documents" as const;
@@ -91,12 +92,15 @@ export async function getEventBudgetSummariesForMonth(
   const nextStart = firstDayOfNextCalendarMonth(ym);
   const { data, error } = await supabase
     .from("events")
-    .select("id, date, location, location_key, planned_budget, is_archived")
+    .select("id, date, location, location_key, planned_budget, is_archived, playbook_workflow")
     .eq("is_archived", false)
     .gte("date", monthStart)
     .lt("date", nextStart);
   if (error) throw error;
-  const peers = (data ?? []) as Omit<EventBudgetPeer, "checklist_estimated_total">[];
+  const peers = (data ?? []) as Omit<
+    EventBudgetPeer,
+    "checklist_estimated_total" | "playbook_line_items_total"
+  >[];
   const ids = peers.map((p) => p.id);
   if (ids.length === 0) return [];
 
@@ -113,10 +117,16 @@ export async function getEventBudgetSummariesForMonth(
     byEvent.set(r.event_id, (byEvent.get(r.event_id) ?? 0) + add);
   }
 
-  return peers.map((p) => ({
-    ...p,
-    checklist_estimated_total: byEvent.get(p.id) ?? 0,
-  }));
+  return peers.map((p) => {
+    const { playbook_workflow: pw, ...rest } = p as typeof p & {
+      playbook_workflow?: unknown;
+    };
+    return {
+      ...rest,
+      checklist_estimated_total: byEvent.get(p.id) ?? 0,
+      playbook_line_items_total: sumPlaybookFrameworkCosts(pw),
+    };
+  });
 }
 
 export type { EventBudgetPeer };
@@ -181,6 +191,10 @@ export async function createEvent(
     giveaway_link?: string | null;
     rsvp_incentive?: string | null;
     rsvp_link?: string | null;
+    event_time_start?: string | null;
+    event_time_end?: string | null;
+    playbook_workflow?: unknown | null;
+    playbook_marketing?: unknown | null;
   }
 ) {
   const { data, error } = await supabase.rpc("create_event_with_checklist", {
@@ -211,8 +225,22 @@ export async function createEvent(
   if (event.rsvp_incentive) promoFields.rsvp_incentive = event.rsvp_incentive;
   if (event.rsvp_link) promoFields.rsvp_link = event.rsvp_link;
 
-  if (Object.keys(promoFields).length > 0) {
-    return updateEvent(supabase, created.id, promoFields as Partial<Event>);
+  const extra: Partial<Event> = { ...(promoFields as Partial<Event>) };
+  if (event.event_time_start != null && String(event.event_time_start).trim() !== "") {
+    extra.event_time_start = event.event_time_start;
+  }
+  if (event.event_time_end != null && String(event.event_time_end).trim() !== "") {
+    extra.event_time_end = event.event_time_end;
+  }
+  if (event.playbook_workflow != null) {
+    extra.playbook_workflow = event.playbook_workflow;
+  }
+  if (event.playbook_marketing != null) {
+    extra.playbook_marketing = event.playbook_marketing;
+  }
+
+  if (Object.keys(extra).length > 0) {
+    return updateEvent(supabase, created.id, extra);
   }
   return created;
 }

@@ -1,12 +1,12 @@
 import { apiFetchJson } from "@/lib/api/api-fetch-json";
+import type { z } from "zod";
+import { eventCreateSchema } from "@/lib/validation/event-mutation-schemas";
 import type {
   Event,
   ChecklistItem,
   EventComment,
   EventDocument,
   EventMedia,
-  EventStatus,
-  EventType,
   ChecklistSection,
   DocumentTag,
   MediaTag,
@@ -14,24 +14,7 @@ import type {
   SwapMeetSpotSize,
 } from "@/types/database";
 
-export type CreateEventApiBody = {
-  name: string;
-  date: string;
-  location: string;
-  owner: string;
-  status: EventStatus;
-  description: string;
-  onedrive_link?: string;
-  event_type?: EventType | null;
-  planned_budget?: number | null;
-  actual_budget?: number | null;
-  event_goals?: string | null;
-  core_activities?: string | null;
-  giveaway_description?: string | null;
-  giveaway_link?: string | null;
-  rsvp_incentive?: string | null;
-  rsvp_link?: string | null;
-};
+export type CreateEventApiBody = z.infer<typeof eventCreateSchema>;
 
 export async function apiCreateEvent(body: CreateEventApiBody): Promise<Event> {
   return apiFetchJson<Event>("/api/events", {

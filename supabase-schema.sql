@@ -184,3 +184,6 @@ create trigger on_events_updated
 -- Playbook marketing (see supabase-migration-playbook-marketing.sql):
 --   events.playbook_marketing jsonb
 --   organizations.marketing_art_form_url text
+--
+-- Playbook workflow (see supabase-migration-playbook-workflow.sql):
+--   events.event_time_start, event_time_end text; events.playbook_workflow jsonb

@@ -15,6 +15,7 @@ import {
   sumOthersPlannedForMonth,
   sumChecklistEstimatedCost,
 } from "@/lib/budgets";
+import { sumPlaybookFrameworkCosts } from "@/lib/playbook-workflow";
 import { normalizeLocationKey } from "@/lib/location-key";
 import {
   apiDeleteEvent,
@@ -85,7 +86,14 @@ export function useEventController(
     );
     const thisEventPlanned = Number(event.planned_budget) || 0;
     const checklistLineSpend = sumChecklistEstimatedCost(checklist);
-    const thisEventCommitted = thisEventPlanned + checklistLineSpend + vendorFeeTotal;
+    const playbookFrameworkSpend = sumPlaybookFrameworkCosts(
+      event.playbook_workflow
+    );
+    const thisEventCommitted =
+      thisEventPlanned +
+      checklistLineSpend +
+      vendorFeeTotal +
+      playbookFrameworkSpend;
     const totalCommittedInMonth = othersPlanned + thisEventCommitted;
     const remaining =
       cap > 0 ? cap - totalCommittedInMonth : null;
@@ -98,6 +106,7 @@ export function useEventController(
       locationLabel: event.location?.trim() ?? "",
       thisEventPlanned,
       checklistLineSpend,
+      playbookFrameworkSpend,
       vendorFeeTotal,
       thisEventCommitted,
       totalCommittedInMonth,
