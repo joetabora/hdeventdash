@@ -10,6 +10,7 @@ import { EventMobileActionBar } from "@/components/events/event-mobile-action-ba
 import { CollapsibleSection } from "@/components/events/event-detail/collapsible-section";
 import { EventCommentsModule } from "@/components/events/event-detail/event-comments-module";
 import { EventDetailHeader } from "@/components/events/event-detail/event-detail-header";
+import { EventPlaybookPrintDocument } from "@/components/events/event-detail/event-playbook-print-document";
 import { EventDetailChecklist } from "@/components/events/event-detail/event-detail-checklist";
 import { EventDetailMedia } from "@/components/events/event-detail/event-detail-media";
 import { EventDetailVendors } from "@/components/events/event-detail/event-detail-vendors";
@@ -199,28 +200,29 @@ export function EventDetailClient({
         id="event-playbook-root"
         className="print-playbook-root max-w-5xl pb-28 md:pb-0"
       >
-        <EventDetailHeader
-          mode="standard"
-          event={c.event}
-          canManageEvents={c.canManageEvents}
-          isAdmin={c.isAdmin}
-          atRisk={c.atRisk}
-          allChecklistComplete={c.allChecklistComplete}
-          allPlaybookPlanningComplete={c.allPlaybookPlanningComplete}
-          planningCompleted={c.playbookPlanning?.completed ?? 0}
-          planningTotal={c.playbookPlanning?.total ?? 0}
-          planningPercentage={c.playbookPlanning?.percentage ?? 0}
-          checklistCompleted={c.checklistCompleted}
-          checklistTotal={c.checklistTotal}
-          showStatusPills={c.showStatusPills}
-          setShowStatusPills={c.setShowStatusPills}
-          onToggleLiveMode={c.handleToggleLiveMode}
-          onOpenEdit={scrollToPlaybookForm}
-          onDelete={c.handleDelete}
-          onStatusChange={c.handleStatusChange}
-          budgetSummaryForEventMonth={c.budgetSummaryForEventMonth}
-          playbookPhaseNav={playbookNav}
-        />
+        <div className="eprint-screen-only">
+          <EventDetailHeader
+            mode="standard"
+            event={c.event}
+            canManageEvents={c.canManageEvents}
+            isAdmin={c.isAdmin}
+            atRisk={c.atRisk}
+            allChecklistComplete={c.allChecklistComplete}
+            allPlaybookPlanningComplete={c.allPlaybookPlanningComplete}
+            planningCompleted={c.playbookPlanning?.completed ?? 0}
+            planningTotal={c.playbookPlanning?.total ?? 0}
+            planningPercentage={c.playbookPlanning?.percentage ?? 0}
+            checklistCompleted={c.checklistCompleted}
+            checklistTotal={c.checklistTotal}
+            showStatusPills={c.showStatusPills}
+            setShowStatusPills={c.setShowStatusPills}
+            onToggleLiveMode={c.handleToggleLiveMode}
+            onOpenEdit={scrollToPlaybookForm}
+            onDelete={c.handleDelete}
+            onStatusChange={c.handleStatusChange}
+            budgetSummaryForEventMonth={c.budgetSummaryForEventMonth}
+            playbookPhaseNav={playbookNav}
+          />
 
         <div className="flex justify-end print:hidden mt-3">
           <Button
@@ -427,16 +429,29 @@ export function EventDetailClient({
             </CollapsibleSection>
           </div>
         </div>
+        </div>
+
+        <div className="hidden print:block">
+          <EventPlaybookPrintDocument
+            event={c.event}
+            checklist={c.checklist}
+            orgMarketingArtFormUrl={orgMarketingArtFormUrl}
+            swapMeetSpots={c.swapMeetSpots}
+            eventVendors={c.eventVendors}
+          />
+        </div>
       </div>
 
-      <EventMobileActionBar
-        eventId={c.event.id}
-        checklist={c.checklist}
-        onAfterChecklistChange={c.onChecklistInvalidate}
-        onAfterMediaChange={() => void c.refetch.media()}
-        onAfterCommentChange={() => void c.refetch.comments()}
-        canManageExtras={c.canManageEvents}
-      />
+      <div className="print:hidden">
+        <EventMobileActionBar
+          eventId={c.event.id}
+          checklist={c.checklist}
+          onAfterChecklistChange={c.onChecklistInvalidate}
+          onAfterMediaChange={() => void c.refetch.media()}
+          onAfterCommentChange={() => void c.refetch.comments()}
+          canManageExtras={c.canManageEvents}
+        />
+      </div>
     </>
   );
 }
