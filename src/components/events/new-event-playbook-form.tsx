@@ -39,6 +39,7 @@ import {
   AI_PROMPT_1_FIXED,
   AI_PROMPT_2_FIXED,
   AI_PROMPT_3_FIXED,
+  buildCopyDevelopmentPrompt1,
   EVENT_TO_FACEBOOK_LINES,
   EVENT_TO_WEBSITE_LINES,
   EVENT_WEEK_FLOW_COPY,
@@ -50,7 +51,13 @@ import {
   SPM_ART_REQUEST_FORM_URL,
 } from "@/lib/new-event-playbook-copy";
 import type { CreateEventApiBody } from "@/lib/events-api-client";
-import { AlertTriangle, ExternalLink, Plus, Trash2 } from "lucide-react";
+import {
+  AlertTriangle,
+  Copy,
+  ExternalLink,
+  Plus,
+  Trash2,
+} from "lucide-react";
 
 export type NewEventPlaybookSubmitPayload = {
   body: CreateEventApiBody;
@@ -211,6 +218,10 @@ export function NewEventPlaybookForm({
   }));
   const [webGraphicFile, setWebGraphicFile] = useState<File | null>(null);
   const [pageBannerFile, setPageBannerFile] = useState<File | null>(null);
+  const [savedPrompt1Block, setSavedPrompt1Block] = useState<string | null>(
+    null
+  );
+  const [prompt1Copied, setPrompt1Copied] = useState(false);
 
   const [fetchedMonthlyBudgets, setFetchedMonthlyBudgets] = useState<
     MonthlyBudget[]
@@ -276,6 +287,11 @@ export function NewEventPlaybookForm({
     const t = setTimeout(() => onBudgetPeersMonthChange(yearMonth), 300);
     return () => clearTimeout(t);
   }, [date, onBudgetPeersMonthChange, yearMonth]);
+
+  useEffect(() => {
+    setSavedPrompt1Block(null);
+    setPrompt1Copied(false);
+  }, [workflow.copy_prompts]);
 
   const frameworkSpend = useMemo(
     () => sumPlaybookFrameworkCosts(workflow),
@@ -744,19 +760,29 @@ export function NewEventPlaybookForm({
             Prompt 1
           </p>
           <p>{AI_PROMPT_1_FIXED}</p>
-          <p className="text-xs text-harley-text-muted">
-            Event name (from title):{" "}
-            <span className="text-harley-text">{title || "—"}</span>
-          </p>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
+          <Input
+            label="Event name (prompt)"
+            value={cp.event_name ?? ""}
+            onChange={(e) =>
+              setWorkflow((w) => ({
+                ...w,
+                copy_prompts: { ...w.copy_prompts, event_name: e.target.value || null },
+              }))
+            }
+            placeholder="Same as event title or alternate wording"
+          />
           <Input
             label="Date (prompt)"
             value={cp.event_date_text ?? ""}
             onChange={(e) =>
               setWorkflow((w) => ({
                 ...w,
-                copy_prompts: { ...w.copy_prompts, event_date_text: e.target.value || null },
+                copy_prompts: {
+                  ...w.copy_prompts,
+                  event_date_text: e.target.value || null,
+                },
               }))
             }
           />
@@ -770,6 +796,20 @@ export function NewEventPlaybookForm({
               }))
             }
             placeholder="Milwaukee H-D"
+          />
+          <Input
+            label="Who it&apos;s for (prompt)"
+            value={cp.who_its_for ?? ""}
+            onChange={(e) =>
+              setWorkflow((w) => ({
+                ...w,
+                copy_prompts: {
+                  ...w.copy_prompts,
+                  who_its_for: e.target.value || null,
+                },
+              }))
+            }
+            placeholder="e.g. Anyone, riders 21+"
           />
         </div>
         <Textarea
@@ -811,26 +851,18 @@ export function NewEventPlaybookForm({
           }
           rows={2}
         />
-        <div className="grid sm:grid-cols-2 gap-3">
-          <Input
-            label="Tone"
-            value={cp.tone ?? ""}
-            onChange={(e) =>
-              setWorkflow((w) => ({
-                ...w,
-                copy_prompts: { ...w.copy_prompts, tone: e.target.value || null },
-              }))
-            }
-          />
-          <div className="sm:pt-6">
-            <p className="text-xs font-medium text-harley-text-muted uppercase tracking-wide mb-1.5">
-              Who it&apos;s for (prompt)
-            </p>
-            <p className="text-sm text-harley-text">Anyone</p>
-          </div>
-        </div>
+        <Input
+          label="Tone"
+          value={cp.tone ?? ""}
+          onChange={(e) =>
+            setWorkflow((w) => ({
+              ...w,
+              copy_prompts: { ...w.copy_prompts, tone: e.target.value || null },
+            }))
+          }
+        />
         <Textarea
-          label="Phrases to include"
+          label="Any phrases to include"
           value={cp.phrases ?? ""}
           onChange={(e) =>
             setWorkflow((w) => ({
@@ -854,6 +886,48 @@ export function NewEventPlaybookForm({
           }
           rows={2}
         />
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => {
+              setSavedPrompt1Block(buildCopyDevelopmentPrompt1(cp));
+              setPrompt1Copied(false);
+            }}
+          >
+            Save prompt for copy
+          </Button>
+          <span className="text-xs text-harley-text-muted">
+            Builds the block below from filled-in fields only.
+          </span>
+        </div>
+        {savedPrompt1Block != null && (
+          <div className="rounded-lg border border-harley-gray/50 bg-harley-black/40 p-4 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-harley-orange">
+                Copy for AI agent
+              </p>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                className="gap-1.5"
+                onClick={() => {
+                  void navigator.clipboard.writeText(savedPrompt1Block).then(() => {
+                    setPrompt1Copied(true);
+                    window.setTimeout(() => setPrompt1Copied(false), 2000);
+                  });
+                }}
+              >
+                <Copy className="w-3.5 h-3.5" />
+                {prompt1Copied ? "Copied" : "Copy"}
+              </Button>
+            </div>
+            <pre className="text-sm text-harley-text whitespace-pre-wrap font-sans leading-relaxed max-h-80 overflow-y-auto rounded-md bg-harley-black/50 p-3 border border-harley-gray/30 select-all">
+              {savedPrompt1Block}
+            </pre>
+          </div>
+        )}
         <div className="rounded-lg bg-harley-black/30 p-3 text-sm text-harley-text-muted space-y-2">
           <p className="font-medium text-harley-text">Prompt 2</p>
           <p>{AI_PROMPT_2_FIXED}</p>

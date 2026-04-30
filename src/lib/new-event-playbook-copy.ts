@@ -19,6 +19,37 @@ export const AI_PROMPT_2_FIXED =
 
 export const AI_PROMPT_3_FIXED = "Now create a social media campaign";
 
+/** Single copy-paste block for an AI agent; omits lines when the field is empty. */
+export function buildCopyDevelopmentPrompt1(fields: {
+  event_name?: string | null;
+  event_date_text?: string | null;
+  location?: string | null;
+  who_its_for?: string | null;
+  food?: string | null;
+  entertainment?: string | null;
+  perks_discounts?: string | null;
+  tone?: string | null;
+  phrases?: string | null;
+  rsvp_notes?: string | null;
+}): string {
+  const parts: string[] = [AI_PROMPT_1_FIXED.trim()];
+  const pushIf = (label: string, value: string | null | undefined) => {
+    const t = (value ?? "").trim();
+    if (t) parts.push(`${label} ${t}`);
+  };
+  pushIf("Event Name:", fields.event_name);
+  pushIf("Date:", fields.event_date_text);
+  pushIf("Location:", fields.location);
+  pushIf("Who It's For:", fields.who_its_for);
+  pushIf("Food:", fields.food);
+  pushIf("Entertainment:", fields.entertainment);
+  pushIf("Perks/Discounts:", fields.perks_discounts);
+  pushIf("Tone:", fields.tone);
+  pushIf("Any Phrases to Include:", fields.phrases);
+  pushIf("RSVP Notes:", fields.rsvp_notes);
+  return parts.join("\n\n");
+}
+
 export const INTERNAL_COMMUNICATION_LINES = [
   "Share event details with team managers wait until flyer is complete",
   "Assign roles (who's working grill, games, raffles, etc.).",

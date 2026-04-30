@@ -32,8 +32,10 @@ export type PlaybookWorkflow = {
   bike_activities_items?: PlaybookFrameworkLineItem[];
   engagement_items?: PlaybookFrameworkLineItem[];
   copy_prompts?: {
+    event_name?: string | null;
     location?: string | null;
     event_date_text?: string | null;
+    who_its_for?: string | null;
     food?: string | null;
     entertainment?: string | null;
     perks_discounts?: string | null;
@@ -95,8 +97,10 @@ export const playbookWorkflowSchema = z
     engagement_items: z.array(lineItemSchema).max(50).optional(),
     copy_prompts: z
       .object({
+        event_name: z.union([z.string().max(500), z.null()]).optional(),
         location: z.union([z.string().max(500), z.null()]).optional(),
         event_date_text: z.union([z.string().max(200), z.null()]).optional(),
+        who_its_for: z.union([z.string().max(1000), z.null()]).optional(),
         food: z.union([z.string().max(4000), z.null()]).optional(),
         entertainment: z.union([z.string().max(4000), z.null()]).optional(),
         perks_discounts: z.union([z.string().max(4000), z.null()]).optional(),
