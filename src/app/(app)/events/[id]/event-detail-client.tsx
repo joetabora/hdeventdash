@@ -206,9 +206,12 @@ export function EventDetailClient({
           isAdmin={c.isAdmin}
           atRisk={c.atRisk}
           allChecklistComplete={c.allChecklistComplete}
-          completedCount={c.completedCount}
-          totalCount={c.totalCount}
-          percentage={c.percentage}
+          allPlaybookPlanningComplete={c.allPlaybookPlanningComplete}
+          planningCompleted={c.playbookPlanning?.completed ?? 0}
+          planningTotal={c.playbookPlanning?.total ?? 0}
+          planningPercentage={c.playbookPlanning?.percentage ?? 0}
+          checklistCompleted={c.checklistCompleted}
+          checklistTotal={c.checklistTotal}
           showStatusPills={c.showStatusPills}
           setShowStatusPills={c.setShowStatusPills}
           onToggleLiveMode={c.handleToggleLiveMode}

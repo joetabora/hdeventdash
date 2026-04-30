@@ -7,7 +7,8 @@ import {
   type EventDetailServerBundle,
 } from "@/hooks/use-event-detail-data";
 import { useAppRole } from "@/contexts/app-role-context";
-import { isEventAtRisk } from "@/lib/at-risk";
+import { isEventAtRiskByPlanning } from "@/lib/at-risk";
+import { computePlaybookPlanningProgress } from "@/lib/playbook-planning-progress";
 import {
   eventDateToYearMonth,
   effectiveMonthlyCapForEvent,
@@ -143,18 +144,29 @@ export function useEventController(
     [checklist]
   );
 
+  const playbookPlanning = useMemo(
+    () => (event ? computePlaybookPlanningProgress(event) : null),
+    [event]
+  );
+
+  const allPlaybookPlanningComplete = useMemo(() => {
+    if (!playbookPlanning || playbookPlanning.total === 0) return false;
+    return playbookPlanning.completed >= playbookPlanning.total;
+  }, [playbookPlanning]);
+
   const atRisk = useMemo(() => {
-    if (!event) return false;
-    const completed = checklist.filter((i) => i.is_checked).length;
-    return isEventAtRisk(event.date, event.status, checklist.length, completed);
-  }, [event, checklist]);
+    if (!event || playbookPlanning == null) return false;
+    return isEventAtRiskByPlanning(
+      event.date,
+      event.status,
+      playbookPlanning.percentage
+    );
+  }, [event, playbookPlanning]);
 
   const isLiveMode = event?.is_live_mode ?? false;
 
-  const completedCount = checklist.filter((i) => i.is_checked).length;
-  const totalCount = checklist.length;
-  const percentage =
-    totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+  const checklistCompleted = checklist.filter((i) => i.is_checked).length;
+  const checklistTotal = checklist.length;
 
   const onChecklistInvalidate = useCallback(
     () => void refetch.checklist(),
@@ -239,11 +251,12 @@ export function useEventController(
     showStatusPills,
     setShowStatusPills,
     allChecklistComplete,
+    allPlaybookPlanningComplete,
+    playbookPlanning,
     atRisk,
     isLiveMode,
-    completedCount,
-    totalCount,
-    percentage,
+    checklistCompleted,
+    checklistTotal,
     onChecklistInvalidate,
     onBudgetContextInvalidate,
     checklistEstimatedTotal,

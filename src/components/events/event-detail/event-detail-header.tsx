@@ -69,10 +69,14 @@ export type EventDetailHeaderStandardProps = {
   canManageEvents: boolean;
   isAdmin: boolean;
   atRisk: boolean;
+  /** Full database checklist (e.g. week/day-of); separate from playbook planning. */
   allChecklistComplete: boolean;
-  completedCount: number;
-  totalCount: number;
-  percentage: number;
+  allPlaybookPlanningComplete: boolean;
+  planningCompleted: number;
+  planningTotal: number;
+  planningPercentage: number;
+  checklistCompleted: number;
+  checklistTotal: number;
   showStatusPills: boolean;
   setShowStatusPills: Dispatch<SetStateAction<boolean>>;
   onToggleLiveMode: () => void | Promise<void>;
@@ -166,9 +170,12 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
     isAdmin,
     atRisk,
     allChecklistComplete,
-    completedCount,
-    totalCount,
-    percentage,
+    allPlaybookPlanningComplete,
+    planningCompleted,
+    planningTotal,
+    planningPercentage,
+    checklistCompleted,
+    checklistTotal,
     showStatusPills,
     setShowStatusPills,
     onToggleLiveMode,
@@ -202,7 +209,7 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
                 <div className="flex items-center gap-2 flex-wrap">
                   <StatusBadge status={event.status} />
                   {atRisk && <Badge variant="danger">At Risk</Badge>}
-                  {allChecklistComplete &&
+                  {allPlaybookPlanningComplete &&
                     event.status !== "ready_for_execution" &&
                     event.status !== "live_event" &&
                     event.status !== "completed" && (
@@ -246,29 +253,40 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 md:gap-4 text-xs md:text-sm text-harley-text-muted mt-1">
+            <div className="flex flex-wrap items-center gap-x-3 md:gap-4 gap-y-1 text-xs md:text-sm text-harley-text-muted mt-1">
               <DaysUntilEvent date={event.date} size="sm" />
-              <span className="flex items-center gap-1">
+              <span className="flex items-center gap-1" title="Playbook planning checkpoints">
                 <ClipboardList className="w-3.5 h-3.5" />
-                {completedCount}/{totalCount}
+                Planning {planningCompleted}/{planningTotal}
+                <span className="text-harley-text-muted/70">
+                  · Checklist {checklistCompleted}/{checklistTotal}
+                </span>
               </span>
             </div>
           </div>
 
           <div className="px-4 pb-3 md:px-5">
+            <p className="text-[10px] uppercase tracking-wide text-harley-text-muted mb-1.5">
+              Playbook planning
+            </p>
             <div className="flex items-center gap-3 md:gap-4">
               <div className="flex-1 h-2.5 md:h-2 bg-harley-gray rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all duration-500 ease-out ${
-                    percentage === 100
+                    planningPercentage === 100
                       ? "bg-gradient-to-r from-harley-orange to-harley-orange-light"
                       : "bg-gradient-to-r from-harley-orange-dark to-harley-orange"
                   }`}
-                  style={{ width: `${percentage}%` }}
+                  style={{ width: `${planningPercentage}%` }}
+                  role="progressbar"
+                  aria-valuenow={planningCompleted}
+                  aria-valuemin={0}
+                  aria-valuemax={planningTotal}
+                  aria-label="Playbook planning progress"
                 />
               </div>
               <span className="text-xs font-bold shrink-0 text-harley-orange">
-                {percentage}%
+                {planningPercentage}%
               </span>
             </div>
           </div>
@@ -289,13 +307,14 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
                 At Risk —{" "}
               </span>
               <span className="text-sm text-harley-danger/80">
-                Event is within 5 days and checklist is not complete.
+                Event is within 5 days and playbook planning is not complete
+                yet.
               </span>
             </div>
           </div>
         )}
 
-        {allChecklistComplete &&
+        {allPlaybookPlanningComplete &&
           event.status !== "ready_for_execution" &&
           event.status !== "live_event" &&
           event.status !== "completed" && (
@@ -303,8 +322,8 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
               <div className="flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 text-harley-orange shrink-0" />
                 <span className="text-sm text-harley-orange">
-                  All checklist items complete. Update status to &quot;Ready for
-                  Execution&quot;?
+                  Playbook planning checkpoints are complete. Update status to
+                  &quot;Ready for Execution&quot;?
                 </span>
               </div>
               {canManageEvents && (
