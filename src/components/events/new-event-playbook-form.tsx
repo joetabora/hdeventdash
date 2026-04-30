@@ -13,6 +13,7 @@ import {
   budgetMonthToDbDate,
 } from "@/lib/budgets";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { createSignedEventDocumentUrl } from "@/lib/events";
 import { formatUsd } from "@/lib/format-currency";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ import { FormActions } from "@/components/forms/form-actions";
 import { useFormSubmitState } from "@/hooks/use-form-submit-state";
 import type {
   Event,
+  EventMedia,
   EventStatus,
   EventType,
   MonthlyBudget,
@@ -240,6 +242,8 @@ export type NewEventPlaybookFormProps = {
   onCancel?: () => void;
   /** When set, the form initializes from this row and monthly-cap peer math excludes it. */
   editSourceEvent?: Event;
+  /** When editing an event, pass current media so web graphic / banner previews resolve. */
+  eventMedia?: EventMedia[];
   orgMarketingArtFormUrl?: string | null;
 };
 
@@ -251,6 +255,7 @@ export function NewEventPlaybookForm({
   onSubmit,
   onCancel,
   editSourceEvent,
+  eventMedia = [],
   orgMarketingArtFormUrl = null,
 }: NewEventPlaybookFormProps) {
   const isEdit = Boolean(editSourceEvent);
@@ -289,6 +294,69 @@ export function NewEventPlaybookForm({
   });
   const [webGraphicFile, setWebGraphicFile] = useState<File | null>(null);
   const [pageBannerFile, setPageBannerFile] = useState<File | null>(null);
+  const webGraphicObjectUrl = useMemo(
+    () => (webGraphicFile ? URL.createObjectURL(webGraphicFile) : null),
+    [webGraphicFile]
+  );
+  const pageBannerObjectUrl = useMemo(
+    () => (pageBannerFile ? URL.createObjectURL(pageBannerFile) : null),
+    [pageBannerFile]
+  );
+
+  useEffect(() => {
+    return () => {
+      if (webGraphicObjectUrl) URL.revokeObjectURL(webGraphicObjectUrl);
+      if (pageBannerObjectUrl) URL.revokeObjectURL(pageBannerObjectUrl);
+    };
+  }, [webGraphicObjectUrl, pageBannerObjectUrl]);
+
+  const [webGraphicServerUrl, setWebGraphicServerUrl] = useState<string | null>(
+    null
+  );
+  const [pageBannerServerUrl, setPageBannerServerUrl] = useState<string | null>(
+    null
+  );
+
+  const webGraphicMediaId = marketing.web_graphic_media_id;
+  const pageBannerMediaId = marketing.page_banner_media_id;
+
+  useEffect(() => {
+    const row =
+      !webGraphicFile && isEdit
+        ? eventMedia.find((m) => m.id === webGraphicMediaId)
+        : undefined;
+    if (!row) {
+      const t = setTimeout(() => setWebGraphicServerUrl(null), 0);
+      return () => clearTimeout(t);
+    }
+    let cancelled = false;
+    const supabase = getSupabaseBrowserClient();
+    void createSignedEventDocumentUrl(supabase, row.file_path).then((url) => {
+      if (!cancelled) setWebGraphicServerUrl(url);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [webGraphicFile, webGraphicMediaId, eventMedia, isEdit]);
+
+  useEffect(() => {
+    const row =
+      !pageBannerFile && isEdit
+        ? eventMedia.find((m) => m.id === pageBannerMediaId)
+        : undefined;
+    if (!row) {
+      const t = setTimeout(() => setPageBannerServerUrl(null), 0);
+      return () => clearTimeout(t);
+    }
+    let cancelled = false;
+    const supabase = getSupabaseBrowserClient();
+    void createSignedEventDocumentUrl(supabase, row.file_path).then((url) => {
+      if (!cancelled) setPageBannerServerUrl(url);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [pageBannerFile, pageBannerMediaId, eventMedia, isEdit]);
   const [savedPrompt1Block, setSavedPrompt1Block] = useState<string | null>(
     null
   );
@@ -360,8 +428,10 @@ export function NewEventPlaybookForm({
   }, [date, onBudgetPeersMonthChange, yearMonth]);
 
   useEffect(() => {
-    setSavedPrompt1Block(null);
-    setPrompt1Copied(false);
+    void Promise.resolve().then(() => {
+      setSavedPrompt1Block(null);
+      setPrompt1Copied(false);
+    });
   }, [workflow.copy_prompts]);
 
   const frameworkSpend = useMemo(
@@ -1079,10 +1149,28 @@ export function NewEventPlaybookForm({
             type="file"
             accept="image/*"
             className="text-sm text-harley-text"
-            onChange={(e) =>
-              setWebGraphicFile(e.target.files?.[0] ?? null)
-            }
+            onChange={(e) => {
+              const f = e.target.files?.[0] ?? null;
+              setWebGraphicFile(f);
+            }}
           />
+          {(webGraphicObjectUrl || webGraphicServerUrl) && (
+            <div className="mt-2 rounded-lg border border-harley-gray/50 overflow-hidden bg-harley-black/20 max-w-md">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={(webGraphicObjectUrl ?? webGraphicServerUrl) || undefined}
+                alt=""
+                className="max-h-40 w-auto object-contain mx-auto"
+              />
+            </div>
+          )}
+          <p className="text-xs text-harley-text-muted mt-1">
+            {webGraphicFile
+              ? webGraphicFile.name
+              : webGraphicMediaId
+                ? "Saved — submit to replace"
+                : "No file yet"}
+          </p>
         </div>
         <Input
           label="Page URL"
@@ -1099,10 +1187,28 @@ export function NewEventPlaybookForm({
             type="file"
             accept="image/*"
             className="text-sm text-harley-text"
-            onChange={(e) =>
-              setPageBannerFile(e.target.files?.[0] ?? null)
-            }
+            onChange={(e) => {
+              const f = e.target.files?.[0] ?? null;
+              setPageBannerFile(f);
+            }}
           />
+          {(pageBannerObjectUrl || pageBannerServerUrl) && (
+            <div className="mt-2 rounded-lg border border-harley-gray/50 overflow-hidden bg-harley-black/20 max-w-md">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={(pageBannerObjectUrl ?? pageBannerServerUrl) || undefined}
+                alt=""
+                className="max-h-40 w-auto object-contain mx-auto"
+              />
+            </div>
+          )}
+          <p className="text-xs text-harley-text-muted mt-1">
+            {pageBannerFile
+              ? pageBannerFile.name
+              : pageBannerMediaId
+                ? "Saved — submit to replace"
+                : "No file yet"}
+          </p>
         </div>
         <Textarea
           label="Page copy"

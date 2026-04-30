@@ -24,6 +24,10 @@ export type PlaybookMarketing = {
   canva_web_banner_done?: boolean;
   canva_fb_cover_done?: boolean;
   art_request_form_url?: string | null;
+  /** event_media.id for web copy graphic (stored separately from generic marketing_asset uploads). */
+  web_graphic_media_id?: string | null;
+  /** event_media.id for info-website page banner. */
+  page_banner_media_id?: string | null;
 };
 
 export const PLAYBOOK_MARKETING_ASSET_CATALOG: readonly {
@@ -80,11 +84,13 @@ export const playbookMarketingSchema = z
     web_page_url: z.union([z.string().max(2000), z.null()]).optional(),
     facebook_event_copy: z.union([z.string().max(20000), z.null()]).optional(),
     canva_web_banner_done: z.boolean().optional(),
-  canva_fb_cover_done: z.boolean().optional(),
-  art_request_form_url: z.union([z.string().max(2000), z.null()]).optional(),
-  /** PAM / map approval accepted (in addition to pam_map_approval_at date). */
-  pam_map_approval_accepted: z.boolean().optional(),
-})
+    canva_fb_cover_done: z.boolean().optional(),
+    art_request_form_url: z.union([z.string().max(2000), z.null()]).optional(),
+    /** PAM / map approval accepted (in addition to pam_map_approval_at date). */
+    pam_map_approval_accepted: z.boolean().optional(),
+    web_graphic_media_id: z.union([z.string().uuid(), z.null()]).optional(),
+    page_banner_media_id: z.union([z.string().uuid(), z.null()]).optional(),
+  })
   .strict();
 
 export function normalizePlaybookMarketingDates(
@@ -156,6 +162,8 @@ export function defaultPlaybookMarketing(): PlaybookMarketing {
     canva_fb_cover_done: false,
     art_request_form_url: null,
     pam_map_approval_accepted: false,
+    web_graphic_media_id: null,
+    page_banner_media_id: null,
   };
 }
 

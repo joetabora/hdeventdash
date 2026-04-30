@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
-import { apiCreateEvent, apiUploadMedia } from "@/lib/events-api-client";
+import { apiCreateEvent, apiPatchEvent, apiUploadMedia } from "@/lib/events-api-client";
 import { apiFetchJson } from "@/lib/api/api-fetch-json";
 import {
   NewEventPlaybookForm,
@@ -12,6 +12,11 @@ import { Card } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import type { EventBudgetPeer } from "@/lib/budgets";
+import {
+  getPlaybookMarketing,
+  normalizePlaybookMarketingDates,
+  type PlaybookMarketing,
+} from "@/lib/playbook-marketing";
 
 export function NewEventClient({
   initialBudgetPeers,
@@ -37,11 +42,20 @@ export function NewEventClient({
   const handleCreate = useCallback(
     async ({ body, webGraphicFile, pageBannerFile }: NewEventPlaybookSubmitPayload) => {
       const event = await apiCreateEvent(body);
+      let mergedPm = normalizePlaybookMarketingDates({
+        ...getPlaybookMarketing(event),
+        ...(body.playbook_marketing as PlaybookMarketing | undefined),
+      });
       if (webGraphicFile) {
-        await apiUploadMedia(event.id, webGraphicFile, "marketing_asset");
+        const m = await apiUploadMedia(event.id, webGraphicFile, "marketing_asset");
+        mergedPm = { ...mergedPm, web_graphic_media_id: m.id };
       }
       if (pageBannerFile) {
-        await apiUploadMedia(event.id, pageBannerFile, "marketing_asset");
+        const m = await apiUploadMedia(event.id, pageBannerFile, "marketing_asset");
+        mergedPm = { ...mergedPm, page_banner_media_id: m.id };
+      }
+      if (webGraphicFile || pageBannerFile) {
+        await apiPatchEvent(event.id, { playbook_marketing: mergedPm });
       }
       router.push(`/events/${event.id}`);
     },

@@ -38,6 +38,11 @@ import {
   apiPatchEvent,
   apiUploadMedia,
 } from "@/lib/events-api-client";
+import {
+  getPlaybookMarketing,
+  normalizePlaybookMarketingDates,
+  type PlaybookMarketing,
+} from "@/lib/playbook-marketing";
 import { errorMessage, showError } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -118,14 +123,34 @@ export function EventDetailClient({
       if (!ev) return;
       const { body, webGraphicFile, pageBannerFile } = payload;
       try {
-        const updated = await apiPatchEvent(ev.id, { ...body });
-        c.setEvent(updated);
+        const formPm = body.playbook_marketing as PlaybookMarketing | undefined;
+        const basePm = normalizePlaybookMarketingDates({
+          ...getPlaybookMarketing(ev),
+          ...formPm,
+        });
+        let mergedPm = basePm;
         if (webGraphicFile) {
-          await apiUploadMedia(updated.id, webGraphicFile, "marketing_asset");
+          const m = await apiUploadMedia(
+            ev.id,
+            webGraphicFile,
+            "marketing_asset"
+          );
+          mergedPm = { ...mergedPm, web_graphic_media_id: m.id };
         }
         if (pageBannerFile) {
-          await apiUploadMedia(updated.id, pageBannerFile, "marketing_asset");
+          const m = await apiUploadMedia(
+            ev.id,
+            pageBannerFile,
+            "marketing_asset"
+          );
+          mergedPm = { ...mergedPm, page_banner_media_id: m.id };
         }
+        const updated = await apiPatchEvent(ev.id, {
+          ...body,
+          playbook_marketing: mergedPm,
+        });
+        c.setEvent(updated);
+        await c.refetch.media();
         void c.refetch.budgetContextForMonth(eventDateToYearMonth(updated.date));
       } catch (err) {
         console.error(err);
@@ -244,6 +269,7 @@ export function EventDetailClient({
                 <NewEventPlaybookForm
                   key={c.event.updated_at ?? c.event.id}
                   editSourceEvent={c.event}
+                  eventMedia={c.media}
                   allEvents={c.budgetPeers}
                   prefetchedMonthlyBudgets={c.monthlyBudgetsForEventMonth}
                   prefetchedForYearMonth={c.eventMonthYearMonth}
