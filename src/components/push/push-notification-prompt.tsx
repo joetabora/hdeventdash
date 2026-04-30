@@ -118,7 +118,7 @@ export function PushNotificationPrompt() {
   if (!showBanner) return null;
 
   return (
-    <div className="shrink-0 border-b border-harley-orange/25 bg-harley-orange/10 px-4 py-3">
+    <div className="print:hidden shrink-0 border-b border-harley-orange/25 bg-harley-orange/10 px-4 py-3">
       <div className="mx-auto max-w-7xl flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
         <div className="flex items-start gap-3 flex-1 min-w-0">
           <Bell className="w-5 h-5 text-harley-orange shrink-0 mt-0.5" />

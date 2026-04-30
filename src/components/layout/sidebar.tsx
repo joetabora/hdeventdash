@@ -143,14 +143,14 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
       {mobileOpen && (
         <div
           data-sidebar-overlay
-          className="lg:hidden fixed inset-0 z-30 bg-black/50 backdrop-blur-sm"
+          className="print:hidden lg:hidden fixed inset-0 z-30 bg-black/50 backdrop-blur-sm"
           onClick={onClose}
         />
       )}
 
       <aside
         data-app-sidebar
-        className={`fixed inset-y-0 left-0 z-40 w-64 bg-harley-dark backdrop-blur-xl border-r border-harley-gray flex flex-col transform transition-transform duration-200 lg:translate-x-0 ${
+        className={`print:hidden fixed inset-y-0 left-0 z-40 w-64 bg-harley-dark backdrop-blur-xl border-r border-harley-gray flex flex-col transform transition-transform duration-200 lg:translate-x-0 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >

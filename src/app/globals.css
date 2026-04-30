@@ -176,9 +176,41 @@ html.event-live-shell header h1 {
     margin: 0.55in;
   }
 
+  html {
+    background: #fff !important;
+  }
+
   body {
-    background: #fff;
-    color: #111;
+    background: #fff !important;
+    color: #111 !important;
+    -webkit-print-color-adjust: economy;
+    print-color-adjust: economy;
+  }
+
+  /* (app)/layout.tsx — full-bleed dark shell wraps all authenticated pages */
+  body .min-h-screen.bg-harley-black {
+    background: #fff !important;
+    color: #111 !important;
+    min-height: 0 !important;
+  }
+
+  #app-shell-main {
+    background: #fff !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    min-height: 0 !important;
+  }
+
+  #app-shell-scroll-inner {
+    background: #fff !important;
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  body #app-shell-main > main {
+    background: #fff !important;
+    overflow: visible !important;
   }
 
   .print-playbook-root .eprint-screen-only {
@@ -196,6 +228,7 @@ html.event-live-shell header h1 {
     font-size: 10.5pt;
     line-height: 1.35;
     max-width: none !important;
+    background: #fff !important;
   }
 
   .event-playbook-print .eprint-cover {

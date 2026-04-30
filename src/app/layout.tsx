@@ -38,6 +38,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         {children}
         <Toaster
+          className="print:hidden"
           theme="dark"
           position="bottom-right"
           toastOptions={{
