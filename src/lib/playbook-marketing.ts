@@ -64,8 +64,7 @@ const assetRowSchema = z
     key: z.string().max(100),
     requested: z.boolean(),
     notes: z.union([z.string().max(2000), z.null()]).optional(),
-  })
-  .strict();
+  });
 
 /** Validates PATCH body / persisted JSON. */
 export const playbookMarketingSchema = z
@@ -90,8 +89,7 @@ export const playbookMarketingSchema = z
     pam_map_approval_accepted: z.boolean().optional(),
     web_graphic_media_id: z.union([z.string().uuid(), z.null()]).optional(),
     page_banner_media_id: z.union([z.string().uuid(), z.null()]).optional(),
-  })
-  .strict();
+  });
 
 export function normalizePlaybookMarketingDates(
   m: PlaybookMarketing

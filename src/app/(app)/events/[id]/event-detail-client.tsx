@@ -155,9 +155,10 @@ export function EventDetailClient({
       } catch (err) {
         console.error(err);
         showError(errorMessage(err, "Failed to save event."));
+        throw err;
       }
     },
-    [c.event, c.setEvent, c.refetch]
+    [c]
   );
 
   const scrollToPlaybookForm = useCallback(() => {

@@ -294,21 +294,50 @@ export function NewEventPlaybookForm({
   });
   const [webGraphicFile, setWebGraphicFile] = useState<File | null>(null);
   const [pageBannerFile, setPageBannerFile] = useState<File | null>(null);
-  const webGraphicObjectUrl = useMemo(
-    () => (webGraphicFile ? URL.createObjectURL(webGraphicFile) : null),
-    [webGraphicFile]
+  const [webGraphicDataUrl, setWebGraphicDataUrl] = useState<string | null>(
+    null
   );
-  const pageBannerObjectUrl = useMemo(
-    () => (pageBannerFile ? URL.createObjectURL(pageBannerFile) : null),
-    [pageBannerFile]
+  const [pageBannerDataUrl, setPageBannerDataUrl] = useState<string | null>(
+    null
   );
 
   useEffect(() => {
-    return () => {
-      if (webGraphicObjectUrl) URL.revokeObjectURL(webGraphicObjectUrl);
-      if (pageBannerObjectUrl) URL.revokeObjectURL(pageBannerObjectUrl);
+    if (!webGraphicFile) {
+      void Promise.resolve().then(() => setWebGraphicDataUrl(null));
+      return;
+    }
+    let cancelled = false;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (!cancelled && typeof reader.result === "string") {
+        setWebGraphicDataUrl(reader.result);
+      }
     };
-  }, [webGraphicObjectUrl, pageBannerObjectUrl]);
+    reader.readAsDataURL(webGraphicFile);
+    return () => {
+      cancelled = true;
+      reader.abort();
+    };
+  }, [webGraphicFile]);
+
+  useEffect(() => {
+    if (!pageBannerFile) {
+      void Promise.resolve().then(() => setPageBannerDataUrl(null));
+      return;
+    }
+    let cancelled = false;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (!cancelled && typeof reader.result === "string") {
+        setPageBannerDataUrl(reader.result);
+      }
+    };
+    reader.readAsDataURL(pageBannerFile);
+    return () => {
+      cancelled = true;
+      reader.abort();
+    };
+  }, [pageBannerFile]);
 
   const [webGraphicServerUrl, setWebGraphicServerUrl] = useState<string | null>(
     null
@@ -469,6 +498,7 @@ export function NewEventPlaybookForm({
     locationKey,
     plannedBudget,
     frameworkSpend,
+    editSourceEvent?.id,
   ]);
 
   const purposeGoalsText = NEW_EVENT_PURPOSE_LINES.join("\n");
@@ -1154,16 +1184,22 @@ export function NewEventPlaybookForm({
               setWebGraphicFile(f);
             }}
           />
-          {(webGraphicObjectUrl || webGraphicServerUrl) && (
-            <div className="mt-2 rounded-lg border border-harley-gray/50 overflow-hidden bg-harley-black/20 max-w-md">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={(webGraphicObjectUrl ?? webGraphicServerUrl) || undefined}
-                alt=""
-                className="max-h-40 w-auto object-contain mx-auto"
-              />
+          {(webGraphicFile && !webGraphicDataUrl) || (webGraphicDataUrl || webGraphicServerUrl) ? (
+            <div className="mt-2 rounded-lg border border-harley-gray/50 overflow-hidden bg-harley-black/20 max-w-md min-h-[5rem] flex items-center justify-center">
+              {webGraphicFile && !webGraphicDataUrl ? (
+                <p className="text-xs text-harley-text-muted px-3 py-4">
+                  Loading preview…
+                </p>
+              ) : (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={(webGraphicDataUrl ?? webGraphicServerUrl) || undefined}
+                  alt=""
+                  className="max-h-48 w-full object-contain"
+                />
+              )}
             </div>
-          )}
+          ) : null}
           <p className="text-xs text-harley-text-muted mt-1">
             {webGraphicFile
               ? webGraphicFile.name
@@ -1192,16 +1228,22 @@ export function NewEventPlaybookForm({
               setPageBannerFile(f);
             }}
           />
-          {(pageBannerObjectUrl || pageBannerServerUrl) && (
-            <div className="mt-2 rounded-lg border border-harley-gray/50 overflow-hidden bg-harley-black/20 max-w-md">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={(pageBannerObjectUrl ?? pageBannerServerUrl) || undefined}
-                alt=""
-                className="max-h-40 w-auto object-contain mx-auto"
-              />
+          {(pageBannerFile && !pageBannerDataUrl) || (pageBannerDataUrl || pageBannerServerUrl) ? (
+            <div className="mt-2 rounded-lg border border-harley-gray/50 overflow-hidden bg-harley-black/20 max-w-md min-h-[5rem] flex items-center justify-center">
+              {pageBannerFile && !pageBannerDataUrl ? (
+                <p className="text-xs text-harley-text-muted px-3 py-4">
+                  Loading preview…
+                </p>
+              ) : (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={(pageBannerDataUrl ?? pageBannerServerUrl) || undefined}
+                  alt=""
+                  className="max-h-48 w-full object-contain"
+                />
+              )}
             </div>
-          )}
+          ) : null}
           <p className="text-xs text-harley-text-muted mt-1">
             {pageBannerFile
               ? pageBannerFile.name
@@ -1424,6 +1466,11 @@ export function NewEventPlaybookForm({
       )}
 
       <FormErrorAlert message={error} />
+      {pending ? (
+        <p className="text-sm text-harley-text-muted">
+          Saving… Large images may take a few seconds while files upload.
+        </p>
+      ) : null}
       <FormActions
         pending={pending}
         submitLabel={isEdit ? "Save changes" : "Create event"}
