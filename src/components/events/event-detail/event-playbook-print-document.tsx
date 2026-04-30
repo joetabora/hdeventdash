@@ -1,11 +1,16 @@
+"use client";
+
 import { format, parseISO } from "date-fns";
-import type {
-  ChecklistItem,
-  Event,
-  EventVendorWithVendor,
-  SwapMeetSpot,
+import { useEffect, useState } from "react";
+import {
+  EVENT_TYPES,
+  type Event,
+  type EventMedia,
+  type EventVendorWithVendor,
+  type SwapMeetSpot,
 } from "@/types/database";
-import { EVENT_TYPES } from "@/types/database";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { createSignedEventDocumentUrl } from "@/lib/events";
 import { formatUsd } from "@/lib/format-currency";
 import {
   effectiveArtRequestFormUrl,
@@ -73,13 +78,13 @@ function printLineItems(w: PlaybookWorkflow, key: keyof PlaybookWorkflow) {
 
 export function EventPlaybookPrintDocument({
   event,
-  checklist,
+  eventMedia,
   orgMarketingArtFormUrl,
   swapMeetSpots = [],
   eventVendors = [],
 }: {
   event: Event;
-  checklist: ChecklistItem[];
+  eventMedia: EventMedia[];
   orgMarketingArtFormUrl: string | null;
   swapMeetSpots?: SwapMeetSpot[];
   eventVendors?: EventVendorWithVendor[];
@@ -98,20 +103,53 @@ export function EventPlaybookPrintDocument({
     PLAYBOOK_MARKETING_ASSET_CATALOG.map((a) => [a.key, a.label])
   );
 
+  const graphicPath = pm.web_graphic_media_id
+    ? eventMedia.find((m) => m.id === pm.web_graphic_media_id)?.file_path ??
+      null
+    : null;
+  const bannerPath = pm.page_banner_media_id
+    ? eventMedia.find((m) => m.id === pm.page_banner_media_id)?.file_path ??
+      null
+    : null;
+
+  const [webGraphicPrintUrl, setWebGraphicPrintUrl] = useState<string | null>(
+    null
+  );
+  const [pageBannerPrintUrl, setPageBannerPrintUrl] = useState<string | null>(
+    null
+  );
+
+  useEffect(() => {
+    if (!graphicPath && !bannerPath) {
+      const t = setTimeout(() => {
+        setWebGraphicPrintUrl(null);
+        setPageBannerPrintUrl(null);
+      }, 0);
+      return () => clearTimeout(t);
+    }
+    let cancelled = false;
+    const supabase = getSupabaseBrowserClient();
+    void (async () => {
+      const gu = graphicPath
+        ? await createSignedEventDocumentUrl(supabase, graphicPath)
+        : null;
+      const bu = bannerPath
+        ? await createSignedEventDocumentUrl(supabase, bannerPath)
+        : null;
+      if (!cancelled) {
+        setWebGraphicPrintUrl(gu);
+        setPageBannerPrintUrl(bu);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [graphicPath, bannerPath]);
+
   const eventTypeLabel = event.event_type
     ? EVENT_TYPES.find((t) => t.value === event.event_type)?.label ??
       event.event_type
     : null;
-
-  const checklistBySection = [...checklist].sort((a, b) => {
-    const s = a.section.localeCompare(b.section);
-    if (s !== 0) return s;
-    return a.sort_order - b.sort_order;
-  });
-
-  const sectionsOrder = Array.from(
-    new Set(checklistBySection.map((i) => i.section))
-  );
 
   return (
     <article className="event-playbook-print text-black bg-white">
@@ -344,6 +382,32 @@ export function EventPlaybookPrintDocument({
             </tr>
           </tbody>
         </table>
+        {webGraphicPrintUrl || pageBannerPrintUrl ? (
+          <div className="eprint-web-assets">
+            {webGraphicPrintUrl ? (
+              <figure className="eprint-figure">
+                <figcaption>Web graphic</figcaption>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={webGraphicPrintUrl}
+                  alt=""
+                  className="eprint-asset-img"
+                />
+              </figure>
+            ) : null}
+            {pageBannerPrintUrl ? (
+              <figure className="eprint-figure">
+                <figcaption>Page banner</figcaption>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={pageBannerPrintUrl}
+                  alt=""
+                  className="eprint-asset-img"
+                />
+              </figure>
+            ) : null}
+          </div>
+        ) : null}
       </section>
 
       <section className="eprint-section">
@@ -487,48 +551,6 @@ export function EventPlaybookPrintDocument({
             ))}
           </tbody>
         </table>
-      </section>
-
-      <section className="eprint-section eprint-break-before">
-        <h2 className="eprint-h2">Operational checklist</h2>
-        <p className="eprint-note eprint-small">
-          Items from the event checklist in the app (all sections).
-        </p>
-        {sectionsOrder.map((section) => (
-          <div key={section} className="eprint-checklist-block">
-            <h3 className="eprint-h3">{section}</h3>
-            <table className="eprint-table eprint-small">
-              <thead>
-                <tr>
-                  <th className="eprint-status-col">Done</th>
-                  <th>Task</th>
-                  <th className="eprint-num">Est. cost</th>
-                </tr>
-              </thead>
-              <tbody>
-                {checklistBySection
-                  .filter((i) => i.section === section)
-                  .map((item) => (
-                    <tr key={item.id}>
-                      <td className="eprint-center">
-                        {item.is_checked ? "☑" : "☐"}
-                      </td>
-                      <td>{item.label}</td>
-                      <td className="eprint-num">
-                        {item.estimated_cost != null &&
-                        Number(item.estimated_cost) > 0
-                          ? formatUsd(Number(item.estimated_cost))
-                          : "—"}
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        ))}
-        {checklist.length === 0 ? (
-          <p className="eprint-muted">No checklist items for this event.</p>
-        ) : null}
       </section>
 
       {eventVendors.length > 0 ? (

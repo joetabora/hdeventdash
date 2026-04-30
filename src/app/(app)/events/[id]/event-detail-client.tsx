@@ -461,7 +461,7 @@ export function EventDetailClient({
         <div className="hidden print:block">
           <EventPlaybookPrintDocument
             event={c.event}
-            checklist={c.checklist}
+            eventMedia={c.media}
             orgMarketingArtFormUrl={orgMarketingArtFormUrl}
             swapMeetSpots={c.swapMeetSpots}
             eventVendors={c.eventVendors}
