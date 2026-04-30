@@ -20,10 +20,17 @@ import { Input, Textarea } from "@/components/ui/input";
 import { FormErrorAlert } from "@/components/forms/form-error-alert";
 import { FormActions } from "@/components/forms/form-actions";
 import { useFormSubmitState } from "@/hooks/use-form-submit-state";
-import type { EventStatus, EventType, MonthlyBudget } from "@/types/database";
+import type {
+  Event,
+  EventStatus,
+  EventType,
+  MonthlyBudget,
+} from "@/types/database";
 import { EVENT_TYPES } from "@/types/database";
 import {
   defaultPlaybookMarketing,
+  effectiveArtRequestFormUrl,
+  getPlaybookMarketing,
   mergeAssetRequestsWithCatalog,
   normalizePlaybookMarketingDates,
   PLAYBOOK_MARKETING_ASSET_CATALOG,
@@ -33,6 +40,7 @@ import {
   type PlaybookFrameworkLineItem,
   type PlaybookWorkflow,
   defaultEmptyPlaybookWorkflow,
+  getPlaybookWorkflow,
   sumPlaybookFrameworkCosts,
 } from "@/lib/playbook-workflow";
 import {
@@ -70,6 +78,47 @@ function numOrNull(v: string): number | null {
   if (t === "") return null;
   const n = Number(t);
   return Number.isFinite(n) ? n : null;
+}
+
+function playbookFormStateFromEvent(
+  event: Event,
+  orgMarketingArtFormUrl: string | null | undefined
+) {
+  const wf = getPlaybookWorkflow(event);
+  const pm = getPlaybookMarketing(event);
+  const artUrl =
+    effectiveArtRequestFormUrl(event, orgMarketingArtFormUrl ?? null) ??
+    SPM_ART_REQUEST_FORM_URL;
+
+  return {
+    place: event.location ?? "",
+    title: event.name ?? "",
+    date: event.date ?? "",
+    timeStart: event.event_time_start ?? "",
+    timeEnd: event.event_time_end ?? "",
+    coreActivities:
+      event.core_activities?.trim() || event.description?.trim() || "",
+    owner: event.owner ?? "",
+    eventType: (event.event_type ?? "") as EventType | "",
+    plannedBudget:
+      event.planned_budget != null &&
+      Number.isFinite(Number(event.planned_budget))
+        ? String(event.planned_budget)
+        : "",
+    workflow: wf,
+    marketing: {
+      ...pm,
+      art_request_form_url: artUrl,
+      engagement_goal_label: pm.engagement_goal_label?.trim()
+        ? pm.engagement_goal_label
+        : "QR scans",
+      engagement_goal_target:
+        pm.engagement_goal_target != null &&
+        Number.isFinite(pm.engagement_goal_target)
+          ? pm.engagement_goal_target
+          : 35,
+    },
+  };
 }
 
 function StaticInfoCard({
@@ -182,6 +231,18 @@ function LineItemBucket({
   );
 }
 
+export type NewEventPlaybookFormProps = {
+  allEvents: EventBudgetPeer[];
+  prefetchedMonthlyBudgets?: MonthlyBudget[];
+  prefetchedForYearMonth?: string | null;
+  onBudgetPeersMonthChange?: (yearMonth: string) => void;
+  onSubmit: (payload: NewEventPlaybookSubmitPayload) => Promise<void>;
+  onCancel?: () => void;
+  /** When set, the form initializes from this row and monthly-cap peer math excludes it. */
+  editSourceEvent?: Event;
+  orgMarketingArtFormUrl?: string | null;
+};
+
 export function NewEventPlaybookForm({
   allEvents,
   prefetchedMonthlyBudgets,
@@ -189,33 +250,43 @@ export function NewEventPlaybookForm({
   onBudgetPeersMonthChange,
   onSubmit,
   onCancel,
-}: {
-  allEvents: EventBudgetPeer[];
-  prefetchedMonthlyBudgets?: MonthlyBudget[];
-  prefetchedForYearMonth?: string | null;
-  onBudgetPeersMonthChange?: (yearMonth: string) => void;
-  onSubmit: (payload: NewEventPlaybookSubmitPayload) => Promise<void>;
-  onCancel?: () => void;
-}) {
-  const [place, setPlace] = useState("");
-  const [title, setTitle] = useState("");
-  const [date, setDate] = useState("");
-  const [timeStart, setTimeStart] = useState("");
-  const [timeEnd, setTimeEnd] = useState("");
-  const [coreActivities, setCoreActivities] = useState("");
-  const [owner, setOwner] = useState("");
-  const [eventType, setEventType] = useState<EventType | "">("");
-  const [plannedBudget, setPlannedBudget] = useState("");
-  const [workflow, setWorkflow] = useState<PlaybookWorkflow>(() =>
-    defaultEmptyPlaybookWorkflow()
+  editSourceEvent,
+  orgMarketingArtFormUrl = null,
+}: NewEventPlaybookFormProps) {
+  const isEdit = Boolean(editSourceEvent);
+  const boot =
+    editSourceEvent != null
+      ? playbookFormStateFromEvent(editSourceEvent, orgMarketingArtFormUrl)
+      : null;
+
+  const [place, setPlace] = useState(() => boot?.place ?? "");
+  const [title, setTitle] = useState(() => boot?.title ?? "");
+  const [date, setDate] = useState(() => boot?.date ?? "");
+  const [timeStart, setTimeStart] = useState(() => boot?.timeStart ?? "");
+  const [timeEnd, setTimeEnd] = useState(() => boot?.timeEnd ?? "");
+  const [coreActivities, setCoreActivities] = useState(
+    () => boot?.coreActivities ?? ""
   );
-  const [marketing, setMarketing] = useState<PlaybookMarketing>(() => ({
-    ...defaultPlaybookMarketing(),
-    art_request_form_url: SPM_ART_REQUEST_FORM_URL,
-    engagement_goal_label: "QR scans",
-    engagement_goal_target: 35,
-    asset_requests: mergeAssetRequestsWithCatalog([]),
-  }));
+  const [owner, setOwner] = useState(() => boot?.owner ?? "");
+  const [eventType, setEventType] = useState<EventType | "">(
+    () => boot?.eventType ?? ""
+  );
+  const [plannedBudget, setPlannedBudget] = useState(
+    () => boot?.plannedBudget ?? ""
+  );
+  const [workflow, setWorkflow] = useState<PlaybookWorkflow>(
+    () => boot?.workflow ?? defaultEmptyPlaybookWorkflow()
+  );
+  const [marketing, setMarketing] = useState<PlaybookMarketing>(() => {
+    if (boot?.marketing) return boot.marketing;
+    return {
+      ...defaultPlaybookMarketing(),
+      art_request_form_url: SPM_ART_REQUEST_FORM_URL,
+      engagement_goal_label: "QR scans",
+      engagement_goal_target: 35,
+      asset_requests: mergeAssetRequestsWithCatalog([]),
+    };
+  });
   const [webGraphicFile, setWebGraphicFile] = useState<File | null>(null);
   const [pageBannerFile, setPageBannerFile] = useState<File | null>(null);
   const [savedPrompt1Block, setSavedPrompt1Block] = useState<string | null>(
@@ -315,7 +386,8 @@ export function NewEventPlaybookForm({
     const othersPlanned = sumOthersPlannedForMonth(
       allEvents,
       yearMonth,
-      singleVenueMonth ? "" : locationKey
+      singleVenueMonth ? "" : locationKey,
+      editSourceEvent?.id
     );
     const total = othersPlanned + thisCommitted;
     const exceeds = cap > 0 && total > cap;
@@ -376,12 +448,22 @@ export function NewEventPlaybookForm({
       date,
       location: place.trim(),
       owner: owner.trim(),
-      status: "planning" as EventStatus,
+      status:
+        isEdit && editSourceEvent
+          ? editSourceEvent.status
+          : ("planning" as EventStatus),
       description: coreActivities.trim().slice(0, 20000),
       event_type: eventType === "" ? null : eventType,
       planned_budget: numOrNull(plannedBudget),
-      actual_budget: null,
-      event_goals: purposeGoalsText,
+      actual_budget: isEdit
+        ? editSourceEvent?.actual_budget != null
+          ? Number(editSourceEvent.actual_budget)
+          : null
+        : null,
+      event_goals:
+        isEdit && editSourceEvent?.event_goals?.trim()
+          ? editSourceEvent.event_goals
+          : purposeGoalsText,
       core_activities: coreActivities.trim() || null,
       event_time_start: timeStart.trim() || null,
       event_time_end: timeEnd.trim() || null,
@@ -1222,7 +1304,11 @@ export function NewEventPlaybookForm({
                       }}
                       className="mt-1 rounded border-harley-gray"
                     />
-                    <span>I understand and want to create the event anyway.</span>
+                    <span>
+                      I understand and want to{" "}
+                      {isEdit ? "save these changes" : "create the event"}{" "}
+                      anyway.
+                    </span>
                   </label>
                 </div>
               </div>
@@ -1234,7 +1320,7 @@ export function NewEventPlaybookForm({
       <FormErrorAlert message={error} />
       <FormActions
         pending={pending}
-        submitLabel="Create event"
+        submitLabel={isEdit ? "Save changes" : "Create event"}
         onCancel={onCancel}
         order="submit-first"
       />

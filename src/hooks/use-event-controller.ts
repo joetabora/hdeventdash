@@ -21,7 +21,7 @@ import {
   apiDeleteEvent,
   apiPatchEvent,
 } from "@/lib/events-api-client";
-import type { EventStatus, EventType } from "@/types/database";
+import type { EventStatus } from "@/types/database";
 import { showError, errorMessage } from "@/lib/toast";
 
 export function useEventController(
@@ -46,7 +46,6 @@ export function useEventController(
     refetch,
   } = useEventDetailData(eventId, initial);
 
-  const [editModalOpen, setEditModalOpen] = useState(false);
   const [showStatusPills, setShowStatusPills] = useState(false);
 
   const eventMonthYearMonth = useMemo(() => {
@@ -130,11 +129,6 @@ export function useEventController(
   }, [eventId, eventMonthYearMonth, refetch]);
 
   useEffect(() => {
-    if (!editModalOpen || !event || !eventMonthYearMonth) return;
-    void refetch.budgetContextForMonth(eventMonthYearMonth);
-  }, [editModalOpen, event, eventMonthYearMonth, refetch]);
-
-  useEffect(() => {
     const root = document.documentElement;
     if (event?.is_live_mode) {
       root.classList.add("event-live-shell");
@@ -208,57 +202,6 @@ export function useEventController(
     [event, setEvent]
   );
 
-  const handleEditSubmit = useCallback(
-    async (data: {
-      name: string;
-      date: string;
-      location: string;
-      owner: string;
-      status: string;
-      description: string;
-      onedrive_link: string;
-      event_type: EventType | null;
-      planned_budget: number | null;
-      actual_budget: number | null;
-      event_goals: string | null;
-      core_activities: string | null;
-      giveaway_description: string | null;
-      giveaway_link: string | null;
-      rsvp_incentive: string | null;
-      rsvp_link: string | null;
-      playbook_marketing?: import("@/lib/playbook-marketing").PlaybookMarketing;
-    }) => {
-      if (!event) return;
-      try {
-        const { playbook_marketing, ...rest } = data;
-        const updated = await apiPatchEvent(event.id, {
-          ...rest,
-          status: rest.status as EventStatus,
-          onedrive_link: rest.onedrive_link || null,
-          event_type: rest.event_type,
-          planned_budget: rest.planned_budget,
-          actual_budget: rest.actual_budget,
-          event_goals: rest.event_goals,
-          core_activities: rest.core_activities,
-          giveaway_description: rest.giveaway_description,
-          giveaway_link: rest.giveaway_link,
-          rsvp_incentive: rest.rsvp_incentive,
-          rsvp_link: rest.rsvp_link,
-          ...(playbook_marketing != null
-            ? { playbook_marketing }
-            : {}),
-        });
-        setEditModalOpen(false);
-        setEvent(updated);
-        void refetch.budgetContextForMonth(eventDateToYearMonth(updated.date));
-      } catch (err) {
-        console.error("Failed to save event:", err);
-        showError(errorMessage(err, "Failed to save event."));
-      }
-    },
-    [event, setEvent, refetch]
-  );
-
   const handleDelete = useCallback(async () => {
     if (!event) return;
     if (
@@ -293,8 +236,6 @@ export function useEventController(
     budgetSummaryForEventMonth,
     canManageEvents,
     isAdmin,
-    editModalOpen,
-    setEditModalOpen,
     showStatusPills,
     setShowStatusPills,
     allChecklistComplete,
@@ -310,7 +251,6 @@ export function useEventController(
     handleToggleLiveMode,
     handleToggleSwapMeet,
     handleStatusChange,
-    handleEditSubmit,
     handleDelete,
     onBudgetPeersMonthChange: (yearMonth: string) => {
       void refetch.budgetContextForMonth(yearMonth);

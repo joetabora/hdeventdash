@@ -2,7 +2,6 @@ import type { ChecklistSection } from "@/types/database";
 
 export const PLAYBOOK_PHASE_IDS = [
   "define",
-  "prepare",
   "market",
   "week",
   "after",
@@ -13,14 +12,13 @@ export type PlaybookPhaseId = (typeof PLAYBOOK_PHASE_IDS)[number];
 
 export const PLAYBOOK_PHASE_LABELS: Record<PlaybookPhaseId, string> = {
   define: "Define",
-  prepare: "Prepare",
   market: "Market & publish",
   week: "Week & day-of",
   after: "After",
   supporting: "Supporting",
 };
 
-/** Checklist sections shown under Prepare (Playbook pre-event + materials). */
+/** @deprecated Prepare phase removed from UI; sections can be merged into other views if needed. */
 export const PLAYBOOK_PREPARE_SECTIONS: readonly ChecklistSection[] = [
   "Pre-Event Preparation",
   "Checklist / Materials",

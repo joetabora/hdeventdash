@@ -1,8 +1,6 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { Modal } from "@/components/ui/modal";
-import { EventForm } from "@/components/events/event-form";
 import { EventRecap } from "@/components/events/event-recap";
 import {
   DynamicAiAssistant,
@@ -26,13 +24,21 @@ import {
   EventVendorWithVendor,
   MonthlyBudget,
   SwapMeetSpot,
-  EVENT_TYPES,
 } from "@/types/database";
 import type { EventBudgetPeer } from "@/lib/budgets";
+import { eventDateToYearMonth } from "@/lib/budgets";
 import { useEventController } from "@/hooks/use-event-controller";
 import { SwapMeetSection } from "@/components/events/swap-meet-section";
+import {
+  NewEventPlaybookForm,
+  type NewEventPlaybookSubmitPayload,
+} from "@/components/events/new-event-playbook-form";
+import {
+  apiPatchEvent,
+  apiUploadMedia,
+} from "@/lib/events-api-client";
+import { errorMessage, showError } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   BarChart3,
   DollarSign,
@@ -45,7 +51,6 @@ import {
 } from "lucide-react";
 import {
   PLAYBOOK_AFTER_SECTIONS,
-  PLAYBOOK_PREPARE_SECTIONS,
   PLAYBOOK_WEEK_SECTIONS,
   type PlaybookPhaseId,
 } from "@/lib/playbook-phases";
@@ -106,6 +111,38 @@ export function EventDetailClient({
     });
   }, []);
 
+  const handlePlaybookEditSave = useCallback(
+    async (payload: NewEventPlaybookSubmitPayload) => {
+      const ev = c.event;
+      if (!ev) return;
+      const { body, webGraphicFile, pageBannerFile } = payload;
+      try {
+        const updated = await apiPatchEvent(ev.id, { ...body });
+        c.setEvent(updated);
+        if (webGraphicFile) {
+          await apiUploadMedia(updated.id, webGraphicFile, "marketing_asset");
+        }
+        if (pageBannerFile) {
+          await apiUploadMedia(updated.id, pageBannerFile, "marketing_asset");
+        }
+        void c.refetch.budgetContextForMonth(eventDateToYearMonth(updated.date));
+      } catch (err) {
+        console.error(err);
+        showError(errorMessage(err, "Failed to save event."));
+      }
+    },
+    [c.event, c.setEvent, c.refetch]
+  );
+
+  const scrollToPlaybookForm = useCallback(() => {
+    setPlaybookPhase("define");
+    requestAnimationFrame(() => {
+      document
+        .getElementById("event-playbook-form")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, []);
+
   if (!c.event) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -156,11 +193,6 @@ export function EventDetailClient({
     />
   );
 
-  const eventTypeLabel = c.event.event_type
-    ? EVENT_TYPES.find((t) => t.value === c.event!.event_type)?.label ??
-      c.event.event_type
-    : null;
-
   return (
     <>
       <div
@@ -180,7 +212,7 @@ export function EventDetailClient({
           showStatusPills={c.showStatusPills}
           setShowStatusPills={c.setShowStatusPills}
           onToggleLiveMode={c.handleToggleLiveMode}
-          onOpenEdit={() => c.setEditModalOpen(true)}
+          onOpenEdit={scrollToPlaybookForm}
           onDelete={c.handleDelete}
           onStatusChange={c.handleStatusChange}
           budgetSummaryForEventMonth={c.budgetSummaryForEventMonth}
@@ -202,30 +234,25 @@ export function EventDetailClient({
 
         <div className="mt-5 sm:mt-6 space-y-8 print:space-y-6">
           <div className={phaseContentClass(playbookPhase, "define")}>
-            <CollapsibleSection
-              icon={<Info className="w-4.5 h-4.5" />}
-              title="Define"
-              defaultOpen={true}
-            >
-              <div className="space-y-4 text-sm text-harley-text-muted leading-relaxed">
-                {eventTypeLabel ? (
-                  <div>
-                    <p className="text-[11px] uppercase tracking-wide font-semibold mb-1.5">
-                      Event type
-                    </p>
-                    <Badge variant="default" className="text-xs font-normal">
-                      {eventTypeLabel}
-                    </Badge>
-                  </div>
-                ) : null}
-                <p>
-                  Purpose, core activities, and promotions are summarized in the
-                  card below the title. Use{" "}
-                  <span className="text-harley-text font-medium">Edit</span> to
-                  change them, or open another playbook phase to continue setup.
+            <div id="event-playbook-form" className="scroll-mt-28 space-y-6">
+              {c.canManageEvents ? (
+                <NewEventPlaybookForm
+                  key={c.event.updated_at ?? c.event.id}
+                  editSourceEvent={c.event}
+                  allEvents={c.budgetPeers}
+                  prefetchedMonthlyBudgets={c.monthlyBudgetsForEventMonth}
+                  prefetchedForYearMonth={c.eventMonthYearMonth}
+                  onBudgetPeersMonthChange={c.onBudgetPeersMonthChange}
+                  orgMarketingArtFormUrl={orgMarketingArtFormUrl}
+                  onSubmit={handlePlaybookEditSave}
+                />
+              ) : (
+                <p className="text-sm text-harley-text-muted">
+                  You don&apos;t have permission to edit this event&apos;s
+                  playbook. Contact a manager for updates.
                 </p>
-              </div>
-            </CollapsibleSection>
+              )}
+            </div>
 
             {c.event.has_swap_meet ? (
               <CollapsibleSection
@@ -271,30 +298,6 @@ export function EventDetailClient({
                 </Button>
               </div>
             ) : null}
-          </div>
-
-          <div className={phaseContentClass(playbookPhase, "prepare")}>
-            <CollapsibleSection
-              icon={<Info className="w-4.5 h-4.5" />}
-              title="Prepare"
-              defaultOpen={true}
-            >
-              <p className="text-xs text-harley-text-muted mb-3 leading-relaxed">
-                Pre-event preparation and day-of materials checklist (from your
-                Event Playbook).
-              </p>
-              <EventDetailChecklist
-                mode="standard"
-                eventId={c.event.id}
-                checklist={c.checklist}
-                canManageEvents={c.canManageEvents}
-                onChecklistInvalidate={c.onChecklistInvalidate}
-                onOptimisticPatch={c.localPatch.checklistItem}
-                onBudgetContextInvalidate={c.onBudgetContextInvalidate}
-                sectionsFilter={PLAYBOOK_PREPARE_SECTIONS}
-                embedded
-              />
-            </CollapsibleSection>
           </div>
 
           <div className={phaseContentClass(playbookPhase, "market")}>
@@ -422,31 +425,6 @@ export function EventDetailClient({
           </div>
         </div>
       </div>
-
-      {c.canManageEvents && (
-        <Modal
-          isOpen={c.editModalOpen}
-          onClose={() => c.setEditModalOpen(false)}
-          title="Edit Event"
-          size="lg"
-        >
-          <EventForm
-            key={`${c.event.id}-${c.event.updated_at}`}
-            event={c.event}
-            canEditBudget={c.canManageEvents}
-            allEvents={c.budgetPeers}
-            prefetchedMonthlyBudgets={c.monthlyBudgetsForEventMonth}
-            prefetchedForYearMonth={c.eventMonthYearMonth}
-            checklistEstimatedTotalForEvent={c.checklistEstimatedTotal}
-            vendorFeeTotalForEvent={c.vendorFeeTotal}
-            onBudgetPeersMonthChange={c.onBudgetPeersMonthChange}
-            onSubmit={c.handleEditSubmit}
-            onCancel={() => c.setEditModalOpen(false)}
-            submitLabel="Save Changes"
-            orgMarketingArtFormUrl={orgMarketingArtFormUrl}
-          />
-        </Modal>
-      )}
 
       <EventMobileActionBar
         eventId={c.event.id}
