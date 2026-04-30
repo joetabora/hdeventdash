@@ -90,18 +90,16 @@ export async function getEventBudgetSummariesForMonth(
   if (!/^\d{4}-\d{2}$/.test(ym)) return [];
   const monthStart = `${ym}-01`;
   const nextStart = firstDayOfNextCalendarMonth(ym);
+  /** Use `*` so we do not reference `playbook_workflow` before that column exists (migration). */
   const { data, error } = await supabase
     .from("events")
-    .select("id, date, location, location_key, planned_budget, is_archived, playbook_workflow")
+    .select("*")
     .eq("is_archived", false)
     .gte("date", monthStart)
     .lt("date", nextStart);
   if (error) throw error;
-  const peers = (data ?? []) as Omit<
-    EventBudgetPeer,
-    "checklist_estimated_total" | "playbook_line_items_total"
-  >[];
-  const ids = peers.map((p) => p.id);
+  const rows = (data ?? []) as Event[];
+  const ids = rows.map((p) => p.id);
   if (ids.length === 0) return [];
 
   const { data: costRows, error: costErr } = await supabase
@@ -117,16 +115,16 @@ export async function getEventBudgetSummariesForMonth(
     byEvent.set(r.event_id, (byEvent.get(r.event_id) ?? 0) + add);
   }
 
-  return peers.map((p) => {
-    const { playbook_workflow: pw, ...rest } = p as typeof p & {
-      playbook_workflow?: unknown;
-    };
-    return {
-      ...rest,
-      checklist_estimated_total: byEvent.get(p.id) ?? 0,
-      playbook_line_items_total: sumPlaybookFrameworkCosts(pw),
-    };
-  });
+  return rows.map((p) => ({
+    id: p.id,
+    date: p.date,
+    location: p.location,
+    location_key: p.location_key ?? null,
+    planned_budget: p.planned_budget ?? null,
+    is_archived: p.is_archived,
+    checklist_estimated_total: byEvent.get(p.id) ?? 0,
+    playbook_line_items_total: sumPlaybookFrameworkCosts(p.playbook_workflow),
+  }));
 }
 
 export type { EventBudgetPeer };
