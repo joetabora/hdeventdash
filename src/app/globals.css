@@ -1,5 +1,29 @@
 @import "tailwindcss";
 
+/* Screen: off-screen instead of display:none so print playbook images actually load
+   (browsers often skip loading <img> inside display:none). */
+@media screen {
+  .playbook-print-only {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    width: 8.5in;
+    max-width: min(8.5in, 100vw);
+    pointer-events: none;
+  }
+}
+
+@media print {
+  .playbook-print-only {
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    width: auto !important;
+    max-width: none !important;
+    pointer-events: auto !important;
+  }
+}
+
 @theme inline {
   /* Accent — orange for buttons, progress, and key highlights only */
   --color-harley-orange: #ff6600;

@@ -458,7 +458,7 @@ export function EventDetailClient({
         </div>
         </div>
 
-        <div className="hidden print:block">
+        <div className="playbook-print-only">
           <EventPlaybookPrintDocument
             event={c.event}
             eventMedia={c.media}

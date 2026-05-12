@@ -1,7 +1,7 @@
 "use client";
 
 import { format, parseISO } from "date-fns";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   EVENT_TYPES,
   type Event,
@@ -37,6 +37,16 @@ import {
 function dash(v: string | null | undefined): string {
   const t = (v ?? "").trim();
   return t || "—";
+}
+
+function mediaFilePathForPlaybookId(
+  eventMedia: EventMedia[],
+  id: string | null | undefined
+): string | null {
+  if (!id?.trim()) return null;
+  const needle = id.trim().toLowerCase();
+  const row = eventMedia.find((m) => m.id.trim().toLowerCase() === needle);
+  return row?.file_path ?? null;
 }
 
 function boolMark(done: boolean | undefined): string {
@@ -103,14 +113,16 @@ export function EventPlaybookPrintDocument({
     PLAYBOOK_MARKETING_ASSET_CATALOG.map((a) => [a.key, a.label])
   );
 
-  const graphicPath = pm.web_graphic_media_id
-    ? eventMedia.find((m) => m.id === pm.web_graphic_media_id)?.file_path ??
-      null
-    : null;
-  const bannerPath = pm.page_banner_media_id
-    ? eventMedia.find((m) => m.id === pm.page_banner_media_id)?.file_path ??
-      null
-    : null;
+  const graphicPath = mediaFilePathForPlaybookId(
+    eventMedia,
+    pm.web_graphic_media_id
+  );
+  const bannerPath = mediaFilePathForPlaybookId(
+    eventMedia,
+    pm.page_banner_media_id
+  );
+
+  const blobRevokeRef = useRef<string[]>([]);
 
   const [webGraphicPrintUrl, setWebGraphicPrintUrl] = useState<string | null>(
     null
@@ -120,6 +132,9 @@ export function EventPlaybookPrintDocument({
   );
 
   useEffect(() => {
+    for (const u of blobRevokeRef.current) URL.revokeObjectURL(u);
+    blobRevokeRef.current = [];
+
     if (!graphicPath && !bannerPath) {
       const t = setTimeout(() => {
         setWebGraphicPrintUrl(null);
@@ -129,20 +144,40 @@ export function EventPlaybookPrintDocument({
     }
     let cancelled = false;
     const supabase = getSupabaseBrowserClient();
+
+    async function pathToPrintableUrl(
+      path: string | null
+    ): Promise<string | null> {
+      if (!path) return null;
+      const signed = await createSignedEventDocumentUrl(supabase, path);
+      if (!signed || cancelled) return null;
+      try {
+        const res = await fetch(signed);
+        if (!res.ok) return signed;
+        const blob = await res.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        blobRevokeRef.current.push(objectUrl);
+        return objectUrl;
+      } catch {
+        return signed;
+      }
+    }
+
     void (async () => {
-      const gu = graphicPath
-        ? await createSignedEventDocumentUrl(supabase, graphicPath)
-        : null;
-      const bu = bannerPath
-        ? await createSignedEventDocumentUrl(supabase, bannerPath)
-        : null;
+      const [gu, bu] = await Promise.all([
+        pathToPrintableUrl(graphicPath),
+        pathToPrintableUrl(bannerPath),
+      ]);
       if (!cancelled) {
         setWebGraphicPrintUrl(gu);
         setPageBannerPrintUrl(bu);
       }
     })();
+
     return () => {
       cancelled = true;
+      for (const u of blobRevokeRef.current) URL.revokeObjectURL(u);
+      blobRevokeRef.current = [];
     };
   }, [graphicPath, bannerPath]);
 
@@ -392,6 +427,8 @@ export function EventPlaybookPrintDocument({
                   src={webGraphicPrintUrl}
                   alt=""
                   className="eprint-asset-img"
+                  loading="eager"
+                  decoding="sync"
                 />
               </figure>
             ) : null}
@@ -403,6 +440,8 @@ export function EventPlaybookPrintDocument({
                   src={pageBannerPrintUrl}
                   alt=""
                   className="eprint-asset-img"
+                  loading="eager"
+                  decoding="sync"
                 />
               </figure>
             ) : null}
