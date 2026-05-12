@@ -58,6 +58,9 @@ function LoginPageInner() {
               Harley Events
             </span>
           </Link>
+          <p className="mt-3 text-harley-text-muted font-medium">
+            Welcome to MKE HD EVENTS
+          </p>
         </div>
 
         <Card padding="xl">

@@ -8,6 +8,9 @@ export default function Home() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-harley-black px-4">
       <div className="max-w-2xl w-full text-center space-y-8">
         <div className="space-y-4">
+          <p className="text-harley-orange font-semibold text-lg tracking-wide">
+            Welcome to MKE HD EVENTS
+          </p>
           <div className="flex items-center justify-center gap-3">
             <Zap className="w-10 h-10 text-harley-orange" />
             <h1 className="text-4xl md:text-5xl font-bold text-harley-text">
