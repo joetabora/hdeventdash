@@ -59,7 +59,7 @@ function LoginPageInner() {
             </span>
           </Link>
           <p className="mt-3 text-harley-text-muted font-medium">
-            WELCOME!!
+            Welcome to MKE HD EVENTS
           </p>
         </div>
 
