@@ -26,10 +26,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push
+            - name: Build and push
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           tags: ghcr.io/joetabora/hdeventdash:latest
           platforms: linux/amd64
+          build-args: |
+            NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+            SECRET_ENCRYPTION_KEY=${{ secrets.SECRET_ENCRYPTION_KEY }}
