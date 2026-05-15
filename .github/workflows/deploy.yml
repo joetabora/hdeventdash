@@ -1,4 +1,4 @@
-name: Deploy via SSH
+name: Deploy (Self-Hosted Runner)
 
 on:
   push:
@@ -6,18 +6,10 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
-      - name: Deploy to server
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          script: |
-            cd /opt/stacks/events
-            git reset --hard origin/main
-            git pull origin main
-            docker compose down
-            docker compose up -d --build
+      - name: Deploy application
+        run: |
+          set -e
+          /opt/deploy/events/deploy.sh
