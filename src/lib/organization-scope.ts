@@ -1,9 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
- * HttpOnly cookie: preferred organization when a user belongs to several (future).
- * Today the DB still enforces one membership per user (`UNIQUE(user_id)` on
- * `organization_members`); the cookie is a no-op until that constraint is relaxed.
+ * HttpOnly cookie: SSR hint for dealership selection alongside JWT
+ * `user_metadata.active_organization_id` (preferred for RLS alignment).
+ *
+ * Allows multiple memberships per user (`organization_members`).
  */
 export const ORGANIZATION_SELECTION_COOKIE_NAME = "hd_current_org_id";
 

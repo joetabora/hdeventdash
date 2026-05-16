@@ -11,11 +11,7 @@ import type { Organization } from "@/types/database";
 export type CurrentOrganizationContextValue = {
   /** Active organization for this session (server-resolved cookie + membership). */
   currentOrganization: Organization | null;
-  /**
-   * Organizations the signed-in user belongs to. With the current DB constraint
-   * (`UNIQUE(user_id)` on organization_members) this is at most one row; the
-   * array shape supports a future multi-membership migration.
-   */
+  /** Organizations the signed-in user belongs to (Milwaukee + West Bend, etc.). */
   memberships: Organization[];
 };
 

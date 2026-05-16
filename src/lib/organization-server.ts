@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { ACTIVE_ORG_USER_METADATA_KEY } from "@/lib/active-organization";
 import {
   ORGANIZATION_SELECTION_COOKIE_NAME,
   isValidOrganizationIdCookieValue,
@@ -16,19 +17,31 @@ export async function readOrganizationSelectionCookie(): Promise<string | undefi
 }
 
 /**
- * Resolves the active organization for this request (cookie + membership).
- * Use from server entrypoints (layout, API routes, RSC) instead of assuming a single membership row.
+ * Resolves the active organization for this request:
+ * validates membership for JWT `active_organization_id` first (matches Postgres RLS),
+ * then HttpOnly cookie, then earliest membership order.
  */
 export async function getSessionOrganizationId(
   supabase: SupabaseClient
 ): Promise<string | null> {
-  const preferred = await readOrganizationSelectionCookie();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const fromJwtRaw = user?.user_metadata?.[ACTIVE_ORG_USER_METADATA_KEY];
+  const fromJwt =
+    typeof fromJwtRaw === "string" &&
+    isValidOrganizationIdCookieValue(fromJwtRaw)
+      ? fromJwtRaw.trim()
+      : undefined;
+
+  const fromCookie = await readOrganizationSelectionCookie();
+  const preferred = fromJwt ?? fromCookie ?? undefined;
+
   return getCurrentOrganizationId(supabase, preferred);
 }
 
 /**
  * Persists org selection after the caller has verified membership (e.g. Server Action).
- * No-op safe: still subject to DB `UNIQUE(user_id)` until multi-membership is enabled.
  */
 export async function setOrganizationSelectionCookie(
   organizationId: string

@@ -2,6 +2,7 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 /**
  * Service-role client for trusted server routes only (cron, admin Auth API).
+ * Queries bypass RLS and can read rows across dealerships (push-reminder cron scans every eligible event).
  * Never import in client components or expose to the browser.
  */
 export function createAdminClient(): SupabaseClient | null {
