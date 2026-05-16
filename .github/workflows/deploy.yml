@@ -1,19 +1,14 @@
-name: Deploy via SSH
+name: Deploy App
 
 on:
   push:
-    branches: ["main"]
+    branches:
+      - main
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
-      - name: SSH Deploy
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          script: |
-            /opt/deploy/events/deploy.sh
+      - name: Run deploy script
+        run: /opt/deploy/events/deploy.sh
