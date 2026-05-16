@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { ACTIVE_ORG_USER_METADATA_KEY } from "@/lib/active-organization";
 import { createClient } from "@/lib/supabase/server";
@@ -37,5 +38,12 @@ export async function switchOrganization(formData: FormData): Promise<void> {
   }
 
   await setOrganizationSelectionCookie(organizationId);
-  redirect("/dashboard");
+  /** Drop stale RSC/router payload so the next paint reads the new org cookie. */
+  revalidatePath("/", "layout");
+  revalidatePath("/dashboard", "layout");
+  /**
+   * `org_switch` makes searchParams change even when already on `/dashboard`, so
+   * AuthSessionSync can refresh the JWT and call `router.refresh()` (pathname alone may not change).
+   */
+  redirect("/dashboard?org_switch=1");
 }
