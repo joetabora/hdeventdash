@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { getCachedOrganizationSession } from "@/lib/app-organization-session";
 import {
   getEventsForDashboard,
 } from "@/lib/events";
@@ -12,7 +12,6 @@ import {
   budgetMonthToDbDate,
   loadMonthCapTimeline,
 } from "@/lib/budgets";
-import { getSessionOrganizationId } from "@/lib/organization-server";
 import { BudgetPageClient } from "./budget-page-client";
 import { Loader2 } from "lucide-react";
 
@@ -22,8 +21,7 @@ function currentYearMonth(): string {
 }
 
 export default async function BudgetPage() {
-  const supabase = await createClient();
-  const orgId = await getSessionOrganizationId(supabase);
+  const { supabase, sessionOrgId: orgId } = await getCachedOrganizationSession();
   const budgetMonth = currentYearMonth();
   const active = await getEventsForDashboard(supabase);
   const [initialMonthlyBudgets, initialAggregates, initialMonthTimeline] =

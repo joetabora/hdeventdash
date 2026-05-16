@@ -1,33 +1,33 @@
 "use client";
 
 import { Suspense, useEffect } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 /**
- * After server actions update Auth user_metadata (e.g. dealership switch),
- * the browser may still hold an old access token; refresh so Postgres RLS/JWT align.
+ * After dealership switch, `updateUser` metadata can lag behind the HttpOnly org cookie.
+ * Only run on `?org_switch=1` (see switchOrganization action): refresh JWT, refetch RSC,
+ * drop the query param.
  *
- * Also handles org switch landing on `/dashboard` with unchanged pathname: the server
- * redirects with `?org_switch=1` so we run `refreshSession` + `router.refresh()`.
+ * We intentionally do not call `refreshSession` on every pathname change — that added
+ * a Supabase round trip per navigation and made the app feel slow.
  */
 function AuthSessionSyncInner() {
-  const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
   const orgSwitch = searchParams.get("org_switch");
 
   useEffect(() => {
+    if (orgSwitch !== "1") return;
+
     const supabase = getSupabaseBrowserClient();
     const run = async () => {
       await supabase.auth.refreshSession();
-      if (orgSwitch === "1") {
-        router.refresh();
-        router.replace("/dashboard", { scroll: false });
-      }
+      router.refresh();
+      router.replace("/dashboard", { scroll: false });
     };
     void run();
-  }, [pathname, orgSwitch, router]);
+  }, [orgSwitch, router]);
 
   return null;
 }

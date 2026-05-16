@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { getSessionOrganizationId } from "@/lib/organization-server";
+import { getCachedOrganizationSession } from "@/lib/app-organization-session";
 import { getEventBudgetSummariesForMonth } from "@/lib/events";
 import { getUserRole, canManageEventsRole } from "@/lib/roles";
 import { NewEventClient } from "./new-event-client";
@@ -11,16 +10,12 @@ function currentYearMonth(): string {
 }
 
 export default async function NewEventPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user, sessionOrgId: organizationId } =
+    await getCachedOrganizationSession();
 
   if (!user) {
     redirect("/auth/login");
   }
-
-  const organizationId = await getSessionOrganizationId(supabase);
   if (!organizationId) {
     redirect("/dashboard");
   }

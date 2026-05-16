@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { DashboardContent } from "@/components/dashboard/dashboard-content";
-import { createClient } from "@/lib/supabase/server";
+import { getCachedOrganizationSession } from "@/lib/app-organization-session";
 import {
   getEventsForDashboard,
   getChecklistStatsForEvents,
@@ -17,7 +17,7 @@ function currentYearMonth(): string {
 }
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
+  const { supabase, sessionOrgId } = await getCachedOrganizationSession();
   const budgetMonth = currentYearMonth();
   const active = await getEventsForDashboard(supabase);
   const [initialChecklistStats, initialAggregates] = await Promise.all([
@@ -48,8 +48,12 @@ export default async function DashboardPage() {
     .sort()
     .join("|");
 
-  /** Remount client when server snapshot changes (e.g. router.refresh) without prop→state effects. */
+  /**
+   * Remount client when data or org changes (avoids stale `useState(initialEvents)`;
+   * org id included so dealership switches always reset even when snapshots look similar).
+   */
   const dashboardClientKey = [
+    sessionOrgId ?? "",
     budgetMonth,
     checklistStatsKey,
     ...active.map((e) => `${e.id}:${e.updated_at}`),

@@ -1,5 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
-import { getSessionOrganizationId } from "@/lib/organization-server";
+import { getCachedOrganizationSession } from "@/lib/app-organization-session";
 import { isAdmin } from "@/lib/roles";
 import {
   listManagedUsersForAdmin,
@@ -8,10 +7,8 @@ import {
 import { UserManagementClient } from "./user-management-client";
 
 export default async function AdminUsersPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user, sessionOrgId: organizationId } =
+    await getCachedOrganizationSession();
 
   const deniedKey = "admin-users:denied" as const;
 
@@ -26,7 +23,6 @@ export default async function AdminUsersPage() {
     );
   }
 
-  const organizationId = await getSessionOrganizationId(supabase);
   if (!organizationId) {
     return (
       <UserManagementClient
@@ -58,9 +54,10 @@ export default async function AdminUsersPage() {
     initialUsers = [];
   }
 
-  const usersClientKey = initialUsers
-    .map((u) => `${u.id}:${u.role}:${u.created_at}`)
-    .join("|");
+  const usersClientKey = [
+    organizationId,
+    ...initialUsers.map((u) => `${u.id}:${u.role}:${u.created_at}`),
+  ].join("|");
 
   return (
     <UserManagementClient

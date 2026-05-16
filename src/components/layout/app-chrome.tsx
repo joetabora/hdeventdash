@@ -20,9 +20,12 @@ const PushNotificationPrompt = dynamic(
 export function AppChrome({
   children,
   userEmail,
+  activeOrganizationId,
 }: {
   children: React.ReactNode;
   userEmail: string | null;
+  /** When the dealership changes, remount page clients so `useState(initial…)` cannot show the prior org. */
+  activeOrganizationId: string | null;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -40,6 +43,7 @@ export function AppChrome({
         <main className="flex-1 overflow-y-auto">
           <div
             id="app-shell-scroll-inner"
+            key={activeOrganizationId ?? "no-org"}
             className="mx-auto w-full max-w-7xl px-4 py-6 lg:px-8 lg:py-8"
           >
             {children}

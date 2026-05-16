@@ -1,10 +1,6 @@
 import { AppProviders } from "@/components/layout/app-providers";
 import { AppChrome } from "@/components/layout/app-chrome";
-import { createClient } from "@/lib/supabase/server";
-import { getSessionOrganizationId } from "@/lib/organization-server";
-import {
-  listOrganizationsForUser,
-} from "@/lib/organization";
+import { getCachedOrganizationSession } from "@/lib/app-organization-session";
 import { getUserRole } from "@/lib/roles";
 
 export default async function AppLayout({
@@ -12,15 +8,9 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user, sessionOrgId, memberships } =
+    await getCachedOrganizationSession();
 
-  const memberships = user
-    ? await listOrganizationsForUser(supabase, user.id)
-    : [];
-  const sessionOrgId = await getSessionOrganizationId(supabase);
   const currentOrganization =
     sessionOrgId != null
       ? memberships.find((o) => o.id === sessionOrgId) ?? null
@@ -39,7 +29,9 @@ export default async function AppLayout({
         currentOrganization={currentOrganization}
         memberships={memberships}
       >
-        <AppChrome userEmail={userEmail}>{children}</AppChrome>
+        <AppChrome userEmail={userEmail} activeOrganizationId={sessionOrgId}>
+          {children}
+        </AppChrome>
       </AppProviders>
     </div>
   );
