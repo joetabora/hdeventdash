@@ -31,7 +31,10 @@ export async function switchOrganization(formData: FormData): Promise<void> {
   const { error } = await supabase.auth.updateUser({
     data: { [ACTIVE_ORG_USER_METADATA_KEY]: organizationId },
   });
-  if (error) redirect("/dashboard");
+  if (error) {
+    console.error("switchOrganization updateUser failed:", error.message);
+    redirect("/dashboard");
+  }
 
   await setOrganizationSelectionCookie(organizationId);
   redirect("/dashboard");

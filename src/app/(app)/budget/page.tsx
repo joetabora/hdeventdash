@@ -12,6 +12,7 @@ import {
   budgetMonthToDbDate,
   loadMonthCapTimeline,
 } from "@/lib/budgets";
+import { getSessionOrganizationId } from "@/lib/organization-server";
 import { BudgetPageClient } from "./budget-page-client";
 import { Loader2 } from "lucide-react";
 
@@ -22,28 +23,34 @@ function currentYearMonth(): string {
 
 export default async function BudgetPage() {
   const supabase = await createClient();
+  const orgId = await getSessionOrganizationId(supabase);
   const budgetMonth = currentYearMonth();
   const active = await getEventsForDashboard(supabase);
   const [initialMonthlyBudgets, initialAggregates, initialMonthTimeline] =
     await Promise.all([
-    getMonthlyBudgetsForMonth(supabase, budgetMonthToDbDate(budgetMonth)),
-    fetchDashboardAggregates(supabase, {
-      budgetMonth,
-      budgetLocationKey: "",
-      search: "",
-      locationKey: "",
-      owner: "",
-    }).catch((err) => {
-      console.error(
-        "dashboard_aggregates RPC failed (run supabase-migration-dashboard-aggregates.sql):",
-        err
-      );
-      return parseDashboardAggregatesJson({});
-    }),
-    loadMonthCapTimeline(supabase),
-  ]);
+      getMonthlyBudgetsForMonth(
+        supabase,
+        budgetMonthToDbDate(budgetMonth),
+        orgId
+      ),
+      fetchDashboardAggregates(supabase, {
+        budgetMonth,
+        budgetLocationKey: "",
+        search: "",
+        locationKey: "",
+        owner: "",
+      }).catch((err) => {
+        console.error(
+          "dashboard_aggregates RPC failed (run supabase-migration-dashboard-aggregates.sql):",
+          err
+        );
+        return parseDashboardAggregatesJson({});
+      }),
+      loadMonthCapTimeline(supabase, undefined, orgId),
+    ]);
 
   const budgetClientKey = [
+    orgId ?? "",
     budgetMonth,
     ...active.map((e) => `${e.id}:${e.updated_at}`),
     ...initialMonthlyBudgets.map((b) => `${b.id}:${b.updated_at}`),
@@ -59,6 +66,7 @@ export default async function BudgetPage() {
     >
       <BudgetPageClient
         key={budgetClientKey}
+        activeOrganizationId={orgId}
         initialEvents={active}
         initialMonthlyBudgets={initialMonthlyBudgets}
         initialBudgetMonth={budgetMonth}

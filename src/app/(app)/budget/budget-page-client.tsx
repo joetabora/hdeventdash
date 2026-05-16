@@ -19,12 +19,14 @@ import { Filter, Wallet } from "lucide-react";
 import { showError } from "@/lib/toast";
 
 export function BudgetPageClient({
+  activeOrganizationId,
   initialEvents,
   initialMonthlyBudgets,
   initialBudgetMonth,
   initialAggregates,
   initialMonthTimeline,
 }: {
+  activeOrganizationId: string | null;
   initialEvents: Event[];
   initialMonthlyBudgets: MonthlyBudget[];
   initialBudgetMonth: string;
@@ -58,11 +60,13 @@ export function BudgetPageClient({
   const refreshTimeline = useCallback(async () => {
     const supabase = getSupabaseBrowserClient();
     try {
-      setMonthTimeline(await loadMonthCapTimeline(supabase));
+      setMonthTimeline(
+        await loadMonthCapTimeline(supabase, undefined, activeOrganizationId)
+      );
     } catch {
       /* keep previous */
     }
-  }, []);
+  }, [activeOrganizationId]);
 
   const refetchAggregates = useCallback(async () => {
     const params = new URLSearchParams({
@@ -100,14 +104,15 @@ export function BudgetPageClient({
       try {
         const rows = await getMonthlyBudgetsForMonth(
           supabase,
-          budgetMonthToDbDate(budgetMonth)
+          budgetMonthToDbDate(budgetMonth),
+          activeOrganizationId
         );
         setMonthlyBudgets(rows);
       } catch {
         setMonthlyBudgets([]);
       }
     })();
-  }, [budgetMonth]);
+  }, [budgetMonth, activeOrganizationId]);
 
   async function reloadMonthlyBudgetsForPickerMonth() {
     const supabase = getSupabaseBrowserClient();
@@ -115,7 +120,8 @@ export function BudgetPageClient({
       setMonthlyBudgets(
         await getMonthlyBudgetsForMonth(
           supabase,
-          budgetMonthToDbDate(budgetMonth)
+          budgetMonthToDbDate(budgetMonth),
+          activeOrganizationId
         )
       );
     } catch {

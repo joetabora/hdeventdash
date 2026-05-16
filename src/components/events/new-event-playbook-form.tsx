@@ -21,6 +21,7 @@ import { Input, Textarea } from "@/components/ui/input";
 import { FormErrorAlert } from "@/components/forms/form-error-alert";
 import { FormActions } from "@/components/forms/form-actions";
 import { useFormSubmitState } from "@/hooks/use-form-submit-state";
+import { useCurrentOrganization } from "@/contexts/current-organization-context";
 import type {
   Event,
   EventMedia,
@@ -259,6 +260,9 @@ export function NewEventPlaybookForm({
   orgMarketingArtFormUrl = null,
 }: NewEventPlaybookFormProps) {
   const isEdit = Boolean(editSourceEvent);
+  const { currentOrganization } = useCurrentOrganization();
+  const budgetOrgId =
+    editSourceEvent?.organization_id ?? currentOrganization?.id ?? null;
   const boot =
     editSourceEvent != null
       ? playbookFormStateFromEvent(editSourceEvent, orgMarketingArtFormUrl)
@@ -426,12 +430,20 @@ export function NewEventPlaybookForm({
 
   useEffect(() => {
     if (!yearMonth || budgetsFromParent) return;
+    if (!budgetOrgId) {
+      queueMicrotask(() => setFetchedMonthlyBudgets([]));
+      return;
+    }
     const supabase = getSupabaseBrowserClient();
     let cancelled = false;
     queueMicrotask(() => {
       if (!cancelled) setBudgetsLoading(true);
     });
-    getMonthlyBudgetsForMonth(supabase, budgetMonthToDbDate(yearMonth))
+    getMonthlyBudgetsForMonth(
+      supabase,
+      budgetMonthToDbDate(yearMonth),
+      budgetOrgId
+    )
       .then((rows) => {
         if (!cancelled) setFetchedMonthlyBudgets(rows);
       })
@@ -444,7 +456,7 @@ export function NewEventPlaybookForm({
     return () => {
       cancelled = true;
     };
-  }, [yearMonth, budgetsFromParent]);
+  }, [yearMonth, budgetsFromParent, budgetOrgId]);
 
   useEffect(() => {
     void Promise.resolve().then(() => setBudgetOverrideConfirmed(false));

@@ -32,6 +32,7 @@ import {
 } from "@/lib/playbook-marketing";
 import { sumPlaybookFrameworkCosts } from "@/lib/playbook-workflow";
 import { AlertTriangle } from "lucide-react";
+import { useCurrentOrganization } from "@/contexts/current-organization-context";
 
 interface EventFormProps {
   event?: Partial<Event>;
@@ -129,6 +130,9 @@ export function EventForm({
   const [budgetOverrideConfirmed, setBudgetOverrideConfirmed] = useState(false);
   const skipNextBudgetMonthFetch = useRef(true);
   const { pending, error, setError, clearError, run } = useFormSubmitState();
+  const { currentOrganization } = useCurrentOrganization();
+  const budgetOrgId =
+    event?.organization_id ?? currentOrganization?.id ?? null;
 
   const yearMonth =
     date.length >= 7 ? eventDateToYearMonth(date) : null;
@@ -157,12 +161,20 @@ export function EventForm({
 
   useEffect(() => {
     if (!yearMonth || budgetsFromParent) return;
+    if (!budgetOrgId) {
+      queueMicrotask(() => setFetchedMonthlyBudgets([]));
+      return;
+    }
     const supabase = getSupabaseBrowserClient();
     let cancelled = false;
     queueMicrotask(() => {
       if (!cancelled) setBudgetsLoading(true);
     });
-    getMonthlyBudgetsForMonth(supabase, budgetMonthToDbDate(yearMonth))
+    getMonthlyBudgetsForMonth(
+      supabase,
+      budgetMonthToDbDate(yearMonth),
+      budgetOrgId
+    )
       .then((rows) => {
         if (!cancelled) setFetchedMonthlyBudgets(rows);
       })
@@ -175,7 +187,7 @@ export function EventForm({
     return () => {
       cancelled = true;
     };
-  }, [yearMonth, budgetsFromParent]);
+  }, [yearMonth, budgetsFromParent, budgetOrgId]);
 
   const budgetCheck = useMemo(() => {
     if (!canEditBudget || !yearMonth) {

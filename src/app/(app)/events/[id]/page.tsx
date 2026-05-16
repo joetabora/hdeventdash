@@ -58,7 +58,8 @@ export default async function EventDetailPage({
     getEventBudgetSummariesForMonth(supabase, budgetMonth).catch(() => []),
     getMonthlyBudgetsForMonth(
       supabase,
-      budgetMonthToDbDate(budgetMonth)
+      budgetMonthToDbDate(budgetMonth),
+      initialEvent.organization_id
     ).catch(() => []),
     getSwapMeetSpots(supabase, id).catch(() => []),
     getCurrentOrganization(supabase).catch(() => null),

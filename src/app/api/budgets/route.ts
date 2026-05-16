@@ -19,6 +19,7 @@ export async function POST(request: Request) {
       month: parsed.data.month,
       location: parsed.data.location,
       budget_amount: parsed.data.budget_amount,
+      organizationId: ctx.organizationId,
     });
     return NextResponse.json(row);
   } catch (e) {

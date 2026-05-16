@@ -17,7 +17,8 @@ export async function POST(request: Request) {
   try {
     const copied = await copyPreviousMonthBudgets(
       ctx.supabase,
-      parsed.data.targetMonth
+      parsed.data.targetMonth,
+      ctx.organizationId
     );
     return NextResponse.json({ ok: true, copied });
   } catch (e) {

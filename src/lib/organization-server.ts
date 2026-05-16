@@ -18,8 +18,8 @@ export async function readOrganizationSelectionCookie(): Promise<string | undefi
 
 /**
  * Resolves the active organization for this request:
- * validates membership for JWT `active_organization_id` first (matches Postgres RLS),
- * then HttpOnly cookie, then earliest membership order.
+ * HttpOnly cookie is preferred over JWT `active_organization_id` so dealership switch
+ * wins immediately; Postgres RLS still keys off JWT until the browser refreshSession runs.
  */
 export async function getSessionOrganizationId(
   supabase: SupabaseClient
@@ -35,7 +35,9 @@ export async function getSessionOrganizationId(
       : undefined;
 
   const fromCookie = await readOrganizationSelectionCookie();
-  const preferred = fromJwt ?? fromCookie ?? undefined;
+
+  /** Prefer HttpOnly org cookie (set on dealership switch) over JWT metadata, which may lag until refreshSession. */
+  const preferred = fromCookie ?? fromJwt ?? undefined;
 
   return getCurrentOrganizationId(supabase, preferred);
 }

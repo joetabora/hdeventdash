@@ -76,20 +76,26 @@ export function buildMonthCapTimeline(
 export async function fetchMonthlyBudgetAmountRowsInRange(
   supabase: SupabaseClient,
   startFirstDay: string,
-  endFirstDay: string
+  endFirstDay: string,
+  organizationId?: string | null
 ): Promise<{ month: string; budget_amount: number }[]> {
-  const { data, error } = await supabase
+  let q = supabase
     .from("monthly_budgets")
     .select("month, budget_amount")
     .gte("month", startFirstDay)
     .lte("month", endFirstDay);
+  if (organizationId) {
+    q = q.eq("organization_id", organizationId);
+  }
+  const { data, error } = await q;
   if (error) throw error;
   return (data ?? []) as { month: string; budget_amount: number }[];
 }
 
 export async function loadMonthCapTimeline(
   supabase: SupabaseClient,
-  now?: Date
+  now?: Date,
+  organizationId?: string | null
 ): Promise<MonthCapRollup[]> {
   const { startYm, startFirstDay, endFirstDay } = planningRangeFromCurrentMonth(now);
   /** Include prior month so "copy from previous" eligibility works for the first chip. */
@@ -97,7 +103,8 @@ export async function loadMonthCapTimeline(
   const rows = await fetchMonthlyBudgetAmountRowsInRange(
     supabase,
     rangeStart,
-    endFirstDay
+    endFirstDay,
+    organizationId
   );
   return buildMonthCapTimeline(
     startYm,
@@ -152,14 +159,19 @@ export function eventDateToYearMonth(isoDate: string): string {
 
 export async function getMonthlyBudgetsForMonth(
   supabase: SupabaseClient,
-  monthFirstDay: string
+  monthFirstDay: string,
+  organizationId?: string | null
 ): Promise<MonthlyBudget[]> {
-  const { data, error } = await supabase
+  let q = supabase
     .from("monthly_budgets")
     .select("*")
     .eq("month", monthFirstDay)
     .order("location_key", { ascending: true })
     .order("location", { ascending: true });
+  if (organizationId) {
+    q = q.eq("organization_id", organizationId);
+  }
+  const { data, error } = await q;
   if (error) throw error;
   return (data ?? []) as MonthlyBudget[];
 }
@@ -170,6 +182,7 @@ export async function upsertMonthlyBudget(
     month: string;
     location: string;
     budget_amount: number;
+    organizationId: string;
   }
 ): Promise<MonthlyBudget> {
   const location = payload.location.trim();
@@ -178,6 +191,7 @@ export async function upsertMonthlyBudget(
     .from("monthly_budgets")
     .upsert(
       {
+        organization_id: payload.organizationId,
         month: payload.month,
         location,
         location_key,
@@ -197,7 +211,8 @@ export async function upsertMonthlyBudget(
  */
 export async function copyPreviousMonthBudgets(
   supabase: SupabaseClient,
-  targetMonthFirstDay: string
+  targetMonthFirstDay: string,
+  organizationId: string
 ): Promise<number> {
   const normalized = budgetMonthToDbDate(targetMonthFirstDay.slice(0, 7));
   const target = parseISO(normalized);
@@ -209,7 +224,8 @@ export async function copyPreviousMonthBudgets(
   const { data: rows, error } = await supabase
     .from("monthly_budgets")
     .select("location, budget_amount")
-    .eq("month", prevStr);
+    .eq("month", prevStr)
+    .eq("organization_id", organizationId);
   if (error) throw error;
   let n = 0;
   for (const r of rows ?? []) {
@@ -219,6 +235,7 @@ export async function copyPreviousMonthBudgets(
       month: normalized,
       location: loc,
       budget_amount: Number(r.budget_amount) || 0,
+      organizationId,
     });
     n += 1;
   }

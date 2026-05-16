@@ -53,7 +53,8 @@ export async function GET(
       getEventBudgetSummariesForMonth(session.supabase, month),
       getMonthlyBudgetsForMonth(
         session.supabase,
-        budgetMonthToDbDate(month)
+        budgetMonthToDbDate(month),
+        session.organizationId
       ),
     ]);
     return NextResponse.json({ events, monthlyBudgets });
