@@ -1,10 +1,30 @@
 -- West Bend Harley-Davidson dealership: new org plus mirrored memberships / roles from Milwaukee.
--- Run AFTER supabase-migration-multi-org-rls.sql
+-- Run AFTER supabase-migration-multi-org-rls.sql (see that file for full production run order).
 --
 -- Assumes Milwaukee is the ORIGINAL dealership org (usually `created_at` first). Existing events stay on that UUID.
+-- This script does NOT copy events, monthly_budgets, vendors, or media — West Bend starts empty for those tables.
 --
 -- Operational note: Cron /api/cron/push-notifications runs with SUPABASE_SERVICE_ROLE_KEY and evaluates events
 -- across every organization — no separate per-org cron is required unless you tighten that job later.
+--
+-- ---------------------------------------------------------------------------
+-- POST-DEPLOY VERIFICATION (run as postgres / service role or Table Editor)
+--   - Two org names:
+--       SELECT id, name FROM public.organizations ORDER BY created_at;
+--   - Each former single-org user has two membership rows (example for one email):
+--       SELECT u.email, o.name, om.created_at
+--       FROM public.organization_members om
+--       JOIN auth.users u ON u.id = om.user_id
+--       JOIN public.organizations o ON o.id = om.organization_id
+--       WHERE u.email = 'you@example.com'
+--       ORDER BY o.name;
+--   - West Bend has zero events until you create them:
+--       SELECT COUNT(*) FROM public.events e
+--       JOIN public.organizations o ON o.id = e.organization_id
+--       WHERE o.name = 'West Bend Harley-Davidson';
+--   - In the app: Sidebar "Switch dealership" → West Bend → Kanban/Budget/Vendors empty;
+--     switch back → Milwaukee data unchanged.
+-- ---------------------------------------------------------------------------
 
 -- ---------------------------------------------------------------------------
 -- 1. Name the primary dealership (the org that owns existing events/data)

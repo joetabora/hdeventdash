@@ -3,6 +3,7 @@
 import { useState, Suspense } from "react";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useCurrentOrganization } from "@/contexts/current-organization-context";
 import { Menu, ChevronDown, LogOut } from "lucide-react";
 
 interface TopHeaderProps {
@@ -23,6 +24,7 @@ function TopHeaderInner({ onMenuToggle, userEmail }: TopHeaderProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [menuOpen, setMenuOpen] = useState(false);
+  const { currentOrganization } = useCurrentOrganization();
 
   const dashboardView = pathname === "/dashboard" ? searchParams.get("view") : null;
   const title =
@@ -50,7 +52,19 @@ function TopHeaderInner({ onMenuToggle, userEmail }: TopHeaderProps) {
         >
           <Menu className="w-5 h-5" />
         </button>
-        <h1 className="text-lg font-semibold text-harley-text">{title}</h1>
+        <div className="flex flex-col min-w-0 gap-0.5">
+          <div className="flex flex-wrap items-center gap-2 min-w-0">
+            <h1 className="text-lg font-semibold text-harley-text">{title}</h1>
+            {currentOrganization?.name ? (
+              <span
+                className="max-w-[min(14rem,calc(100vw-10rem))] truncate rounded-md border border-harley-gray/70 bg-harley-gray/25 px-2 py-0.5 text-xs font-medium text-harley-text-muted"
+                title={currentOrganization.name}
+              >
+                {currentOrganization.name}
+              </span>
+            ) : null}
+          </div>
+        </div>
       </div>
 
       <div className="relative">

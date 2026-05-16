@@ -1,10 +1,19 @@
 -- Multi-dealership: multiple organization memberships + JWT-driven active org for RLS.
 -- Run in Supabase SQL Editor after supabase-migration-organizations.sql and supabase-migration-rbac.sql.
 --
+-- PRODUCTION RUN ORDER (once per Supabase project)
+--   1) Run this file (supabase-migration-multi-org-rls.sql).
+--   2) Run supabase-seed-west-bend-dealership.sql.
+--   3) Deploy the app build that includes switch-dealership UI + switchOrganization action.
+--   4) Have users sign out and sign in once so JWT picks up user_metadata if needed.
+--
+-- If ALTER TABLE ... DROP CONSTRAINT fails, list constraints in SQL Editor:
+--   SELECT conname FROM pg_constraint WHERE conrelid = 'public.organization_members'::regclass;
+--   SELECT conname FROM pg_constraint WHERE conrelid = 'public.user_roles'::regclass;
+-- and drop the UNIQUE constraint on user_id only before re-running this file.
+--
 -- JWT: app sets Supabase Auth user_metadata.active_organization_id (UUID string) via updateUser when switching.
 -- RLS resolves public.current_organization_id() from validated membership rows only.
---
--- After running, seed West Bend dealership with supabase-seed-west-bend-dealership.sql.
 
 -- ---------------------------------------------------------------------------
 -- 1. Constraints: multi-membership and per-org roles
