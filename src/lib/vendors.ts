@@ -1,4 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js";
+
+import { SHARED_VENDORS_ORGANIZATION_ID } from "@/lib/shared-vendors-org";
 import {
   Vendor,
   EventVendor,
@@ -81,6 +83,9 @@ export async function getVendor(
   return data as Vendor;
 }
 
+/**
+ * Inserts a vendor row into the shared catalog (see shared-vendors-org migration).
+ */
 export async function createVendor(
   supabase: SupabaseClient,
   row: {
@@ -104,9 +109,7 @@ export async function createVendor(
       website: row.website ?? "",
       category: row.category ?? "",
       notes: row.notes ?? "",
-      ...(row.organization_id
-        ? { organization_id: row.organization_id }
-        : {}),
+      organization_id: row.organization_id ?? SHARED_VENDORS_ORGANIZATION_ID,
     })
     .select()
     .single();

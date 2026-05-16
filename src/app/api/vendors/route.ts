@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getOrgManagerContext } from "@/lib/admin/require-org-manager";
 import { createVendor, listVendorsPaginated } from "@/lib/vendors";
+import { SHARED_VENDORS_ORGANIZATION_ID } from "@/lib/shared-vendors-org";
 import { vendorCreateSchema } from "@/lib/validation/api-schemas";
 import { parseWithSchema, readJsonBody } from "@/lib/validation/request-json";
 
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
   try {
     const vendor = await createVendor(ctx.supabase, {
       ...parsed.data,
-      organization_id: ctx.organizationId,
+      organization_id: SHARED_VENDORS_ORGANIZATION_ID,
     });
     return NextResponse.json(vendor);
   } catch (e) {

@@ -159,7 +159,7 @@ export function VendorsPageClient({
           <div>
             <h1 className="text-xl font-bold text-harley-text">Vendors</h1>
             <p className="text-sm text-harley-text-muted">
-              Directory for your organization — attach vendors to events from each event page.
+              Shared directory for all dealerships — attach vendors to events from each event page.
             </p>
           </div>
         </div>
