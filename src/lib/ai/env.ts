@@ -1,3 +1,4 @@
+import { loadEnvConfig } from "@next/env";
 import {
   AiDisabledError,
   AiModelNotAllowedError,
@@ -16,9 +17,38 @@ export type AiRuntimeEnv = {
   hostAllowlist: string[];
 };
 
+let aiDotfilesPrimed = false;
+
+/**
+ * Ensures `.env*` files are merged into `process.env` for this Node process.
+ * Needed because route bundles may otherwise miss `.env.local`, and because static
+ * `process.env.FOO` reads can be inlined at build time as `undefined`.
+ */
+function primeAiDotenv(): void {
+  if (aiDotfilesPrimed) return;
+  aiDotfilesPrimed = true;
+  try {
+    loadEnvConfig(process.cwd(), process.env.NODE_ENV !== "production", undefined, true);
+  } catch {
+    /* Non-fatal: fall through to whatever is already on process.env */
+  }
+}
+
+/** Resolve env without static `process.env.KEY` access (avoids Next build-time inlining). */
+function env(key: string): string | undefined {
+  primeAiDotenv();
+  return Reflect.get(process.env, key) as string | undefined;
+}
+
 function parseBool(v: string | undefined): boolean {
   if (v == null) return false;
-  const t = v.trim().toLowerCase();
+  let t = v.trim().toLowerCase();
+  if (
+    (t.startsWith('"') && t.endsWith('"')) ||
+    (t.startsWith("'") && t.endsWith("'"))
+  ) {
+    t = t.slice(1, -1).trim().toLowerCase();
+  }
   return t === "true" || t === "1" || t === "yes" || t === "on";
 }
 
@@ -39,22 +69,22 @@ function parseCsvHosts(raw: string | undefined): string[] {
 }
 
 export function loadAiRuntimeEnv(): AiRuntimeEnv {
-  const enabled = parseBool(process.env.AI_ENABLED);
-  const ollamaBaseUrl = (process.env.OLLAMA_BASE_URL ?? "").trim();
-  const defaultModel = (process.env.OLLAMA_DEFAULT_MODEL ?? "llama3.2").trim();
-  const allowedModels = parseCsvModels(process.env.OLLAMA_ALLOWED_MODELS);
-  const timeoutMsRaw = Number(process.env.AI_REQUEST_TIMEOUT_MS ?? 120_000);
+  const enabled = parseBool(env("AI_ENABLED"));
+  const ollamaBaseUrl = (env("OLLAMA_BASE_URL") ?? "").trim();
+  const defaultModel = (env("OLLAMA_DEFAULT_MODEL") ?? "llama3.2").trim();
+  const allowedModels = parseCsvModels(env("OLLAMA_ALLOWED_MODELS"));
+  const timeoutMsRaw = Number(env("AI_REQUEST_TIMEOUT_MS") ?? 120_000);
   const timeoutMs =
     Number.isFinite(timeoutMsRaw) && timeoutMsRaw >= 3000 ? timeoutMsRaw : 120_000;
-  const maxPromptRaw = Number(process.env.AI_MAX_PROMPT_CHARS ?? 48_000);
+  const maxPromptRaw = Number(env("AI_MAX_PROMPT_CHARS") ?? 48_000);
   const maxPromptChars =
     Number.isFinite(maxPromptRaw) && maxPromptRaw >= 1000 ? maxPromptRaw : 48_000;
-  const maxCompletionRaw = Number(process.env.AI_MAX_COMPLETION_CHARS ?? 24_000);
+  const maxCompletionRaw = Number(env("AI_MAX_COMPLETION_CHARS") ?? 24_000);
   const maxCompletionChars =
     Number.isFinite(maxCompletionRaw) && maxCompletionRaw >= 500
       ? maxCompletionRaw
       : 24_000;
-  const hostAllowlist = parseCsvHosts(process.env.OLLAMA_HOST_ALLOWLIST);
+  const hostAllowlist = parseCsvHosts(env("OLLAMA_HOST_ALLOWLIST"));
 
   return {
     enabled,
@@ -68,13 +98,16 @@ export function loadAiRuntimeEnv(): AiRuntimeEnv {
   };
 }
 
-export function assertAiEnabled(env: AiRuntimeEnv): void {
-  if (!env.enabled) {
-    throw new AiDisabledError(
-      "AI features are disabled. Set AI_ENABLED=true in .env.local and restart `next dev` if you just changed it."
-    );
+export function assertAiEnabled(envSnapshot: AiRuntimeEnv): void {
+  if (!envSnapshot.enabled) {
+    const raw = env("AI_ENABLED");
+    const hint =
+      raw == null || raw.trim() === ""
+        ? "Add AI_ENABLED=true to .env.local (or deployment env). Restart after changing env files."
+        : `AI_ENABLED is set to "${raw.trim()}" — use true, 1, yes, or on.`;
+    throw new AiDisabledError(`AI features are disabled. ${hint}`);
   }
-  if (!env.ollamaBaseUrl) {
+  if (!envSnapshot.ollamaBaseUrl) {
     throw new AiDisabledError(
       "AI is enabled but OLLAMA_BASE_URL is not configured."
     );
