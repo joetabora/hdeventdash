@@ -74,6 +74,21 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+## Docker / production image builds
+
+Next.js needs **`NEXT_PUBLIC_SUPABASE_URL`** and **`NEXT_PUBLIC_SUPABASE_ANON_KEY`** at **`docker build`** time (they are inlined into the bundle). Copying `.env.local` into the image is discouraged; instead export them on the build host (or load from a CI secret file), then:
+
+```bash
+export NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
+export NEXT_PUBLIC_SUPABASE_ANON_KEY="your-anon-key"
+docker build \
+  --build-arg NEXT_PUBLIC_SUPABASE_URL \
+  --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY \
+  -t harley-dashboard .
+```
+
+Update **`deploy.sh`** (or your pipeline) so these exports exist **before** `docker build`.
+
 ## Push notifications (Firebase Cloud Messaging)
 
 Lightweight setup: **free Spark** Firebase plan + **one scheduled HTTP POST** per day (e.g. GitHub Actions `schedule`, [cron-job.org](https://cron-job.org) with POST, or another scheduler that can send a `Authorization` header).
