@@ -76,7 +76,15 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Docker / production image builds
 
-Next.js needs **`NEXT_PUBLIC_SUPABASE_URL`** and **`NEXT_PUBLIC_SUPABASE_ANON_KEY`** at **`docker build`** time (they are inlined into the bundle). Copying `.env.local` into the image is discouraged; instead export them on the build host (or load from a CI secret file), then:
+The authenticated app shell is **`force-dynamic`**, so **`next build`** does not need Supabase cookies or env during static generation.
+
+For **runtime**, the container still needs **`NEXT_PUBLIC_SUPABASE_URL`** and **`NEXT_PUBLIC_SUPABASE_ANON_KEY`** (and any other vars you use). Typical options:
+
+1. **Env file on the build host** — keep `.env.local` or `.env.production` in the project directory when you run `docker build` (not committed to git). Next loads it during `RUN npm run build` inside the image.
+
+2. **`docker run -e`** / Compose **`environment:`** — set `NEXT_PUBLIC_*` when starting the container **only works if those values were already present at build time** for code paths that inlined them; prefer baking via option (1) or build-args below.
+
+3. **Explicit build-args** — export vars on the host, then:
 
 ```bash
 export NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
@@ -87,7 +95,7 @@ docker build \
   -t harley-dashboard .
 ```
 
-Update **`deploy.sh`** (or your pipeline) so these exports exist **before** `docker build`.
+Do **not** pass empty `--build-arg` lines without values — Docker would inject empty strings and override a valid `.env.local`.
 
 ## Push notifications (Firebase Cloud Messaging)
 

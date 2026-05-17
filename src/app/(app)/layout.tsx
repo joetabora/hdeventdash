@@ -3,6 +3,9 @@ import { AppChrome } from "@/components/layout/app-chrome";
 import { getCachedOrganizationSession } from "@/lib/app-organization-session";
 import { getUserRole } from "@/lib/roles";
 
+/** Avoid static prerender at `next build` (needs cookies + Supabase env); Docker/CI often has no secrets at build time. */
+export const dynamic = "force-dynamic";
+
 export default async function AppLayout({
   children,
 }: {
