@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useRef, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { ChecklistStats } from "@/lib/events";
 import { apiPatchEvent } from "@/lib/events-api-client";
@@ -15,9 +16,10 @@ import { DashboardMetrics } from "@/components/dashboard/metrics";
 import { RoiTrendsCard } from "@/components/dashboard/roi-trends-card";
 import { AnalyticsDashboard } from "@/components/dashboard/analytics-dashboard";
 import { Card } from "@/components/ui/card";
-import { LayoutGrid, Calendar, List, BarChart3 } from "lucide-react";
+import { LayoutGrid, Calendar, List, BarChart3, PlusCircle } from "lucide-react";
 import { useAppRole } from "@/contexts/app-role-context";
 import type { DashboardAggregates } from "@/lib/dashboard-aggregates";
+import { buttonStyles } from "@/components/ui/button";
 
 type ViewType = "kanban" | "calendar" | "list" | "analytics";
 
@@ -143,34 +145,63 @@ export function DashboardContent({
   }
 
   const viewButtons: { id: ViewType; label: string; icon: typeof LayoutGrid }[] = [
-    { id: "kanban", label: "Kanban", icon: LayoutGrid },
+    { id: "kanban", label: "Board", icon: LayoutGrid },
     { id: "calendar", label: "Calendar", icon: Calendar },
     { id: "list", label: "List", icon: List },
     { id: "analytics", label: "Analytics", icon: BarChart3 },
   ];
 
+  const viewDescription =
+    currentView === "analytics"
+      ? "Performance, attendance, and ROI signals across active events."
+      : currentView === "calendar"
+        ? "Date-driven planning across every active event."
+        : currentView === "list"
+          ? "A compact table for scanning owners, venues, and status."
+          : "Drag events through planning, execution, and completion.";
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-harley-text">
-          {currentView === "analytics" ? "Analytics" : "Events Dashboard"}
-        </h1>
-        <Card padding="none" className="flex items-center p-1">
-          {viewButtons.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => setView(id)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                currentView === id
-                  ? "bg-harley-orange text-white"
-                  : "text-harley-text-muted hover:text-harley-text"
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              <span className="hidden sm:inline">{label}</span>
-            </button>
-          ))}
-        </Card>
+      <div className="flex flex-col gap-4 rounded-lg border border-harley-gray/80 bg-harley-dark/72 p-4 shadow-[var(--shadow-card)] sm:p-5 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase text-harley-orange">
+            {currentView === "analytics" ? "Analytics" : "Event command center"}
+          </p>
+          <h2 className="mt-1 text-2xl font-bold text-harley-text">
+            {currentView === "analytics" ? "Analytics" : "Events Dashboard"}
+          </h2>
+          <p className="mt-1 max-w-2xl text-sm text-harley-text-muted">
+            {viewDescription}
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="grid grid-cols-4 gap-1 rounded-lg border border-harley-gray/80 bg-harley-black/32 p-1">
+            {viewButtons.map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setView(id)}
+                className={`flex h-9 min-w-0 items-center justify-center gap-2 rounded-md px-2 text-sm font-medium transition-colors ${
+                  currentView === id
+                    ? "bg-harley-orange text-white shadow-sm shadow-harley-orange/20"
+                    : "text-harley-text-muted hover:bg-harley-gray-light/70 hover:text-harley-text"
+                }`}
+                aria-pressed={currentView === id}
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="hidden md:inline">{label}</span>
+              </button>
+            ))}
+          </div>
+
+          {canManageEvents ? (
+            <Link href="/events/new" className={buttonStyles.primary("md")}>
+              <PlusCircle className="h-4 w-4" />
+              New Event
+            </Link>
+          ) : null}
+        </div>
       </div>
 
       {currentView !== "analytics" && (
@@ -183,15 +214,17 @@ export function DashboardContent({
         />
       )}
 
-      <Filters
-        events={events}
-        search={search}
-        onSearchChange={setSearch}
-        locationKeyFilter={locationKeyFilter}
-        onLocationKeyFilterChange={setLocationKeyFilter}
-        ownerFilter={ownerFilter}
-        onOwnerFilterChange={setOwnerFilter}
-      />
+      <Card padding="sm" className="bg-harley-dark/72">
+        <Filters
+          events={events}
+          search={search}
+          onSearchChange={setSearch}
+          locationKeyFilter={locationKeyFilter}
+          onLocationKeyFilterChange={setLocationKeyFilter}
+          ownerFilter={ownerFilter}
+          onOwnerFilterChange={setOwnerFilter}
+        />
+      </Card>
 
       {currentView !== "analytics" && (
         <RoiTrendsCard trends={aggregates.filtered.roiTrends} />

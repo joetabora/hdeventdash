@@ -27,16 +27,16 @@ export function KanbanColumn({
   return (
     <div
       ref={setNodeRef}
-      className={`flex flex-col rounded-xl border transition-all duration-200 min-h-[calc(100vh-16rem)] ${
+      className={`flex flex-col rounded-lg border transition-all duration-200 min-h-[calc(100vh-16rem)] ${
         isOver
           ? "border-harley-orange/60 bg-harley-orange/[0.03] shadow-[inset_0_0_20px_var(--color-harley-orange)/0.04]"
           : "border-harley-gray/60 bg-harley-black/60"
       }`}
     >
       {/* Sticky header */}
-      <div className="sticky top-0 z-10 px-3.5 py-3 border-b border-harley-gray/60 bg-harley-black/90 backdrop-blur-sm rounded-t-xl">
+      <div className="sticky top-0 z-10 px-3.5 py-3 border-b border-harley-gray/60 bg-harley-black/90 backdrop-blur-sm rounded-t-lg">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-semibold text-harley-text uppercase tracking-wide truncate">
+          <h3 className="text-xs font-semibold text-harley-text uppercase truncate">
             {title}
           </h3>
           <span className="text-[10px] font-bold text-harley-text-muted bg-harley-gray-light/50 rounded-full min-w-[22px] h-[22px] flex items-center justify-center px-1.5">

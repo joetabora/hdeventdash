@@ -44,19 +44,19 @@ export function ListView({ events, atRiskIds, hasFilters, onClearFilters }: List
         <table className="w-full">
           <thead>
             <tr className="border-b border-harley-gray">
-              <th className="text-left px-4 py-3 text-xs font-medium text-harley-text-muted uppercase tracking-wider">
+              <th className="text-left px-4 py-3 text-xs font-medium text-harley-text-muted uppercase">
                 Event
               </th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-harley-text-muted uppercase tracking-wider">
+              <th className="text-left px-4 py-3 text-xs font-medium text-harley-text-muted uppercase">
                 Date
               </th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-harley-text-muted uppercase tracking-wider hidden md:table-cell">
+              <th className="text-left px-4 py-3 text-xs font-medium text-harley-text-muted uppercase hidden md:table-cell">
                 Location
               </th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-harley-text-muted uppercase tracking-wider hidden md:table-cell">
+              <th className="text-left px-4 py-3 text-xs font-medium text-harley-text-muted uppercase hidden md:table-cell">
                 Owner
               </th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-harley-text-muted uppercase tracking-wider">
+              <th className="text-left px-4 py-3 text-xs font-medium text-harley-text-muted uppercase">
                 Status
               </th>
               <th className="px-4 py-3"></th>

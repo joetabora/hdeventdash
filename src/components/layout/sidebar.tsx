@@ -26,13 +26,14 @@ import {
   Wallet,
 } from "lucide-react";
 
-const navItems = [
-  { href: "/budget", label: "Budget", icon: Wallet },
-  { href: "/dashboard", label: "Kanban", icon: LayoutGrid },
+const eventViewItems = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutGrid },
   { href: "/dashboard?view=calendar", label: "Calendar", icon: Calendar },
   { href: "/dashboard?view=list", label: "List", icon: List },
   { href: "/dashboard?view=analytics", label: "Analytics", icon: BarChart3 },
 ];
+
+const operationsItems = [{ href: "/budget", label: "Budget", icon: Wallet }];
 
 const adminItems = [
   { href: "/admin/users", label: "User Management", icon: ShieldCheck },
@@ -68,28 +69,36 @@ function SidebarDealershipSwitcher() {
     (o) => o.id !== currentOrganization?.id
   );
 
-  if (memberships.length < 2 || otherDealerships.length === 0) {
+  if (memberships.length === 0) {
     return null;
   }
 
   return (
-    <div className="space-y-1.5 shrink-0">
-      <p className="text-[10px] font-semibold text-harley-text-muted uppercase tracking-widest px-5">
-        Switch dealership
+    <div className="mx-3 rounded-lg border border-harley-gray/80 bg-harley-black/32 p-3 shadow-[var(--shadow-card)]">
+      <p className="text-[10px] font-semibold text-harley-text-muted uppercase">
+        Active dealership
       </p>
-      <div className="px-2 space-y-0.5">
-        {otherDealerships.map((org) => (
-          <form key={org.id} action={switchOrganization}>
-            <input type="hidden" name="organizationId" value={org.id} />
-            <button
-              type="submit"
-              className="w-full text-left px-3 py-2 rounded-lg text-xs font-medium text-harley-text-muted hover:bg-harley-gray-light/30 hover:text-harley-orange transition-colors duration-100"
-            >
-              {org.name}
-            </button>
-          </form>
-        ))}
-      </div>
+      <p
+        className="mt-1 truncate text-sm font-semibold text-harley-text"
+        title={currentOrganization?.name ?? undefined}
+      >
+        {currentOrganization?.name ?? "No dealership"}
+      </p>
+      {otherDealerships.length > 0 ? (
+        <div className="mt-3 space-y-1">
+          {otherDealerships.map((org) => (
+            <form key={org.id} action={switchOrganization}>
+              <input type="hidden" name="organizationId" value={org.id} />
+              <button
+                type="submit"
+                className="w-full rounded-md px-2 py-1.5 text-left text-xs font-medium text-harley-text-muted transition-colors duration-100 hover:bg-harley-gray-light/70 hover:text-harley-orange"
+              >
+                {org.name}
+              </button>
+            </form>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -107,11 +116,11 @@ function SidebarNav({
   const searchParams = useSearchParams();
 
   return (
-    <nav className="flex-1 px-4 pt-2 space-y-1 overflow-y-auto">
-      <p className="px-3 pt-3 pb-2 text-[10px] font-semibold text-harley-text-muted uppercase tracking-widest">
-        Views
+    <nav className="flex-1 px-3 pt-2 space-y-1 overflow-y-auto">
+      <p className="px-3 pt-3 pb-2 text-[10px] font-semibold text-harley-text-muted uppercase">
+        Event views
       </p>
-      {navItems.map((item) => {
+      {eventViewItems.map((item) => {
         const isActive = isNavItemActive(pathname, searchParams, item.href);
         return (
           <SidebarNavLink
@@ -120,10 +129,30 @@ function SidebarNav({
             onClick={onClose}
             icon={item.icon}
             label={item.label}
-            className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-100 ${
+            className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-100 ${
               isActive
-                ? "bg-harley-orange/15 text-harley-orange"
-                : "text-harley-text-muted hover:bg-harley-gray-light/30 hover:text-harley-text"
+                ? "bg-harley-orange text-white shadow-sm shadow-harley-orange/20"
+                : "text-harley-text-muted hover:bg-harley-gray-light/70 hover:text-harley-text"
+            }`}
+          />
+        );
+      })}
+      <p className="px-3 pt-5 pb-2 text-[10px] font-semibold text-harley-text-muted uppercase">
+        Operations
+      </p>
+      {operationsItems.map((item) => {
+        const isActive = isNavItemActive(pathname, searchParams, item.href);
+        return (
+          <SidebarNavLink
+            key={item.href}
+            href={item.href}
+            onClick={onClose}
+            icon={item.icon}
+            label={item.label}
+            className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-100 ${
+              isActive
+                ? "bg-harley-orange text-white shadow-sm shadow-harley-orange/20"
+                : "text-harley-text-muted hover:bg-harley-gray-light/70 hover:text-harley-text"
             }`}
           />
         );
@@ -134,16 +163,16 @@ function SidebarNav({
           onClick={onClose}
           icon={Store}
           label="Vendors"
-          className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-100 ${
+          className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-100 ${
             pathname === "/vendors" || pathname.startsWith("/vendors/")
-              ? "bg-harley-orange/15 text-harley-orange"
-              : "text-harley-text-muted hover:bg-harley-gray-light/30 hover:text-harley-text"
+              ? "bg-harley-orange text-white shadow-sm shadow-harley-orange/20"
+              : "text-harley-text-muted hover:bg-harley-gray-light/70 hover:text-harley-text"
           }`}
         />
       )}
       {isAdmin && (
         <>
-          <p className="px-3 pt-5 pb-2 text-[10px] font-semibold text-harley-text-muted uppercase tracking-widest">
+          <p className="px-3 pt-5 pb-2 text-[10px] font-semibold text-harley-text-muted uppercase">
             Admin
           </p>
           {adminItems.map((item) => {
@@ -155,10 +184,10 @@ function SidebarNav({
                 onClick={onClose}
                 icon={item.icon}
                 label={item.label}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-100 ${
+                className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-100 ${
                   isActive
-                    ? "bg-harley-orange/15 text-harley-orange"
-                    : "text-harley-text-muted hover:bg-harley-gray-light/30 hover:text-harley-text"
+                    ? "bg-harley-orange text-white shadow-sm shadow-harley-orange/20"
+                    : "text-harley-text-muted hover:bg-harley-gray-light/70 hover:text-harley-text"
                 }`}
               />
             );
@@ -177,18 +206,18 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
       {mobileOpen && (
         <div
           data-sidebar-overlay
-          className="print:hidden lg:hidden fixed inset-0 z-30 bg-black/50 backdrop-blur-sm"
+          className="print:hidden lg:hidden fixed inset-0 z-30 bg-black/60 backdrop-blur-sm"
           onClick={onClose}
         />
       )}
 
       <aside
         data-app-sidebar
-        className={`print:hidden fixed inset-y-0 left-0 z-40 w-64 bg-harley-dark backdrop-blur-xl border-r border-harley-gray flex flex-col transform transition-transform duration-200 lg:translate-x-0 ${
+        className={`print:hidden fixed inset-y-0 left-0 z-40 w-64 bg-harley-dark/95 backdrop-blur-xl border-r border-harley-gray/80 flex flex-col transform transition-transform duration-200 lg:translate-x-0 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="h-16 flex items-center justify-between px-5 border-b border-harley-gray shrink-0">
+        <div className="h-16 flex items-center justify-between px-5 border-b border-harley-gray/80 shrink-0">
           <SidebarLogoLink onClick={onClose} />
           <button
             type="button"
@@ -200,7 +229,7 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
         </div>
 
         {canManageEvents && (
-          <div className="px-4 pt-5 pb-2">
+          <div className="px-3 pt-5 pb-2">
             <SidebarNavLink
               href="/events/new"
               onClick={onClose}
@@ -233,7 +262,7 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
           </Suspense>
         </div>
 
-        <div className="mt-auto shrink-0 border-t border-harley-gray pt-3 pb-4 space-y-3">
+        <div className="mt-auto shrink-0 border-t border-harley-gray/80 pt-3 pb-4 space-y-3">
           <SidebarDealershipSwitcher />
           <p className="px-5 text-[10px] text-harley-text-muted/50 text-center">
             Harley Event Dashboard v1.0

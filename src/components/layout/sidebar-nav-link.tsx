@@ -65,7 +65,7 @@ function BrandRow() {
         <Zap className="h-6 w-6 shrink-0 text-harley-orange" aria-hidden />
       )}
       <span
-        className={`text-lg font-bold text-harley-text tracking-tight ${pending ? "opacity-80" : ""}`}
+        className={`text-lg font-bold text-harley-text ${pending ? "opacity-80" : ""}`}
       >
         Harley Events
       </span>

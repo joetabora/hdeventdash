@@ -12,18 +12,18 @@ interface MetricCardProps {
 }
 
 const accentStyles = {
-  orange: "text-harley-orange bg-harley-orange/10",
-  danger: "text-harley-danger bg-harley-danger/10",
-  success: "text-harley-success bg-harley-success/10",
-  muted: "text-harley-text-muted bg-harley-gray",
+  orange: "text-harley-orange bg-harley-orange/12 border-harley-orange/15",
+  danger: "text-harley-danger bg-harley-danger/12 border-harley-danger/15",
+  success: "text-harley-success bg-harley-success/12 border-harley-success/15",
+  muted: "text-harley-text-muted bg-harley-gray border-harley-gray-lighter/40",
 };
 
 function MetricCard({ label, value, subtext, icon, accent = "orange" }: MetricCardProps) {
   return (
-    <Card padding="sm" hover className="group">
+    <Card padding="sm" hover className="group overflow-hidden">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs font-medium text-harley-text-muted uppercase tracking-wider">
+          <p className="text-xs font-medium text-harley-text-muted uppercase">
             {label}
           </p>
           <p className="text-2xl font-bold text-harley-text mt-1">{value}</p>
@@ -31,7 +31,7 @@ function MetricCard({ label, value, subtext, icon, accent = "orange" }: MetricCa
             <p className="text-xs text-harley-text-muted mt-0.5">{subtext}</p>
           )}
         </div>
-        <div className={`p-2.5 rounded-lg transition-transform duration-200 group-hover:scale-110 ${accentStyles[accent]}`}>
+        <div className={`rounded-lg border p-2.5 transition-transform duration-200 group-hover:scale-105 ${accentStyles[accent]}`}>
           {icon}
         </div>
       </div>
@@ -55,7 +55,7 @@ export function DashboardMetrics({
   totalEvents,
 }: DashboardMetricsProps) {
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
       <MetricCard
         label="Upcoming Events"
         value={String(upcomingCount)}

@@ -30,15 +30,15 @@
   --color-harley-orange-light: #ff8533;
   --color-harley-orange-dark: #e65c00;
 
-  /* Surfaces — neutral dark (no blue) */
-  --color-harley-black: #0f0f0f;
-  --color-harley-dark: #1a1a1a;
-  --color-harley-gray: #2a2a2a;
-  --color-harley-gray-light: #222222;
-  --color-harley-gray-lighter: #3a3a3a;
+  /* Surfaces — warm neutral dark, tuned for dense operational views */
+  --color-harley-black: #0b0b0c;
+  --color-harley-dark: #171716;
+  --color-harley-gray: #2b2926;
+  --color-harley-gray-light: #20201f;
+  --color-harley-gray-lighter: #403c36;
 
-  --color-harley-text: #e8e8e8;
-  --color-harley-text-muted: #888888;
+  --color-harley-text: #f0eee9;
+  --color-harley-text-muted: #a49d92;
 
   /* Semantic — no blue; subdued for minimal UI */
   --color-harley-success: #52b768;
@@ -48,8 +48,8 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.45);
-  --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.55);
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.035), 0 10px 28px rgba(0, 0, 0, 0.22);
+  --shadow-elevated: 0 1px 0 rgba(255, 255, 255, 0.05), 0 18px 42px rgba(0, 0, 0, 0.42);
 }
 
 html {
@@ -57,7 +57,9 @@ html {
 }
 
 body {
-  background: var(--color-harley-black);
+  background:
+    linear-gradient(180deg, #11100f 0%, var(--color-harley-black) 18rem),
+    var(--color-harley-black);
   color: var(--color-harley-text);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;

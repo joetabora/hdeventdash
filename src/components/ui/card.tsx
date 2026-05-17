@@ -25,11 +25,11 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
     return (
       <div
         ref={ref}
-        className={`bg-harley-dark rounded-xl border border-harley-gray shadow-[var(--shadow-card)] transition-all duration-200 ${
+        className={`bg-harley-dark/92 rounded-lg border border-harley-gray/80 shadow-[var(--shadow-card)] transition-all duration-200 ${
           paddingStyles[padding]
         } ${
           hover
-            ? "hover:border-harley-gray-lighter/50 hover:shadow-[var(--shadow-elevated)] hover:-translate-y-[1px]"
+            ? "hover:border-harley-gray-lighter/70 hover:shadow-[var(--shadow-elevated)] hover:-translate-y-[1px]"
             : ""
         } ${interactive ? "cursor-pointer active:scale-[0.99] active:translate-y-0" : ""} ${className}`}
         {...props}

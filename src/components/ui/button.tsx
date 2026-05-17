@@ -12,7 +12,7 @@ const variantStyles: Record<Variant, string> = {
   primary:
     "bg-harley-orange text-white shadow-sm shadow-harley-orange/20 hover:bg-harley-orange-light hover:shadow-md hover:shadow-harley-orange/25 active:bg-harley-orange-dark active:shadow-none",
   secondary:
-    "bg-transparent text-harley-text border border-harley-gray-lighter/60 hover:border-harley-text-muted/40 hover:bg-harley-gray-light/30 active:bg-harley-gray-light/50 active:border-harley-text-muted/50",
+    "bg-harley-dark/70 text-harley-text border border-harley-gray-lighter/60 hover:border-harley-text-muted/40 hover:bg-harley-gray-light/70 active:bg-harley-gray-light active:border-harley-text-muted/50",
   ghost:
     "bg-transparent text-harley-text-muted hover:bg-harley-gray-light/50 hover:text-harley-text active:bg-harley-gray-light",
   danger:

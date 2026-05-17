@@ -40,11 +40,11 @@ export function AppChrome({
         />
         <PushNotificationPrompt />
 
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto bg-[linear-gradient(180deg,rgba(255,102,0,0.035)_0%,rgba(11,11,12,0)_14rem)]">
           <div
             id="app-shell-scroll-inner"
             key={activeOrganizationId ?? "no-org"}
-            className="mx-auto w-full max-w-7xl px-4 py-6 lg:px-8 lg:py-8"
+            className="mx-auto w-full max-w-7xl px-4 py-5 lg:px-8 lg:py-7"
           >
             {children}
           </div>
