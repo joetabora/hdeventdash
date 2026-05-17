@@ -15,6 +15,10 @@ import {
   type EmailCampaignDraft,
   type EventDescriptionDraft,
 } from "@/lib/ai-generate";
+import { AI_TEMPLATE_IDS } from "@/lib/ai/prompt-templates/ids";
+import { parseJsonFromModelText } from "@/lib/ai/parse-json-response";
+import { rawHashtagsResponseSchema } from "@/lib/ai/marketing-response-schemas";
+import { useAiCompletion } from "@/hooks/use-ai-completion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -43,6 +47,12 @@ const inputClass =
   "w-full px-3 py-2 rounded-lg bg-harley-black/40 border border-harley-gray-lighter/40 text-harley-text text-sm focus:outline-none focus:border-harley-orange/60 focus:ring-1 focus:ring-harley-orange/25";
 
 export function AiAssistant({ event }: AiAssistantProps) {
+  const {
+    run: runAiCompletion,
+    status: hashtagAiStatus,
+    error: hashtagAiError,
+  } = useAiCompletion();
+  const [hashtagPreview, setHashtagPreview] = useState("");
   const [plan, setPlan] = useState<MarketingPlan | null>(null);
   const [loading, setLoading] = useState<LoadingKey>(null);
   /** Stable row id while a single card is regenerating (preserves React keys). */
@@ -162,11 +172,15 @@ export function AiAssistant({ event }: AiAssistantProps) {
 
   async function handleRegenerateOneSocial(id: string) {
     if (!plan) return;
-    const idx = plan.socialPosts.findIndex((p) => p.id === id);
-    if (idx < 0) return;
+    const draft = plan.socialPosts.find((p) => p.id === id);
+    if (!draft) return;
     setItemLoadingId(id);
     try {
-      const next = await regenerateSocialPostAtIndex(event, idx);
+      const next = await regenerateSocialPostAtIndex(event, {
+        platform: draft.platform,
+        angle: draft.angle,
+        content: draft.content,
+      });
       setPlan((p) =>
         p
           ? {
@@ -187,11 +201,15 @@ export function AiAssistant({ event }: AiAssistantProps) {
 
   async function handleRegenerateOneEmail(id: string) {
     if (!plan) return;
-    const idx = plan.emailCampaigns.findIndex((e) => e.id === id);
-    if (idx < 0) return;
+    const draft = plan.emailCampaigns.find((e) => e.id === id);
+    if (!draft) return;
     setItemLoadingId(id);
     try {
-      const next = await regenerateEmailCampaignAtIndex(event, idx);
+      const next = await regenerateEmailCampaignAtIndex(event, {
+        title: draft.title,
+        subject: draft.subject,
+        body: draft.body,
+      });
       setPlan((p) =>
         p
           ? {
@@ -212,11 +230,14 @@ export function AiAssistant({ event }: AiAssistantProps) {
 
   async function handleRegenerateOneDescription(id: string) {
     if (!plan) return;
-    const idx = plan.eventDescriptions.findIndex((d) => d.id === id);
-    if (idx < 0) return;
+    const draft = plan.eventDescriptions.find((d) => d.id === id);
+    if (!draft) return;
     setItemLoadingId(id);
     try {
-      const next = await regenerateEventDescriptionAtIndex(event, idx);
+      const next = await regenerateEventDescriptionAtIndex(event, {
+        label: draft.label,
+        content: draft.content,
+      });
       setPlan((p) =>
         p
           ? {
@@ -249,6 +270,27 @@ export function AiAssistant({ event }: AiAssistantProps) {
   const busyDesc = loading === "descriptions" || busyAll;
   const itemBusyGlobal = itemLoadingId !== null;
 
+  const handleSuggestHashtags = useCallback(async () => {
+    setHashtagPreview("");
+    const res = await runAiCompletion(`/api/events/${event.id}/ai/complete`, {
+      templateId: AI_TEMPLATE_IDS.SOCIAL_HASHTAGS,
+      variables: {},
+    });
+    if (!res?.text) return;
+    try {
+      const parsed = rawHashtagsResponseSchema.safeParse(
+        parseJsonFromModelText(res.text)
+      );
+      if (!parsed.success) {
+        showError("Could not parse hashtag suggestions.");
+        return;
+      }
+      setHashtagPreview(parsed.data.hashtags.join(" "));
+    } catch {
+      showError("Could not parse hashtag suggestions.");
+    }
+  }, [event.id, runAiCompletion]);
+
   return (
     <Card className="!p-3.5 md:!p-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
@@ -259,6 +301,32 @@ export function AiAssistant({ event }: AiAssistantProps) {
             <p className="text-xs text-harley-text-muted mt-0.5">
               Social posts, email ideas, and event descriptions — edit and copy anything.
             </p>
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                className="text-xs h-8"
+                onClick={handleSuggestHashtags}
+                disabled={hashtagAiStatus === "loading"}
+              >
+                {hashtagAiStatus === "loading" ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="w-3.5 h-3.5" />
+                )}
+                Suggest hashtags
+              </Button>
+              {hashtagAiError ? (
+                <span className="text-xs text-red-400">{hashtagAiError}</span>
+              ) : null}
+            </div>
+            {hashtagPreview ? (
+              <p className="text-xs text-harley-text-muted mt-2 leading-relaxed">
+                <span className="text-harley-text-muted font-medium">Hashtags: </span>
+                {hashtagPreview}
+              </p>
+            ) : null}
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
