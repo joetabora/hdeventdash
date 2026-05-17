@@ -27,16 +27,29 @@ export type AiChatServiceCompleteResult = {
   model: string;
 };
 
-let cachedEnv: AiRuntimeEnv | null = null;
-let cachedProvider: AiProvider | null = null;
-
+/** Recalculate each request so .env.local edits apply without stale module cache during dev. */
 function getEnv(): AiRuntimeEnv {
-  cachedEnv ??= loadAiRuntimeEnv();
-  return cachedEnv;
+  return loadAiRuntimeEnv();
+}
+
+let cachedProvider: AiProvider | null = null;
+let cachedProviderKey = "";
+
+function providerCacheKey(env: AiRuntimeEnv): string {
+  return [
+    env.ollamaBaseUrl,
+    String(env.timeoutMs),
+    String(env.maxCompletionChars),
+    [...env.hostAllowlist].sort().join(","),
+  ].join("|");
 }
 
 function getProvider(env: AiRuntimeEnv): AiProvider {
-  cachedProvider ??= new OllamaProvider(env);
+  const key = providerCacheKey(env);
+  if (!cachedProvider || cachedProviderKey !== key) {
+    cachedProviderKey = key;
+    cachedProvider = new OllamaProvider(env);
+  }
   return cachedProvider;
 }
 

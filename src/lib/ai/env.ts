@@ -17,7 +17,9 @@ export type AiRuntimeEnv = {
 };
 
 function parseBool(v: string | undefined): boolean {
-  return v === "true" || v === "1";
+  if (v == null) return false;
+  const t = v.trim().toLowerCase();
+  return t === "true" || t === "1" || t === "yes" || t === "on";
 }
 
 function parseCsvModels(raw: string | undefined): string[] {
@@ -68,7 +70,9 @@ export function loadAiRuntimeEnv(): AiRuntimeEnv {
 
 export function assertAiEnabled(env: AiRuntimeEnv): void {
   if (!env.enabled) {
-    throw new AiDisabledError();
+    throw new AiDisabledError(
+      "AI features are disabled. Set AI_ENABLED=true in .env.local and restart `next dev` if you just changed it."
+    );
   }
   if (!env.ollamaBaseUrl) {
     throw new AiDisabledError(
