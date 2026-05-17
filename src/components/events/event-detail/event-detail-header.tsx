@@ -169,7 +169,6 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
     canManageEvents,
     isAdmin,
     atRisk,
-    allChecklistComplete,
     allPlaybookPlanningComplete,
     planningCompleted,
     planningTotal,

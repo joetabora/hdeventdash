@@ -115,7 +115,6 @@ export function useEventController(
   }, [
     event,
     checklist,
-    eventVendors,
     vendorFeeTotal,
     canManageEvents,
     eventMonthYearMonth,

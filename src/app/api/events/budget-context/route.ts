@@ -16,7 +16,11 @@ export async function GET(request: Request) {
   }
 
   try {
-    const events = await getEventBudgetSummariesForMonth(ctx.supabase, month);
+    const events = await getEventBudgetSummariesForMonth(
+      ctx.supabase,
+      month,
+      ctx.organizationId
+    );
     return NextResponse.json({ events });
   } catch (e) {
     console.error("GET /api/events/budget-context:", e);

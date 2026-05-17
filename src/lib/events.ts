@@ -63,17 +63,22 @@ export function getDashboardEventDateBounds(): { start: string; end: string } {
  * Dashboard / kanban / analytics: avoid loading the full events history.
  */
 export async function getEventsForDashboard(
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
+  organizationId?: string | null
 ): Promise<Event[]> {
   const { start: startStr, end: endStr } = getDashboardEventDateBounds();
 
-  const { data, error } = await supabase
+  let q = supabase
     .from("events")
     .select("*")
     .eq("is_archived", false)
     .gte("date", startStr)
     .lte("date", endStr)
     .order("date", { ascending: true });
+  if (organizationId) {
+    q = q.eq("organization_id", organizationId);
+  }
+  const { data, error } = await q;
   if (error) throw error;
   return data as Event[];
 }
@@ -84,19 +89,24 @@ export async function getEventsForDashboard(
  */
 export async function getEventBudgetSummariesForMonth(
   supabase: SupabaseClient,
-  yearMonth: string
+  yearMonth: string,
+  organizationId?: string | null
 ): Promise<EventBudgetPeer[]> {
   const ym = yearMonth.slice(0, 7);
   if (!/^\d{4}-\d{2}$/.test(ym)) return [];
   const monthStart = `${ym}-01`;
   const nextStart = firstDayOfNextCalendarMonth(ym);
   /** Use `*` so we do not reference `playbook_workflow` before that column exists (migration). */
-  const { data, error } = await supabase
+  let q = supabase
     .from("events")
     .select("*")
     .eq("is_archived", false)
     .gte("date", monthStart)
     .lt("date", nextStart);
+  if (organizationId) {
+    q = q.eq("organization_id", organizationId);
+  }
+  const { data, error } = await q;
   if (error) throw error;
   const rows = (data ?? []) as Event[];
   const ids = rows.map((p) => p.id);
@@ -157,12 +167,19 @@ export async function getChecklistStatsForEvents(
   return stats;
 }
 
-export async function getEvent(supabase: SupabaseClient, id: string) {
-  const { data, error } = await supabase
+export async function getEvent(
+  supabase: SupabaseClient,
+  id: string,
+  organizationId?: string | null
+) {
+  let q = supabase
     .from("events")
     .select("*")
-    .eq("id", id)
-    .single();
+    .eq("id", id);
+  if (organizationId) {
+    q = q.eq("organization_id", organizationId);
+  }
+  const { data, error } = await q.single();
   if (error) throw error;
   return data as Event;
 }
@@ -616,4 +633,3 @@ export async function uploadSwapMeetWaiver(
   if (error) throw error;
   return data as SwapMeetSpot;
 }
-

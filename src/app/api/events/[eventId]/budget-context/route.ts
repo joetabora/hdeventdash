@@ -41,7 +41,11 @@ export async function GET(
 
   if (!month) {
     try {
-      const ev = await getEvent(session.supabase, idCheck.id);
+      const ev = await getEvent(
+        session.supabase,
+        idCheck.id,
+        session.organizationId
+      );
       month = eventDateToYearMonth(ev.date);
     } catch {
       return NextResponse.json({ error: "Event not found." }, { status: 404 });
@@ -50,7 +54,11 @@ export async function GET(
 
   try {
     const [events, monthlyBudgets] = await Promise.all([
-      getEventBudgetSummariesForMonth(session.supabase, month),
+      getEventBudgetSummariesForMonth(
+        session.supabase,
+        month,
+        session.organizationId
+      ),
       getMonthlyBudgetsForMonth(
         session.supabase,
         budgetMonthToDbDate(month),

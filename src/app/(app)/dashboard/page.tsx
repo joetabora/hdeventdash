@@ -19,7 +19,7 @@ function currentYearMonth(): string {
 export default async function DashboardPage() {
   const { supabase, sessionOrgId } = await getCachedOrganizationSession();
   const budgetMonth = currentYearMonth();
-  const active = await getEventsForDashboard(supabase);
+  const active = await getEventsForDashboard(supabase, sessionOrgId);
   const [initialChecklistStats, initialAggregates] = await Promise.all([
     getChecklistStatsForEvents(
       supabase,
@@ -31,6 +31,7 @@ export default async function DashboardPage() {
       search: "",
       locationKey: "",
       owner: "",
+      organizationId: sessionOrgId,
     }).catch((err) => {
       console.error(
         "dashboard_aggregates RPC failed (run supabase-migration-dashboard-aggregates.sql):",

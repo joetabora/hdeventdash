@@ -37,6 +37,12 @@ export async function switchOrganization(formData: FormData): Promise<void> {
     redirect("/dashboard");
   }
 
+  const { error: refreshError } = await supabase.auth.refreshSession();
+  if (refreshError) {
+    console.error("switchOrganization refreshSession failed:", refreshError.message);
+    redirect("/dashboard");
+  }
+
   await setOrganizationSelectionCookie(organizationId);
   /** Drop stale RSC/router payload so the next paint reads the new org cookie. */
   revalidatePath("/", "layout");

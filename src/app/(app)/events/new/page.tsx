@@ -28,7 +28,8 @@ export default async function NewEventPage() {
   const budgetMonth = currentYearMonth();
   const initialBudgetPeers = await getEventBudgetSummariesForMonth(
     supabase,
-    budgetMonth
+    budgetMonth,
+    organizationId
   );
 
   return (

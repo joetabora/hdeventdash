@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   ChecklistItem,
   ChecklistSection as ChecklistSectionType,
@@ -191,7 +191,9 @@ export function ChecklistSectionComponent({
         >
           {items.map((item) => (
             <ChecklistItemRow
-              key={item.id}
+              key={`${item.id}:${item.assignee ?? ""}:${item.comment ?? ""}:${
+                item.estimated_cost ?? ""
+              }`}
               item={item}
               liveMode={liveMode}
               allowDelete={allowStructureEdit}
@@ -278,18 +280,6 @@ function ChecklistItemRow({
   const [costInput, setCostInput] = useState(
     item.estimated_cost != null ? String(item.estimated_cost) : ""
   );
-
-  useEffect(() => {
-    setAssigneeInput(item.assignee || "");
-  }, [item.assignee, item.id]);
-
-  useEffect(() => {
-    setCommentInput(item.comment || "");
-  }, [item.comment, item.id]);
-
-  useEffect(() => {
-    setCostInput(item.estimated_cost != null ? String(item.estimated_cost) : "");
-  }, [item.estimated_cost, item.id]);
 
   function handleToggle() {
     if (!item.is_checked) {

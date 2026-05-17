@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getCachedOrganizationSession } from "@/lib/app-organization-session";
 import {
   getEvent,
   getChecklistItems,
@@ -16,7 +16,6 @@ import {
 } from "@/lib/budgets";
 import { getActiveEventVendors } from "@/lib/vendors";
 import type { Event, EventVendorWithVendor } from "@/types/database";
-import { getCurrentOrganization } from "@/lib/organization";
 import { eventDetailBundleFingerprint } from "@/lib/event-detail-bundle-fingerprint";
 import { EventDetailClient } from "./event-detail-client";
 
@@ -26,11 +25,12 @@ export default async function EventDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const supabase = await createClient();
+  const { supabase, sessionOrgId, memberships } =
+    await getCachedOrganizationSession();
 
   let initialEvent: Event;
   try {
-    initialEvent = await getEvent(supabase, id);
+    initialEvent = await getEvent(supabase, id, sessionOrgId);
   } catch {
     notFound();
   }
@@ -46,7 +46,6 @@ export default async function EventDetailPage({
     initialBudgetPeers,
     initialMonthlyBudgetsForEventMonth,
     initialSwapMeetSpots,
-    org,
   ] = await Promise.all([
     getChecklistItems(supabase, id),
     getEventDocuments(supabase, id),
@@ -55,15 +54,21 @@ export default async function EventDetailPage({
     getActiveEventVendors(supabase, id).catch(
       () => [] as EventVendorWithVendor[]
     ),
-    getEventBudgetSummariesForMonth(supabase, budgetMonth).catch(() => []),
+    getEventBudgetSummariesForMonth(supabase, budgetMonth, sessionOrgId).catch(
+      () => []
+    ),
     getMonthlyBudgetsForMonth(
       supabase,
       budgetMonthToDbDate(budgetMonth),
       initialEvent.organization_id
     ).catch(() => []),
     getSwapMeetSpots(supabase, id).catch(() => []),
-    getCurrentOrganization(supabase).catch(() => null),
   ]);
+
+  const org =
+    memberships.find(
+      (membership) => membership.id === initialEvent.organization_id
+    ) ?? null;
 
   const eventDetailClientKey = eventDetailBundleFingerprint({
     event: initialEvent,

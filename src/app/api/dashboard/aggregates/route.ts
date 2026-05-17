@@ -26,6 +26,7 @@ export async function GET(request: Request) {
       search,
       locationKey,
       owner,
+      organizationId: session.organizationId,
     });
     return NextResponse.json(aggregates);
   } catch (e) {
