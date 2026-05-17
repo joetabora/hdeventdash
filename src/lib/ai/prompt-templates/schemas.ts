@@ -44,3 +44,10 @@ export const hashtagsVarsSchema = eventMarketingBaseVarsSchema.extend({
 export const facebookDescriptionVarsSchema = eventMarketingBaseVarsSchema.extend({
   tone: z.enum(["professional", "casual", "hype"]).optional().default("professional"),
 });
+
+/** Built client-side from playbook copy-development fields + fixed Prompt 2/3 text. */
+export const playbookCopyDevelopmentPackVarsSchema = z
+  .object({
+    briefing: z.string().min(40).max(45_000),
+  })
+  .strict();

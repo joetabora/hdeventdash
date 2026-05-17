@@ -8,6 +8,8 @@ export const AI_TEMPLATE_IDS = {
   MARKETING_DESCRIPTION_REGEN: "event.marketing.description_regen",
   SOCIAL_HASHTAGS: "event.social.hashtags",
   SOCIAL_FACEBOOK_DESCRIPTION: "event.social.facebook_description",
+  /** Playbook “Copy development”: Prompts 1–3 via one briefing blob. */
+  PLAYBOOK_COPY_DEVELOPMENT_PACK: "playbook.copy_development.pack",
 } as const;
 
 export type AiTemplateId = (typeof AI_TEMPLATE_IDS)[keyof typeof AI_TEMPLATE_IDS];

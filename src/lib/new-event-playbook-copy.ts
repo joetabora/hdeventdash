@@ -50,6 +50,33 @@ export function buildCopyDevelopmentPrompt1(fields: {
   return parts.join("\n\n");
 }
 
+/** Full briefing for local AI: Prompt 1 field block plus fixed Prompt 2 / Prompt 3 lines from the playbook. */
+export function buildCopyDevelopmentAiBriefing(fields: {
+  event_name?: string | null;
+  event_date_text?: string | null;
+  location?: string | null;
+  who_its_for?: string | null;
+  food?: string | null;
+  entertainment?: string | null;
+  perks_discounts?: string | null;
+  tone?: string | null;
+  phrases?: string | null;
+  rsvp_notes?: string | null;
+}): string {
+  const p1 = buildCopyDevelopmentPrompt1(fields);
+  return [
+    p1,
+    "",
+    "---",
+    "",
+    "Additional tasks from the playbook (same event):",
+    "",
+    `Prompt 2: ${AI_PROMPT_2_FIXED}`,
+    "",
+    `Prompt 3: ${AI_PROMPT_3_FIXED}`,
+  ].join("\n");
+}
+
 export const INTERNAL_COMMUNICATION_LINES = [
   "Share event details with team managers wait until flyer is complete",
   "Assign roles (who's working grill, games, raffles, etc.).",

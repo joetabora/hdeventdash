@@ -7,6 +7,7 @@ import {
   eventMarketingBaseVarsSchema,
   facebookDescriptionVarsSchema,
   hashtagsVarsSchema,
+  playbookCopyDevelopmentPackVarsSchema,
   socialPostRegenVarsSchema,
 } from "@/lib/ai/prompt-templates/schemas";
 
@@ -52,6 +53,28 @@ const EMAIL_JSON_RULES = `Return a JSON array of exactly 4 objects. Each object 
 const DESC_JSON_RULES = `Return a JSON array of exactly 4 objects. Each object must have:
 - "label": one of "Short blurb (social / SMS)", "Standard (app / calendar)", "Long-form (website / press)", "SEO-style summary".
 - "content": the description text for that variant.`;
+
+const PLAYBOOK_COPY_PACK_SECTIONS = `Produce ALL requested deliverables in ONE plain-text response using EXACTLY these section labels (each label on its own line, immediately followed by the content):
+
+FACEBOOK_DETAILS:
+<body copy suitable for a Facebook Event description — warm, clear, dealership-appropriate>
+
+SUMMARY:
+<short paragraph summary suitable for a web event listing>
+
+SEO_META_TITLE:
+<suggested meta title; aim around 60 characters or less>
+
+SEO_META_DESCRIPTION:
+<meta description at or under 150 characters>
+
+SOCIAL_CAMPAIGN:
+<a compact bullet list using "- " at the start of each line outlining a simple multi-post social campaign>
+
+Rules:
+- Plain text only — no markdown code fences.
+- Treat everything under "Briefing" below as factual constraints; do not invent sponsors, discounts, legal promises, or perks not stated there.
+- Honor tone and phrases called out in the briefing when provided.`;
 
 export const PROMPT_TEMPLATE_REGISTRY: Record<
   string,
@@ -269,6 +292,30 @@ Tone preset: {{tone}}.`
             "",
             "Details:",
             "{{eventDescription}}",
+          ].join("\n"),
+          s
+        ),
+      };
+    },
+  },
+
+  [AI_TEMPLATE_IDS.PLAYBOOK_COPY_DEVELOPMENT_PACK]: {
+    id: AI_TEMPLATE_IDS.PLAYBOOK_COPY_DEVELOPMENT_PACK,
+    version: "1",
+    varsSchema: playbookCopyDevelopmentPackVarsSchema,
+    render: (vars) => {
+      const s = stringifyVars(vars as Record<string, unknown>);
+      return {
+        system:
+          "You support Harley-Davidson dealership event marketing. Follow the briefing faithfully; prefer concise, publish-ready prose.",
+        user: interpolatePlaceholders(
+          [
+            PLAYBOOK_COPY_PACK_SECTIONS,
+            "",
+            "Briefing:",
+            "---",
+            "{{briefing}}",
+            "---",
           ].join("\n"),
           s
         ),

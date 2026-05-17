@@ -21,6 +21,7 @@ import { Input, Textarea } from "@/components/ui/input";
 import { FormErrorAlert } from "@/components/forms/form-error-alert";
 import { FormActions } from "@/components/forms/form-actions";
 import { useFormSubmitState } from "@/hooks/use-form-submit-state";
+import { useAiCompletion } from "@/hooks/use-ai-completion";
 import { useCurrentOrganization } from "@/contexts/current-organization-context";
 import type {
   Event,
@@ -51,6 +52,7 @@ import {
   AI_PROMPT_2_FIXED,
   AI_PROMPT_3_FIXED,
   buildCopyDevelopmentPrompt1,
+  buildCopyDevelopmentAiBriefing,
   EVENT_TO_FACEBOOK_LINES,
   EVENT_TO_WEBSITE_LINES,
   EVENT_WEEK_FLOW_COPY,
@@ -66,9 +68,11 @@ import {
   AlertTriangle,
   Copy,
   ExternalLink,
+  Loader2,
   Plus,
   Trash2,
 } from "lucide-react";
+import { AI_TEMPLATE_IDS } from "@/lib/ai/prompt-templates/ids";
 
 export type NewEventPlaybookSubmitPayload = {
   body: CreateEventApiBody;
@@ -394,6 +398,8 @@ export function NewEventPlaybookForm({
     null
   );
   const [prompt1Copied, setPrompt1Copied] = useState(false);
+  const copyPackAi = useAiCompletion();
+  const [copyPackCopied, setCopyPackCopied] = useState(false);
 
   const [fetchedMonthlyBudgets, setFetchedMonthlyBudgets] = useState<
     MonthlyBudget[]
@@ -1127,6 +1133,81 @@ export function NewEventPlaybookForm({
           <p>{AI_PROMPT_2_FIXED}</p>
           <p className="font-medium text-harley-text pt-2">Prompt 3</p>
           <p>{AI_PROMPT_3_FIXED}</p>
+        </div>
+
+        <div className="mt-4 rounded-lg border border-harley-orange/40 bg-harley-black/25 p-4 space-y-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-harley-orange">
+            Generate with local AI
+          </p>
+          <p className="text-xs text-harley-text-muted leading-relaxed">
+            Runs your Prompt 1 fields plus Prompts 2–3 through Ollama (
+            <code className="text-[10px] px-1 rounded bg-harley-black/60">
+              POST /api/ai/complete
+            </code>
+            ). Enable{" "}
+            <code className="text-[10px] px-1 rounded bg-harley-black/60">
+              AI_ENABLED=true
+            </code>{" "}
+            and configure{" "}
+            <code className="text-[10px] px-1 rounded bg-harley-black/60">
+              OLLAMA_BASE_URL
+            </code>
+            .
+          </p>
+          <Button
+            type="button"
+            variant="primary"
+            disabled={copyPackAi.status === "loading"}
+            onClick={() =>
+              void copyPackAi.run("/api/ai/complete", {
+                templateId: AI_TEMPLATE_IDS.PLAYBOOK_COPY_DEVELOPMENT_PACK,
+                variables: {
+                  briefing: buildCopyDevelopmentAiBriefing(
+                    workflow.copy_prompts ?? {}
+                  ),
+                },
+              })
+            }
+          >
+            {copyPackAi.status === "loading" ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Generating…
+              </>
+            ) : (
+              "Generate copy with AI"
+            )}
+          </Button>
+          {copyPackAi.error ? (
+            <p className="text-xs text-red-400">{copyPackAi.error}</p>
+          ) : null}
+          {copyPackAi.status === "success" && copyPackAi.data?.text ? (
+            <div className="rounded-lg border border-harley-gray/40 bg-harley-black/40 p-3 space-y-2">
+              <div className="flex flex-wrap justify-between gap-2 items-center">
+                <p className="text-xs font-semibold text-harley-text">AI draft</p>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => {
+                    const text = copyPackAi.data?.text;
+                    if (!text) return;
+                    void navigator.clipboard.writeText(text).then(() => {
+                      setCopyPackCopied(true);
+                      window.setTimeout(() => setCopyPackCopied(false), 2000);
+                    });
+                  }}
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  {copyPackCopied ? "Copied" : "Copy"}
+                </Button>
+              </div>
+              <pre className="text-sm text-harley-text whitespace-pre-wrap font-sans leading-relaxed max-h-[28rem] overflow-y-auto rounded-md bg-harley-black/50 p-3 border border-harley-gray/30 select-all">
+                {copyPackAi.data.text}
+              </pre>
+            </div>
+          ) : null}
         </div>
       </Card>
 
