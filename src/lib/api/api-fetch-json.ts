@@ -20,31 +20,56 @@ export function isApiError(e: unknown): e is ApiError {
   return e instanceof ApiError;
 }
 
-/** Message from `{ error: string }` or a generic fallback. */
-export function apiMessageFromBody(data: unknown, status: number): string {
-  if (
-    data &&
-    typeof data === "object" &&
-    "error" in data &&
-    typeof (data as { error: unknown }).error === "string"
-  ) {
-    const msg = (data as { error: string }).error.trim();
-    if (msg) return msg;
+/** Message from `{ error: string }`, `{ message: string }`, or a generic fallback. */
+export function apiMessageFromBody(
+  data: unknown,
+  status: number,
+  nonJsonSnippet?: string
+): string {
+  if (data !== null && typeof data === "object") {
+    const o = data as { error?: unknown; message?: unknown };
+    if (typeof o.error === "string") {
+      const msg = o.error.trim();
+      if (msg) return msg;
+    }
+    if (typeof o.message === "string") {
+      const msg = o.message.trim();
+      if (msg) return msg;
+    }
+  }
+  const hint = sanitizeResponseSnippet(nonJsonSnippet);
+  if (hint) {
+    return `Request failed (${status}): ${hint}`;
+  }
+  if ([502, 503, 504].includes(status)) {
+    return `Request failed (${status}). The gateway or reverse proxy returned an error (often unreachable upstream or timeout). Confirm the deployment is healthy and retry.`;
   }
   return `Request failed (${status})`;
+}
+
+/** Strip markup and collapse whitespace for short user-facing excerpts. */
+function sanitizeResponseSnippet(raw: string | undefined, maxLen = 200): string {
+  if (raw === undefined || !raw.trim()) return "";
+  const t = raw
+    .slice(0, 1200)
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!t) return "";
+  return t.length > maxLen ? `${t.slice(0, maxLen)}…` : t;
 }
 
 const PARSE_FAILED = Symbol("apiFetchJsonParseFailed");
 
 async function readJsonBodyFromResponse(
   res: Response
-): Promise<unknown | typeof PARSE_FAILED> {
-  const text = await res.text();
-  if (!text.trim()) return undefined;
+): Promise<{ data: unknown | typeof PARSE_FAILED; rawText: string }> {
+  const rawText = await res.text();
+  if (!rawText.trim()) return { data: undefined, rawText };
   try {
-    return JSON.parse(text) as unknown;
+    return { data: JSON.parse(rawText) as unknown, rawText };
   } catch {
-    return PARSE_FAILED;
+    return { data: PARSE_FAILED, rawText };
   }
 }
 
@@ -61,20 +86,24 @@ export async function apiFetchJson<T = unknown>(
     credentials: init?.credentials ?? DEFAULT_CREDENTIALS,
   });
 
-  const data = await readJsonBodyFromResponse(res);
+  const { data, rawText } = await readJsonBodyFromResponse(res);
 
   if (data === PARSE_FAILED) {
     throw new ApiError(
       res.ok
         ? "Invalid JSON in response"
-        : apiMessageFromBody(undefined, res.status),
+        : apiMessageFromBody(undefined, res.status, rawText),
       res.status,
       undefined
     );
   }
 
   if (!res.ok) {
-    throw new ApiError(apiMessageFromBody(data, res.status), res.status, data);
+    throw new ApiError(
+      apiMessageFromBody(data, res.status, rawText),
+      res.status,
+      data
+    );
   }
 
   return data as T;
@@ -93,15 +122,15 @@ export async function apiFetchJsonOrNull<T = unknown>(
     credentials: init?.credentials ?? DEFAULT_CREDENTIALS,
   });
 
-  const data = await readJsonBodyFromResponse(res);
+  const parsed = await readJsonBodyFromResponse(res);
 
   if (!res.ok) {
     return null;
   }
 
-  if (data === PARSE_FAILED) {
+  if (parsed.data === PARSE_FAILED) {
     throw new ApiError("Invalid JSON in response", res.status, undefined);
   }
 
-  return data as T;
+  return parsed.data as T;
 }
