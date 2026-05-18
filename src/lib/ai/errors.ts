@@ -17,10 +17,13 @@ export class AiModelNotAllowedError extends Error {
 export class AiProviderError extends Error {
   readonly code = "AI_PROVIDER_ERROR" as const;
   readonly causeUnknown?: unknown;
-  constructor(message: string, causeUnknown?: unknown) {
+  /** Safe to expose in API JSON (`502` responses); omit for generic wording. */
+  readonly clientMessage?: string;
+  constructor(message: string, causeUnknown?: unknown, clientMessage?: string) {
     super(message);
     this.name = "AiProviderError";
     this.causeUnknown = causeUnknown;
+    this.clientMessage = clientMessage;
   }
 }
 

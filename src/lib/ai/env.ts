@@ -122,17 +122,31 @@ export function validateOllamaBaseUrl(
   try {
     url = new URL(rawUrl);
   } catch {
-    throw new AiProviderError("OLLAMA_BASE_URL is not a valid URL.");
+    throw new AiProviderError(
+      "OLLAMA_BASE_URL is not a valid URL.",
+      undefined,
+      "OLLAMA_BASE_URL is not a valid URL."
+    );
   }
   if (url.protocol !== "http:" && url.protocol !== "https:") {
-    throw new AiProviderError("OLLAMA_BASE_URL must use http or https.");
+    throw new AiProviderError(
+      "OLLAMA_BASE_URL must use http or https.",
+      undefined,
+      "OLLAMA_BASE_URL must use http or https."
+    );
   }
   if (url.username || url.password) {
-    throw new AiProviderError("OLLAMA_BASE_URL must not embed credentials.");
+    throw new AiProviderError(
+      "OLLAMA_BASE_URL must not embed credentials.",
+      undefined,
+      "OLLAMA_BASE_URL must not embed credentials."
+    );
   }
   if (hostAllowlist.length > 0 && !hostAllowlist.includes(url.hostname)) {
     throw new AiProviderError(
-      `OLLAMA_BASE_URL hostname "${url.hostname}" is not in OLLAMA_HOST_ALLOWLIST.`
+      `OLLAMA_BASE_URL hostname "${url.hostname}" is not in OLLAMA_HOST_ALLOWLIST.`,
+      undefined,
+      `OLLAMA_HOST_ALLOWLIST does not include "${url.hostname}". Add this host, or remove OLLAMA_HOST_ALLOWLIST if you intentionally use LAN IPs like 192.168.x.x.`
     );
   }
   return url;

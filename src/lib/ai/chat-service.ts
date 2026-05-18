@@ -76,7 +76,9 @@ export async function aiCompleteText(
   const promptChars = countPromptChars(messages);
   if (promptChars > env.maxPromptChars) {
     throw new AiProviderError(
-      `Prompt exceeds maximum size (${env.maxPromptChars} characters).`
+      `Prompt exceeds maximum size (${env.maxPromptChars} characters).`,
+      undefined,
+      `Prompt is too large (${env.maxPromptChars} characters max). Shorten playbook fields and try again.`
     );
   }
 

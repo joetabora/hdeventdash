@@ -23,7 +23,11 @@ export function aiExceptionResponse(error: unknown): NextResponse {
   if (error instanceof AiProviderError) {
     console.error("AiProviderError:", error.message, error.causeUnknown);
     return NextResponse.json(
-      { error: "AI provider failed to complete the request." },
+      {
+        error:
+          error.clientMessage ??
+          "AI provider failed to complete the request.",
+      },
       { status: 502 }
     );
   }
