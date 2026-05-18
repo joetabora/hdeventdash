@@ -78,6 +78,8 @@ export interface Event {
   user_id: string;
   attendance: number | null;
   recap_notes: string | null;
+  /** Planning scratch pad (meeting notes, ideas while coordinating). */
+  planning_notes?: string | null;
   sales_estimate: number | null;
   is_archived: boolean;
   /** ROI / outcome tracking (null/omitted until migration applied) */

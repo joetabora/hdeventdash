@@ -32,6 +32,7 @@ import {
   Gift,
   Ticket,
   Target,
+  StickyNote,
 } from "lucide-react";
 
 export type EventDetailHeaderLiveProps = {
@@ -228,6 +229,13 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
                   <Zap className="w-4 h-4" />
                   <span className="hidden md:inline">Live Mode</span>
                 </Button>
+                <Link
+                  href={`/events/${event.id}/notes`}
+                  className={`${buttonStyles.secondary("sm")} !px-2.5 md:!px-3`}
+                >
+                  <StickyNote className="w-4 h-4" />
+                  <span className="hidden md:inline">Notes</span>
+                </Link>
                 {canManageEvents && (
                   <Button
                     variant="secondary"

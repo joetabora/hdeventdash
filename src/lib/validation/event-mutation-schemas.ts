@@ -92,6 +92,7 @@ export const eventManagerPatchSchema = z
     is_archived: z.boolean().optional(),
     attendance: z.union([z.number().int().min(0).max(10_000_000), z.null()]).optional(),
     recap_notes: z.union([z.string().max(20000), z.null()]).optional(),
+    planning_notes: z.union([z.string().max(50000), z.null()]).optional(),
     sales_estimate: z.union([moneyNonneg, z.null()]).optional(),
     roi_leads_generated: z
       .union([z.number().int().min(0).max(1_000_000_000), z.null()])
