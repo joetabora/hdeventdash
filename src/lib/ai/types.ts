@@ -8,8 +8,6 @@ export type AiMessage = {
 export type AiCompletionRequest = {
   messages: AiMessage[];
   model: string;
-  /** AbortSignal merges with timeout signal inside the provider. */
-  signal?: AbortSignal;
 };
 
 export type AiCompletionResult = {

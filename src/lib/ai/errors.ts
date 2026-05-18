@@ -27,9 +27,12 @@ export class AiProviderError extends Error {
   }
 }
 
+const AI_TIMEOUT_DEFAULT_USER_MESSAGE =
+  "AI is taking longer than the server's allow-list time. Local 7B+ models often need several minutes—increase AI_REQUEST_TIMEOUT_MS (min 180s) and Cloudflare Tunnel ingress timeouts (noResponseTimeoutSeconds / origin timeouts), shorten inputs, or retry.";
+
 export class AiTimeoutError extends Error {
   readonly code = "AI_TIMEOUT" as const;
-  constructor(message = "The AI request timed out.") {
+  constructor(message = AI_TIMEOUT_DEFAULT_USER_MESSAGE) {
     super(message);
     this.name = "AiTimeoutError";
   }

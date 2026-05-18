@@ -5,6 +5,9 @@ import { parseWithSchema, readJsonBody } from "@/lib/validation/request-json";
 import { runAiPromptTemplate } from "@/lib/ai/run-template";
 import { aiExceptionResponse } from "@/lib/ai/http-errors";
 
+/** Hosts/CDN proxies often enforce ~100s; allow long Ollama runs on runners that honor Next.js hints. Tunnel ingress still needs aligned timeouts. */
+export const maxDuration = 900;
+
 export async function POST(request: Request) {
   const session = await requireSession();
   if (!session.ok) return session.response;
@@ -26,7 +29,6 @@ export async function POST(request: Request) {
       templateId: parsed.data.templateId,
       variables: parsed.data.variables,
       model: parsed.data.model,
-      signal: request.signal,
     });
     if (!result.ok) return result.response;
     return NextResponse.json({

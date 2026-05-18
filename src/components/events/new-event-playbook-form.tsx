@@ -1178,6 +1178,16 @@ export function NewEventPlaybookForm({
               "Generate copy with AI"
             )}
           </Button>
+          {copyPackAi.status === "loading" ? (
+            <p className="text-[11px] text-harley-text-muted leading-relaxed">
+              Local 7B+ models can take several minutes—leave this tab open. If
+              requests fail before output appears, raise{" "}
+              <code className="text-[10px] px-1 rounded bg-harley-black/60">
+                AI_REQUEST_TIMEOUT_MS
+              </code>{" "}
+              and Cloudflare Tunnel / proxy read timeouts above that limit.
+            </p>
+          ) : null}
           {copyPackAi.error ? (
             <p className="text-xs text-red-400">{copyPackAi.error}</p>
           ) : null}

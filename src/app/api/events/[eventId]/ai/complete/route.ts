@@ -8,6 +8,9 @@ import { mergeClientVarsWithEvent } from "@/lib/ai/event-template-vars";
 import { runAiPromptTemplate } from "@/lib/ai/run-template";
 import { aiExceptionResponse } from "@/lib/ai/http-errors";
 
+/** Long Ollama runs: see `src/app/api/ai/complete/route.ts` (`maxDuration`). */
+export const maxDuration = 900;
+
 export async function POST(
   request: Request,
   context: { params: Promise<{ eventId: string }> }
@@ -52,7 +55,6 @@ export async function POST(
       templateId: parsed.data.templateId,
       variables: mergedVars,
       model: parsed.data.model,
-      signal: request.signal,
     });
     if (!result.ok) return result.response;
     return NextResponse.json({

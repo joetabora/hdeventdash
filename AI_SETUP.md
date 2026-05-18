@@ -105,6 +105,10 @@ Current deployment method:
 - Environment variables should use `.env.local`
 - Maintain production-safe architecture
 
+## Cloudflare Tunnel / long-lived AI requests
+
+Tune tunnel **ingress** timeouts (e.g. `noResponseTimeoutSeconds`, `proxyType: http`) and any reverse proxy **`proxy_read_timeout`** so they are **greater than `AI_REQUEST_TIMEOUT_MS`**. Defaults around ~60–100 s routinely kill slow Ollama calls even when Docker and DNS are healthy.
+
 ## App integration (Event Dashboard)
 
 The Next.js app talks to **Ollama only on the server**. The browser calls dashboard API routes; it never opens `OLLAMA_BASE_URL` directly.
@@ -117,10 +121,11 @@ See [.env.local.example](.env.local.example). Typical Docker Compose values:
 |----------|---------|
 | `AI_ENABLED` | `true` |
 | `OLLAMA_BASE_URL` | `http://ollama:11434` (service DNS on the Compose network) |
-| `OLLAMA_DEFAULT_MODEL` | Tag pulled in Ollama (e.g. `llama3.2`) |
+| `OLLAMA_DEFAULT_MODEL` | Pulled tag in Ollama (e.g. `llama3.1:8b`; also `mistral:latest`, `gemma3:4b`, `qwen2.5-coder:7b`) |
 | `OLLAMA_ALLOWED_MODELS` | Optional comma list; if omitted, only the default model is accepted |
 | `OLLAMA_HOST_ALLOWLIST` | Optional comma list of allowed URL hostnames for `OLLAMA_BASE_URL` |
-| `AI_REQUEST_TIMEOUT_MS` | Server-side HTTP timeout toward Ollama (default `120000`) |
+| `AI_REQUEST_TIMEOUT_MS` | Server-side deadline for each `/api/chat` fetch (minimum **180 000** enforced; Cloudflare Tunnel should exceed this). |
+| `AI_OLLAMA_RETRIES` | Extra attempts on transient failures (default `1`, max `5`) |
 | `AI_MAX_PROMPT_CHARS` / `AI_MAX_COMPLETION_CHARS` | Guardrails for payload size |
 
 ### HTTP API
@@ -137,5 +142,5 @@ Templates live under `src/lib/ai/prompt-templates/` (IDs in `prompt-templates/id
 
 ### Frontend
 
-- **`useAiCompletion`** (`src/hooks/use-ai-completion.ts`) — POST helper with loading/error state and `AbortController` cancellation.
+- **`useAiCompletion`** (`src/hooks/use-ai-completion.ts`) — POST helper with loading/error state. Its `AbortController` only stops the browser→dashboard request; server-side inference uses **`AI_REQUEST_TIMEOUT_MS`** and does **not** mirror inbound HTTP disconnects.
 - Event playbook **AI Assistant** uses `/api/events/.../ai/complete` via `src/lib/ai-generate.ts`.

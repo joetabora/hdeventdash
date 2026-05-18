@@ -23,7 +23,9 @@ function wasAbortError(e: unknown): boolean {
 }
 
 /**
- * POST to `/api/ai/complete` or `/api/events/:eventId/ai/complete` with abort + stable loading/error state.
+ * POST to `/api/ai/complete` or `/api/events/:eventId/ai/complete` with loading/error state.
+ * The hook's `AbortController` only cancels the browser→API `fetch`; the route runs inference
+ * with `AI_REQUEST_TIMEOUT_MS` and does not mirror Cloudflare/proxy inbound disconnects.
  */
 export function useAiCompletion() {
   const [status, setStatus] = useState<AiCompletionStatus>("idle");

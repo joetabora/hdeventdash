@@ -11,6 +11,8 @@ export type AiRuntimeEnv = {
   defaultModel: string;
   allowedModels: string[];
   timeoutMs: number;
+  /** Extra Ollama fetch attempts beyond the first (transient/network errors only). */
+  ollamaRetryExtraAttempts: number;
   maxPromptChars: number;
   maxCompletionChars: number;
   /** When non-empty, `OLLAMA_BASE_URL` hostname must match one entry. */
@@ -71,11 +73,21 @@ function parseCsvHosts(raw: string | undefined): string[] {
 export function loadAiRuntimeEnv(): AiRuntimeEnv {
   const enabled = parseBool(env("AI_ENABLED"));
   const ollamaBaseUrl = (env("OLLAMA_BASE_URL") ?? "").trim();
-  const defaultModel = (env("OLLAMA_DEFAULT_MODEL") ?? "llama3.2").trim();
+  const defaultModel = (env("OLLAMA_DEFAULT_MODEL") ?? "llama3.1:8b").trim();
   const allowedModels = parseCsvModels(env("OLLAMA_ALLOWED_MODELS"));
-  const timeoutMsRaw = Number(env("AI_REQUEST_TIMEOUT_MS") ?? 120_000);
-  const timeoutMs =
-    Number.isFinite(timeoutMsRaw) && timeoutMsRaw >= 3000 ? timeoutMsRaw : 120_000;
+  const AI_TIMEOUT_FALLBACK_MS = 180_000;
+  const AI_TIMEOUT_MIN_MS = 180_000;
+  const timeoutMsParsed = Number(env("AI_REQUEST_TIMEOUT_MS"));
+  const timeoutMsRaw =
+    Number.isFinite(timeoutMsParsed) && timeoutMsParsed > 0
+      ? timeoutMsParsed
+      : AI_TIMEOUT_FALLBACK_MS;
+  const timeoutMs = Math.max(AI_TIMEOUT_MIN_MS, timeoutMsRaw);
+  const retriesParsed = Number(env("AI_OLLAMA_RETRIES") ?? 1);
+  const retryExtraRaw = Number.isFinite(retriesParsed)
+    ? Math.floor(retriesParsed)
+    : 1;
+  const ollamaRetryExtraAttempts = Math.min(5, Math.max(0, retryExtraRaw));
   const maxPromptRaw = Number(env("AI_MAX_PROMPT_CHARS") ?? 48_000);
   const maxPromptChars =
     Number.isFinite(maxPromptRaw) && maxPromptRaw >= 1000 ? maxPromptRaw : 48_000;
@@ -92,6 +104,7 @@ export function loadAiRuntimeEnv(): AiRuntimeEnv {
     defaultModel,
     allowedModels,
     timeoutMs,
+    ollamaRetryExtraAttempts,
     maxPromptChars,
     maxCompletionChars,
     hostAllowlist,

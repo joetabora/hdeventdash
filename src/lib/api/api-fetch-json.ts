@@ -37,6 +37,13 @@ export function apiMessageFromBody(
       if (msg) return msg;
     }
   }
+  if (
+    status === 502 &&
+    nonJsonSnippet &&
+    looksLikeProxied502Page(nonJsonSnippet)
+  ) {
+    return BAD_GATEWAY_502_PROXY_MESSAGE;
+  }
   const hint = sanitizeResponseSnippet(nonJsonSnippet);
   if (hint) {
     return `Request failed (${status}): ${hint}`;
@@ -45,6 +52,23 @@ export function apiMessageFromBody(
     return `Request failed (${status}). The gateway or reverse proxy returned an error (often unreachable upstream or timeout). Confirm the deployment is healthy and retry.`;
   }
   return `Request failed (${status})`;
+}
+
+/** Shown instead of scraped CDN/nginx 502 HTML (noisy truncated links). */
+const BAD_GATEWAY_502_PROXY_MESSAGE =
+  "Request failed (502): Bad gateway — your CDN/proxy reached the edge but could not reach your application server (origin down, crash, timeout, wrong port, or unhealthy container). Restart or redeploy your app and verify origin host, port, and TLS settings in your host dashboard.";
+
+/** HTML error pages served by proxies (Cloudflare, nginx, etc.) when the origin fails. */
+function looksLikeProxied502Page(raw: string): boolean {
+  const s = raw.toLowerCase();
+  if (s.length < 24) return false;
+  const has502 = /\b502\b/.test(s);
+  if (!has502) return false;
+  return (
+    /bad\s+gateway/.test(s) ||
+    /error\s+code\s*:?\s*502/.test(s) ||
+    (/\bcloudflare\b/.test(s) && /ray id/i.test(s))
+  );
 }
 
 /** Strip markup and collapse whitespace for short user-facing excerpts. */

@@ -7,7 +7,6 @@ export async function runAiPromptTemplate(params: {
   templateId: string;
   variables: Record<string, unknown>;
   model?: string | null;
-  signal?: AbortSignal;
 }): Promise<
   | {
       ok: true;
@@ -34,7 +33,6 @@ export async function runAiPromptTemplate(params: {
     system: rendered.system,
     user: rendered.user,
     model: params.model,
-    signal: params.signal,
   });
   return {
     ok: true,

@@ -19,7 +19,6 @@ export type AiChatServiceCompleteInput = {
   system?: string;
   user: string;
   model?: string | null;
-  signal?: AbortSignal;
 };
 
 export type AiChatServiceCompleteResult = {
@@ -39,6 +38,7 @@ function providerCacheKey(env: AiRuntimeEnv): string {
   return [
     env.ollamaBaseUrl,
     String(env.timeoutMs),
+    String(env.ollamaRetryExtraAttempts),
     String(env.maxCompletionChars),
     [...env.hostAllowlist].sort().join(","),
   ].join("|");
@@ -86,7 +86,6 @@ export async function aiCompleteText(
   const out = await provider.complete({
     messages,
     model,
-    signal: input.signal,
   });
   return { text: out.text, model: out.model };
 }
