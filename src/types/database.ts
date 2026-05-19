@@ -210,6 +210,75 @@ export interface EventMedia {
   created_at: string;
 }
 
+export type OpsFeedEntryType =
+  | "note"
+  | "idea"
+  | "call"
+  | "vendor"
+  | "sponsor"
+  | "reminder"
+  | "issue"
+  | "improvement"
+  | "staffing"
+  | "marketing"
+  | "social";
+
+export const OPS_FEED_ENTRY_TYPES: { value: OpsFeedEntryType; label: string }[] =
+  [
+    { value: "note", label: "Note" },
+    { value: "idea", label: "Idea" },
+    { value: "call", label: "Phone call" },
+    { value: "vendor", label: "Vendor" },
+    { value: "sponsor", label: "Sponsor" },
+    { value: "reminder", label: "Reminder" },
+    { value: "issue", label: "Issue" },
+    { value: "improvement", label: "Improvement" },
+    { value: "staffing", label: "Staffing" },
+    { value: "marketing", label: "Marketing" },
+    { value: "social", label: "Social media" },
+  ];
+
+export type OpsFeedPriority = "low" | "normal" | "high" | "urgent";
+
+export const OPS_FEED_PRIORITIES: { value: OpsFeedPriority; label: string }[] = [
+  { value: "low", label: "Low" },
+  { value: "normal", label: "Normal" },
+  { value: "high", label: "High" },
+  { value: "urgent", label: "Urgent" },
+];
+
+export type OpsFeedEntryStatus = "active" | "archived" | "resolved";
+
+export const OPS_FEED_ENTRY_STATUSES: {
+  value: OpsFeedEntryStatus;
+  label: string;
+}[] = [
+  { value: "active", label: "Active" },
+  { value: "archived", label: "Archived" },
+  { value: "resolved", label: "Resolved" },
+];
+
+export interface OpsFeedEntry {
+  id: string;
+  organization_id: string;
+  created_at: string;
+  updated_at: string;
+  title: string;
+  content: string;
+  entry_type: OpsFeedEntryType;
+  priority: OpsFeedPriority;
+  tags: string[];
+  event_id: string | null;
+  created_by: string;
+  created_by_email: string;
+  status: OpsFeedEntryStatus;
+}
+
+/** Entry with optional joined event summary (list views). */
+export interface OpsFeedEntryWithEvent extends OpsFeedEntry {
+  event?: { id: string; name: string; date: string } | null;
+}
+
 export type VendorParticipationStatus =
   | "invited"
   | "confirmed"

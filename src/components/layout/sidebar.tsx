@@ -24,6 +24,7 @@ import {
   ShieldCheck,
   Store,
   Wallet,
+  Radio,
 } from "lucide-react";
 
 const eventViewItems = [
@@ -33,7 +34,10 @@ const eventViewItems = [
   { href: "/dashboard?view=analytics", label: "Analytics", icon: BarChart3 },
 ];
 
-const operationsItems = [{ href: "/budget", label: "Budget", icon: Wallet }];
+const operationsItems = [
+  { href: "/budget", label: "Budget", icon: Wallet },
+  { href: "/ops-feed", label: "Ops Feed", icon: Radio },
+];
 
 const adminItems = [
   { href: "/admin/users", label: "User Management", icon: ShieldCheck },
