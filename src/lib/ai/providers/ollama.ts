@@ -122,7 +122,7 @@ export class OllamaProvider implements AiProvider {
     let lastErr: unknown;
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       try {
-        return await this.invokeChat(req.messages, req.model);
+        return await this.invokeChat(req.messages, req.model, req.temperature);
       } catch (e) {
         lastErr = e;
         const retry =
@@ -137,7 +137,8 @@ export class OllamaProvider implements AiProvider {
   /** Single `/api/chat` round-trip bounded only by configured server timeout (`AI_REQUEST_TIMEOUT_MS`). */
   private async invokeChat(
     messages: AiMessage[],
-    model: string
+    model: string,
+    temperature?: number
   ): Promise<AiCompletionResult> {
     const timeout = new AbortController();
     const t = setTimeout(() => timeout.abort(), this.env.timeoutMs);
@@ -151,6 +152,9 @@ export class OllamaProvider implements AiProvider {
             model,
             messages,
             stream: false,
+            ...(temperature != null
+              ? { options: { temperature } }
+              : {}),
           }),
           signal: timeout.signal,
         });

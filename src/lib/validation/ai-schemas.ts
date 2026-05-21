@@ -11,6 +11,8 @@ export const aiCompleteRequestSchema = z
     templateId: z.string().trim().min(1).max(160),
     variables: aiVariablesSchema.optional().default({}),
     model: z.string().trim().max(128).optional(),
+    /** Optional override; templates may also suggest temperature. */
+    temperature: z.number().min(0).max(2).optional(),
   })
   .strict();
 

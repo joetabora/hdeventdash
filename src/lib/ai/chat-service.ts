@@ -19,6 +19,7 @@ export type AiChatServiceCompleteInput = {
   system?: string;
   user: string;
   model?: string | null;
+  temperature?: number | null;
 };
 
 export type AiChatServiceCompleteResult = {
@@ -86,6 +87,7 @@ export async function aiCompleteText(
   const out = await provider.complete({
     messages,
     model,
+    ...(input.temperature != null ? { temperature: input.temperature } : {}),
   });
   return { text: out.text, model: out.model };
 }

@@ -7,6 +7,7 @@ export async function runAiPromptTemplate(params: {
   templateId: string;
   variables: Record<string, unknown>;
   model?: string | null;
+  temperature?: number | null;
 }): Promise<
   | {
       ok: true;
@@ -29,10 +30,13 @@ export async function runAiPromptTemplate(params: {
   if (!parsedVars.ok) return { ok: false, response: parsedVars.response };
 
   const rendered = tpl.render(parsedVars.data);
+  const temperature =
+    params.temperature ?? rendered.temperature ?? undefined;
   const out = await aiCompleteText({
     system: rendered.system,
     user: rendered.user,
     model: params.model,
+    temperature,
   });
   return {
     ok: true,

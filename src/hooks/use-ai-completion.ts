@@ -11,6 +11,7 @@ export type AiCompletionRunBody = {
   templateId: string;
   variables?: Record<string, unknown>;
   model?: string;
+  temperature?: number;
 };
 
 function wasAbortError(e: unknown): boolean {
@@ -62,6 +63,7 @@ export function useAiCompletion() {
           variables: body.variables ?? {},
         };
         if (body.model?.trim()) payload.model = body.model.trim();
+        if (body.temperature != null) payload.temperature = body.temperature;
 
         const res = await apiFetchJson<AiCompleteApiResponse>(path, {
           method: "POST",

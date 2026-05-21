@@ -55,6 +55,7 @@ export async function POST(
       templateId: parsed.data.templateId,
       variables: mergedVars,
       model: parsed.data.model,
+      temperature: parsed.data.temperature,
     });
     if (!result.ok) return result.response;
     return NextResponse.json({

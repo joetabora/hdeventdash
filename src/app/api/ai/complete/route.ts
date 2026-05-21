@@ -29,6 +29,7 @@ export async function POST(request: Request) {
       templateId: parsed.data.templateId,
       variables: parsed.data.variables,
       model: parsed.data.model,
+      temperature: parsed.data.temperature,
     });
     if (!result.ok) return result.response;
     return NextResponse.json({

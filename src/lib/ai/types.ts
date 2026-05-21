@@ -8,6 +8,8 @@ export type AiMessage = {
 export type AiCompletionRequest = {
   messages: AiMessage[];
   model: string;
+  /** Ollama sampling temperature (0–2). */
+  temperature?: number;
 };
 
 export type AiCompletionResult = {

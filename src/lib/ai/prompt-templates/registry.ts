@@ -8,14 +8,27 @@ import {
   facebookDescriptionVarsSchema,
   hashtagsVarsSchema,
   playbookCopyDevelopmentPackVarsSchema,
+  playbookMarketingAssistantVarsSchema,
   socialPostRegenVarsSchema,
 } from "@/lib/ai/prompt-templates/schemas";
+import {
+  composeLegacyCopyPackPrompt,
+  composeMarketingPrompt,
+} from "@/lib/ai/marketing-prompt/compose";
+import { DEFAULT_MARKETING_TOGGLES } from "@/lib/ai/marketing-prompt/types";
+
+export type RenderedPrompt = {
+  system: string;
+  user: string;
+  /** Template-suggested sampling temperature (Ollama). */
+  temperature?: number;
+};
 
 export type PromptTemplateDefinition<TVars> = {
   id: string;
   version: string;
   varsSchema: z.ZodType<TVars>;
-  render: (vars: TVars) => { system: string; user: string };
+  render: (vars: TVars) => RenderedPrompt;
 };
 
 function stringifyVars(vars: Record<string, unknown>): Record<string, string> {
@@ -301,25 +314,35 @@ Tone preset: {{tone}}.`
 
   [AI_TEMPLATE_IDS.PLAYBOOK_COPY_DEVELOPMENT_PACK]: {
     id: AI_TEMPLATE_IDS.PLAYBOOK_COPY_DEVELOPMENT_PACK,
-    version: "1",
+    version: "2",
     varsSchema: playbookCopyDevelopmentPackVarsSchema,
     render: (vars) => {
-      const s = stringifyVars(vars as Record<string, unknown>);
-      return {
-        system:
-          "You support Harley-Davidson dealership event marketing. Follow the briefing faithfully; prefer concise, publish-ready prose.",
-        user: interpolatePlaceholders(
-          [
-            PLAYBOOK_COPY_PACK_SECTIONS,
-            "",
-            "Briefing:",
-            "---",
-            "{{briefing}}",
-            "---",
-          ].join("\n"),
-          s
-        ),
+      const v = vars as { briefing: string };
+      return composeLegacyCopyPackPrompt(v.briefing);
+    },
+  },
+
+  [AI_TEMPLATE_IDS.PLAYBOOK_MARKETING_ASSISTANT]: {
+    id: AI_TEMPLATE_IDS.PLAYBOOK_MARKETING_ASSISTANT,
+    version: "1",
+    varsSchema: playbookMarketingAssistantVarsSchema,
+    render: (vars) => {
+      const v = vars as {
+        briefing: string;
+        platform: Parameters<typeof composeMarketingPrompt>[0]["platform"];
+        tone: Parameters<typeof composeMarketingPrompt>[0]["tone"];
+        copyLength: Parameters<typeof composeMarketingPrompt>[0]["copyLength"];
+        variationCount: 1 | 2 | 3;
+        options?: Partial<typeof DEFAULT_MARKETING_TOGGLES>;
       };
+      return composeMarketingPrompt({
+        briefing: v.briefing,
+        platform: v.platform,
+        tone: v.tone,
+        copyLength: v.copyLength,
+        variationCount: v.variationCount,
+        options: { ...DEFAULT_MARKETING_TOGGLES, ...v.options },
+      });
     },
   },
 };

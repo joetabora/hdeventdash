@@ -10,6 +10,8 @@ export const AI_TEMPLATE_IDS = {
   SOCIAL_FACEBOOK_DESCRIPTION: "event.social.facebook_description",
   /** Playbook “Copy development”: Prompts 1–3 via one briefing blob. */
   PLAYBOOK_COPY_DEVELOPMENT_PACK: "playbook.copy_development.pack",
+  /** Enhanced marketing assistant with platform/tone/toggles. */
+  PLAYBOOK_MARKETING_ASSISTANT: "playbook.marketing.assistant",
 } as const;
 
 export type AiTemplateId = (typeof AI_TEMPLATE_IDS)[keyof typeof AI_TEMPLATE_IDS];
