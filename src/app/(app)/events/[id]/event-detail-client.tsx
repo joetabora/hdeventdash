@@ -10,6 +10,7 @@ import { EventMobileActionBar } from "@/components/events/event-mobile-action-ba
 import { CollapsibleSection } from "@/components/events/event-detail/collapsible-section";
 import { EventCommentsModule } from "@/components/events/event-detail/event-comments-module";
 import { EventDetailHeader } from "@/components/events/event-detail/event-detail-header";
+import { EventPlanningNotesPanel } from "@/components/events/event-detail/event-planning-notes-panel";
 import { EventPlaybookPrintDocument } from "@/components/events/event-detail/event-playbook-print-document";
 import { EventDetailChecklist } from "@/components/events/event-detail/event-detail-checklist";
 import { EventDetailMedia } from "@/components/events/event-detail/event-detail-media";
@@ -94,6 +95,8 @@ export function EventDetailClient({
   initialOrgMarketingArtFormUrl = null,
 }: EventDetailClientProps) {
   const [playbookPhase, setPlaybookPhase] = useState<PlaybookPhaseId>("define");
+  const [planningNotesExpandNonce, setPlanningNotesExpandNonce] =
+    useState(0);
   const orgMarketingArtFormUrl = initialOrgMarketingArtFormUrl ?? null;
 
   const c = useEventController(eventId, {
@@ -114,6 +117,17 @@ export function EventDetailClient({
       document
         .getElementById("playbook-ai-assistant")
         ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, []);
+
+  const openPlanningNotes = useCallback(() => {
+    setPlanningNotesExpandNonce((n) => n + 1);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        document
+          .getElementById("event-planning-notes")
+          ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
     });
   }, []);
 
@@ -248,6 +262,24 @@ export function EventDetailClient({
             onStatusChange={c.handleStatusChange}
             budgetSummaryForEventMonth={c.budgetSummaryForEventMonth}
             playbookPhaseNav={playbookNav}
+            onOpenPlanningNotes={openPlanningNotes}
+          />
+
+          <EventPlanningNotesPanel
+            key={`${c.event.id}:${c.event.updated_at ?? ""}:${c.event.planning_notes ?? ""}`}
+            variant="inline"
+            eventId={c.event.id}
+            initialNotes={c.event.planning_notes ?? ""}
+            canEdit={c.canManageEvents}
+            expandNonce={planningNotesExpandNonce}
+            onSaved={(notes) => {
+              if (!c.event) return;
+              c.setEvent({
+                ...c.event,
+                planning_notes: notes,
+                updated_at: new Date().toISOString(),
+              });
+            }}
           />
 
         <div className="flex justify-end print:hidden mt-3">

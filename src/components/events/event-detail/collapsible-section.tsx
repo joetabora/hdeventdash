@@ -26,6 +26,9 @@ export function CollapsibleSection({
   heavyActivationMargin = "200px",
   /** Passed to the outer `<section>` for deep-linking / scroll targets. */
   id,
+  expandNonce,
+  /** Extra classes on the `<section>` root (e.g. scroll-margin). */
+  sectionClassName = "",
   headerAction,
   children,
 }: {
@@ -38,6 +41,8 @@ export function CollapsibleSection({
   deferHeavyContent?: boolean;
   heavyActivationMargin?: string;
   id?: string;
+  expandNonce?: number;
+  sectionClassName?: string;
   /** Optional element rendered at the right edge of the header (e.g. remove button). */
   headerAction?: React.ReactNode;
   children: React.ReactNode;
@@ -48,6 +53,19 @@ export function CollapsibleSection({
   const [heavyReady, setHeavyReady] = useState(!deferHeavyContent);
   const userToggled = useRef(false);
   const sectionRef = useRef<HTMLElement>(null);
+  const lastExpandNonceRef = useRef(0);
+
+  useEffect(() => {
+    if (expandNonce == null) return;
+    if (expandNonce > lastExpandNonceRef.current) {
+      lastExpandNonceRef.current = expandNonce;
+      userToggled.current = true;
+      if (deferHeavyContent) {
+        setHeavyReady(true);
+      }
+      setOpen(true);
+    }
+  }, [expandNonce, deferHeavyContent]);
 
   useLayoutEffect(() => {
     if (!autoOpenOnDesktop) return;
@@ -82,7 +100,11 @@ export function CollapsibleSection({
   const showBody = open && (!deferHeavyContent || heavyReady);
 
   return (
-    <section ref={sectionRef} id={id} className="mb-8 md:mb-10">
+    <section
+      ref={sectionRef}
+      id={id}
+      className={`${id ? "scroll-mt-[6.75rem] " : ""}mb-8 md:mb-10 ${sectionClassName || ""}`.trim()}
+    >
       <button
         type="button"
         onClick={() => {

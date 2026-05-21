@@ -87,6 +87,8 @@ export type EventDetailHeaderStandardProps = {
   budgetSummaryForEventMonth?: EventBudgetMonthSummary | null;
   /** Sticky playbook phase tabs (desktop event detail). */
   playbookPhaseNav?: ReactNode;
+  /** Opens / scrolls inline planning notes (standard header only). */
+  onOpenPlanningNotes?: () => void;
 };
 
 export type EventDetailHeaderProps =
@@ -184,6 +186,7 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
     onStatusChange,
     budgetSummaryForEventMonth = null,
     playbookPhaseNav,
+    onOpenPlanningNotes,
   } = props;
 
   const engagementLine = formatEngagementGoalLine(event);
@@ -229,13 +232,27 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
                   <Zap className="w-4 h-4" />
                   <span className="hidden md:inline">Live Mode</span>
                 </Button>
-                <Link
-                  href={`/events/${event.id}/notes`}
-                  className={`${buttonStyles.secondary("sm")} !px-2.5 md:!px-3`}
-                >
-                  <StickyNote className="w-4 h-4" />
-                  <span className="hidden md:inline">Notes</span>
-                </Link>
+                {onOpenPlanningNotes ? (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={onOpenPlanningNotes}
+                    className="!px-2.5 md:!px-3"
+                    title="Planning notes — scroll here"
+                  >
+                    <StickyNote className="w-4 h-4" />
+                    <span className="hidden md:inline">Notes</span>
+                  </Button>
+                ) : (
+                  <Link
+                    href={`/events/${event.id}/notes`}
+                    className={`${buttonStyles.secondary("sm")} !px-2.5 md:!px-3`}
+                  >
+                    <StickyNote className="w-4 h-4" />
+                    <span className="hidden md:inline">Notes</span>
+                  </Link>
+                )}
                 {canManageEvents && (
                   <Button
                     variant="secondary"
