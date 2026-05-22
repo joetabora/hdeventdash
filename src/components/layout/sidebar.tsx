@@ -246,9 +246,9 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
                 <img
                   src="/MKElogo.png"
                   alt="Milwaukee Harley-Davidson"
-                  className="mx-auto h-auto max-h-[4.25rem] w-full max-w-[13rem] object-contain"
-                  width={208}
-                  height={68}
+                  className="mx-auto h-auto max-h-[8.5rem] w-auto max-w-full object-contain"
+                  width={416}
+                  height={136}
                   decoding="async"
                 />
               </div>
