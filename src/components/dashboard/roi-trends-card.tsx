@@ -19,7 +19,7 @@ export function RoiTrendsCard({ trends }: RoiTrendsCardProps) {
       <Card className="!p-4 md:!p-5">
         <div className="flex items-center gap-2 mb-2">
           <TrendingUp className="w-5 h-5 text-harley-orange" />
-          <h2 className="text-lg font-semibold text-harley-text">ROI trends</h2>
+          <h2 className="font-display-heading text-lg font-semibold text-harley-text">ROI trends</h2>
         </div>
         <p className="text-sm text-harley-text-muted">
           When you add revenue or lead counts on event pages, they&apos;ll show up
@@ -35,7 +35,7 @@ export function RoiTrendsCard({ trends }: RoiTrendsCardProps) {
         <div className="flex items-center gap-2">
           <TrendingUp className="w-5 h-5 text-harley-orange" />
           <div>
-            <h2 className="text-lg font-semibold text-harley-text">ROI trends</h2>
+            <h2 className="font-display-heading text-lg font-semibold text-harley-text">ROI trends</h2>
             <p className="text-xs text-harley-text-muted">
               Revenue by event date · cumulative trend below
             </p>
@@ -63,7 +63,7 @@ export function RoiTrendsCard({ trends }: RoiTrendsCardProps) {
                   {formatUsd(rev)}
                 </span>
               </div>
-              <div className="h-2 rounded-full bg-harley-gray/60 overflow-hidden">
+              <div className="h-2 overflow-hidden rounded-full bg-surface-overlay/92">
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-harley-orange-dark to-harley-orange transition-all duration-300"
                   style={{ width: `${Math.max(w, rev > 0 ? 4 : 0)}%` }}
@@ -77,7 +77,7 @@ export function RoiTrendsCard({ trends }: RoiTrendsCardProps) {
         })}
       </div>
 
-      <div className="mt-6 pt-4 border-t border-harley-gray/50 space-y-2">
+      <div className="mt-6 space-y-2 border-t border-border-subtle/75 pt-4">
         <div className="flex items-center justify-between gap-2">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-harley-text-muted">
             Cumulative revenue over time

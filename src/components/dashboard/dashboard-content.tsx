@@ -3,6 +3,8 @@
 import { useMemo, useState, useRef, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { LayoutGrid, Calendar, List, BarChart3, PlusCircle } from "lucide-react";
+
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { ChecklistStats } from "@/lib/events";
 import { apiPatchEvent } from "@/lib/events-api-client";
@@ -16,10 +18,12 @@ import { DashboardMetrics } from "@/components/dashboard/metrics";
 import { RoiTrendsCard } from "@/components/dashboard/roi-trends-card";
 import { AnalyticsDashboard } from "@/components/dashboard/analytics-dashboard";
 import { Card } from "@/components/ui/card";
-import { LayoutGrid, Calendar, List, BarChart3, PlusCircle } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
+import { SegmentedControl } from "@/components/ui/segmented-control";
+import { EmptyState } from "@/components/ui/empty-state";
+import { buttonStyles, Button } from "@/components/ui/button";
 import { useAppRole } from "@/contexts/app-role-context";
 import type { DashboardAggregates } from "@/lib/dashboard-aggregates";
-import { buttonStyles } from "@/components/ui/button";
 
 type ViewType = "kanban" | "calendar" | "list" | "analytics";
 
@@ -27,6 +31,13 @@ function currentYearMonth(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
+
+const viewOptions = [
+  { id: "kanban" as const, label: "Board", icon: LayoutGrid },
+  { id: "calendar" as const, label: "Calendar", icon: Calendar },
+  { id: "list" as const, label: "List", icon: List },
+  { id: "analytics" as const, label: "Analytics", icon: BarChart3 },
+];
 
 export function DashboardContent({
   initialEvents,
@@ -45,9 +56,7 @@ export function DashboardContent({
 
   const rawView = searchParams.get("view");
   const currentView: ViewType =
-    rawView === "calendar" ||
-    rawView === "list" ||
-    rawView === "analytics"
+    rawView === "calendar" || rawView === "list" || rawView === "analytics"
       ? rawView
       : "kanban";
 
@@ -118,6 +127,14 @@ export function DashboardContent({
     });
   }, [events, search, locationKeyFilter, ownerFilter]);
 
+  const hasFilters = !!(search.trim() || locationKeyFilter || ownerFilter);
+
+  function clearFilters() {
+    setSearch("");
+    setLocationKeyFilter("");
+    setOwnerFilter("");
+  }
+
   async function handleStatusChange(eventId: string, newStatus: EventStatus) {
     if (!canManageEvents) return;
     const supabase = supabaseRef.current;
@@ -144,13 +161,6 @@ export function DashboardContent({
     }
   }
 
-  const viewButtons: { id: ViewType; label: string; icon: typeof LayoutGrid }[] = [
-    { id: "kanban", label: "Board", icon: LayoutGrid },
-    { id: "calendar", label: "Calendar", icon: Calendar },
-    { id: "list", label: "List", icon: List },
-    { id: "analytics", label: "Analytics", icon: BarChart3 },
-  ];
-
   const viewDescription =
     currentView === "analytics"
       ? "Performance, attendance, and ROI signals across active events."
@@ -161,48 +171,36 @@ export function DashboardContent({
           : "Drag events through planning, execution, and completion.";
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 rounded-lg border border-harley-gray/80 bg-harley-dark/72 p-4 shadow-[var(--shadow-card)] sm:p-5 lg:flex-row lg:items-center lg:justify-between">
-        <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase text-harley-orange">
-            {currentView === "analytics" ? "Analytics" : "Event command center"}
-          </p>
-          <h2 className="mt-1 text-2xl font-bold text-harley-text">
-            {currentView === "analytics" ? "Analytics" : "Events Dashboard"}
-          </h2>
-          <p className="mt-1 max-w-2xl text-sm text-harley-text-muted">
-            {viewDescription}
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="grid grid-cols-4 gap-1 rounded-lg border border-harley-gray/80 bg-harley-black/32 p-1">
-            {viewButtons.map(({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setView(id)}
-                className={`flex h-9 min-w-0 items-center justify-center gap-2 rounded-md px-2 text-sm font-medium transition-colors ${
-                  currentView === id
-                    ? "bg-harley-orange text-white shadow-sm shadow-harley-orange/20"
-                    : "text-harley-text-muted hover:bg-harley-gray-light/70 hover:text-harley-text"
-                }`}
-                aria-pressed={currentView === id}
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                <span className="hidden md:inline">{label}</span>
-              </button>
-            ))}
+    <div className="space-y-8">
+      <PageHeader
+        kicker={
+          currentView === "analytics"
+            ? "Analytics"
+            : "Event command center"
+        }
+        title={
+          currentView === "analytics"
+            ? "Analytics"
+            : "Events Dashboard"
+        }
+        description={viewDescription}
+        actions={
+          <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center lg:w-auto lg:justify-end">
+            <SegmentedControl<ViewType>
+              options={viewOptions}
+              value={currentView}
+              onChange={setView}
+              className="w-full max-w-xl sm:w-auto"
+            />
+            {canManageEvents ? (
+              <Link href="/events/new" className={buttonStyles.primary("md")}>
+                <PlusCircle className="h-4 w-4" />
+                New Event
+              </Link>
+            ) : null}
           </div>
-
-          {canManageEvents ? (
-            <Link href="/events/new" className={buttonStyles.primary("md")}>
-              <PlusCircle className="h-4 w-4" />
-              New Event
-            </Link>
-          ) : null}
-        </div>
-      </div>
+        }
+      />
 
       {currentView !== "analytics" && (
         <DashboardMetrics
@@ -214,7 +212,7 @@ export function DashboardContent({
         />
       )}
 
-      <Card padding="sm" className="bg-harley-dark/72">
+      <Card padding="sm" variant="glass" className="bg-surface-overlay/72">
         <Filters
           events={events}
           search={search}
@@ -234,8 +232,37 @@ export function DashboardContent({
         <AnalyticsDashboard aggregate={aggregates.filtered} />
       )}
 
-      {currentView === "kanban" && (
-        <div className="overflow-x-auto -mx-2 px-2">
+      {currentView === "kanban" && filteredEvents.length === 0 ? (
+        <EmptyState
+          icon={LayoutGrid}
+          title={hasFilters ? "No events match your filters" : "No events to show"}
+          description={
+            hasFilters
+              ? "Try clearing filters or broadening search to bring events back on the board."
+              : events.length === 0
+                ? "Create your first event to populate the Kanban lanes."
+                : "No events matched this view yet."
+          }
+          action={
+            <>
+              {hasFilters ? (
+                <Button type="button" variant="secondary" size="sm" onClick={clearFilters}>
+                  Clear filters
+                </Button>
+              ) : null}
+              {canManageEvents ? (
+                <Link href="/events/new" className={buttonStyles.primary("md")}>
+                  <PlusCircle className="h-4 w-4" />
+                  New Event
+                </Link>
+              ) : null}
+            </>
+          }
+        />
+      ) : null}
+
+      {currentView === "kanban" && filteredEvents.length > 0 ? (
+        <div className="-mx-2 overflow-x-auto px-2">
           <KanbanBoard
             events={filteredEvents}
             onStatusChange={handleStatusChange}
@@ -243,7 +270,7 @@ export function DashboardContent({
             readOnly={!canManageEvents}
           />
         </div>
-      )}
+      ) : null}
       {currentView === "calendar" && (
         <CalendarView events={filteredEvents} />
       )}
@@ -251,8 +278,8 @@ export function DashboardContent({
         <ListView
           events={filteredEvents}
           atRiskIds={atRiskIds}
-          hasFilters={!!(search || locationKeyFilter || ownerFilter)}
-          onClearFilters={() => { setSearch(""); setLocationKeyFilter(""); setOwnerFilter(""); }}
+          hasFilters={hasFilters}
+          onClearFilters={clearFilters}
         />
       )}
     </div>

@@ -27,19 +27,19 @@ export function KanbanColumn({
   return (
     <div
       ref={setNodeRef}
-      className={`flex flex-col rounded-lg border transition-all duration-200 min-h-[calc(100vh-16rem)] ${
+      className={`flex min-h-[calc(100vh-16rem)] flex-col rounded-xl border transition-all duration-200 ${
         isOver
-          ? "border-harley-orange/60 bg-harley-orange/[0.03] shadow-[inset_0_0_20px_var(--color-harley-orange)/0.04]"
-          : "border-harley-gray/60 bg-harley-black/60"
+          ? "border-harley-orange/60 bg-harley-orange/[0.04] shadow-[inset_0_0_24px_var(--color-harley-orange)/0.06]"
+          : "border-border-subtle bg-surface-base/55"
       }`}
     >
       {/* Sticky header */}
-      <div className="sticky top-0 z-10 px-3.5 py-3 border-b border-harley-gray/60 bg-harley-black/90 backdrop-blur-sm rounded-t-lg">
+      <div className="sticky top-0 z-10 rounded-t-xl border-b border-border-subtle bg-surface-overlay/92 px-3.5 py-3 backdrop-blur-md">
         <div className="flex items-center justify-between">
           <h3 className="text-xs font-semibold text-harley-text uppercase truncate">
             {title}
           </h3>
-          <span className="text-[10px] font-bold text-harley-text-muted bg-harley-gray-light/50 rounded-full min-w-[22px] h-[22px] flex items-center justify-center px-1.5">
+          <span className="flex h-[22px] min-w-[22px] items-center justify-center rounded-full bg-surface-overlay/92 px-1.5 text-[10px] font-bold tabular-nums text-harley-text-muted ring-1 ring-border-subtle/80">
             {count}
           </span>
         </div>
@@ -57,7 +57,7 @@ export function KanbanColumn({
         ))}
         {events.length === 0 && (
           <div className={`flex items-center justify-center py-12 rounded-lg border border-dashed transition-colors ${
-            isOver ? "border-harley-orange/40 text-harley-orange/60" : "border-harley-gray/40 text-harley-text-muted/40"
+            isOver ? "border-harley-orange/40 text-harley-orange/65" : "border-border-subtle/85 text-harley-text-muted/42"
           }`}>
             <p className="text-xs font-medium">
               {readOnly ? "No events" : "Drop here"}

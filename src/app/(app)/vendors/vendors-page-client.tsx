@@ -18,7 +18,10 @@ import {
 import { useFormSubmitState } from "@/hooks/use-form-submit-state";
 import { useAppRole } from "@/contexts/app-role-context";
 import { apiFetchJson } from "@/lib/api/api-fetch-json";
-import { PlusCircle, Store, Search, ChevronRight, ChevronLeft, Loader2 } from "lucide-react";
+import { PlusCircle, Search, ChevronRight, ChevronLeft, Loader2 } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
+import { baseInputClassName } from "@/components/ui/input";
+import { cn } from "@/lib/cn";
 
 type VendorsApiPage = {
   vendors: Vendor[];
@@ -152,22 +155,18 @@ export function VendorsPageClient({
   }
 
   return (
-    <div className="max-w-4xl">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div className="flex items-center gap-3">
-          <Store className="w-8 h-8 text-harley-orange shrink-0" />
-          <div>
-            <h1 className="text-xl font-bold text-harley-text">Vendors</h1>
-            <p className="text-sm text-harley-text-muted">
-              Shared directory for all dealerships — attach vendors to events from each event page.
-            </p>
-          </div>
-        </div>
-        <Button onClick={() => setModalOpen(true)} className="shrink-0">
-          <PlusCircle className="w-4 h-4" />
-          Add vendor
-        </Button>
-      </div>
+    <div className="max-w-4xl space-y-8">
+      <PageHeader
+        title="Vendors"
+        kicker="Network"
+        description="Shared directory across dealerships — attach vendors to events from each event page."
+        actions={
+          <Button onClick={() => setModalOpen(true)} className="shrink-0">
+            <PlusCircle className="w-4 h-4" />
+            Add vendor
+          </Button>
+        }
+      />
 
       <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-harley-text-muted" />
@@ -176,7 +175,7 @@ export function VendorsPageClient({
           placeholder="Search name, contact, category, email…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text placeholder-harley-text-muted/60 focus:outline-none focus:border-harley-orange/70 focus:ring-1 focus:ring-harley-orange/20"
+          className={cn(baseInputClassName, "pl-10")}
         />
       </div>
 
@@ -239,7 +238,7 @@ export function VendorsPageClient({
           {vendors.map((v) => (
             <li key={v.id}>
               <Link href={`/vendors/${v.id}`}>
-                <Card className="!p-4 transition-colors hover:border-harley-orange/40 hover:bg-harley-gray/30">
+                <Card className="!p-4 transition-colors hover:border-harley-orange/40 hover:bg-surface-overlay/72">
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <p className="font-medium text-harley-text truncate">{v.name}</p>

@@ -60,10 +60,12 @@ export function CollapsibleSection({
     if (expandNonce > lastExpandNonceRef.current) {
       lastExpandNonceRef.current = expandNonce;
       userToggled.current = true;
-      if (deferHeavyContent) {
-        setHeavyReady(true);
-      }
-      setOpen(true);
+      queueMicrotask(() => {
+        if (deferHeavyContent) {
+          setHeavyReady(true);
+        }
+        setOpen(true);
+      });
     }
   }, [expandNonce, deferHeavyContent]);
 
@@ -125,7 +127,7 @@ export function CollapsibleSection({
             {count}
           </span>
         )}
-        <div className="flex-1 border-t border-harley-gray/40 ml-2" />
+        <div className="flex-1 border-t border-border-subtle/40 ml-2" />
         {headerAction && (
           <span
             className="shrink-0"
@@ -147,7 +149,7 @@ export function CollapsibleSection({
             children
           ) : deferHeavyContent ? (
             <div
-              className="rounded-xl border border-harley-gray/40 bg-harley-gray/10 min-h-[7rem] animate-pulse"
+              className="rounded-xl border border-border-subtle/40 bg-harley-gray/10 min-h-[7rem] animate-pulse"
               aria-hidden
             />
           ) : null}

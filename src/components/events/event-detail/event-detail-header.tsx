@@ -105,7 +105,7 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
     } = props;
     return (
       <>
-        <div className="sticky top-0 z-10 -mx-1 px-1 py-3 sm:py-4 bg-harley-black/95 backdrop-blur-md border-b border-harley-gray/50 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="-mx-1 flex flex-col gap-3 border-b border-border-subtle/60 bg-surface-base/93 px-1 py-3 backdrop-blur-md sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:py-4 sticky top-0 z-10">
           <Link
             href="/dashboard"
             className={`${buttonStyles.secondary("md")} justify-center min-h-12 sm:min-h-11 w-full sm:w-auto order-2 sm:order-1`}
@@ -201,7 +201,7 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
         Back to Dashboard
       </Link>
 
-      <div className="sticky top-16 z-10 -mx-2 px-2 pb-3 md:pb-4 pt-1 bg-harley-black/80 backdrop-blur-xl">
+      <div className="sticky top-14 z-10 -mx-2 bg-surface-base/82 px-2 pb-3 pt-1 backdrop-blur-xl md:top-14 md:pb-4 lg:top-14">
         <Card padding="none">
           <div className="px-4 py-3 md:px-5 md:py-4">
             <div className="flex items-start justify-between gap-3 mb-2 md:mb-0">
@@ -315,7 +315,7 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
             </div>
           </div>
           {playbookPhaseNav ? (
-            <div className="px-4 pb-3 md:px-5 pt-1 border-t border-harley-gray/40">
+            <div className="px-4 pb-3 md:px-5 pt-1 border-t border-border-subtle/40">
               {playbookPhaseNav}
             </div>
           ) : null}
@@ -397,12 +397,12 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
             </div>
           </div>
           {event.description && (
-            <p className="mt-3 pt-3 border-t border-harley-gray/50 text-sm text-harley-text-muted leading-relaxed">
+            <p className="mt-3 pt-3 border-t border-border-subtle/50 text-sm text-harley-text-muted leading-relaxed">
               {event.description}
             </p>
           )}
           {event.event_goals && (
-            <div className="mt-3 pt-3 border-t border-harley-gray/50">
+            <div className="mt-3 pt-3 border-t border-border-subtle/50">
               <p className="text-[11px] uppercase tracking-wide text-harley-text-muted font-semibold mb-1.5">
                 Purpose &amp; Goals
               </p>
@@ -412,7 +412,7 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
             </div>
           )}
           {engagementLine ? (
-            <div className="mt-3 pt-3 border-t border-harley-gray/50">
+            <div className="mt-3 pt-3 border-t border-border-subtle/50">
               <p className="text-[11px] uppercase tracking-wide text-harley-text-muted font-semibold mb-1.5">
                 Engagement goal
               </p>
@@ -423,7 +423,7 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
             </div>
           ) : null}
           {event.core_activities && (
-            <div className="mt-3 pt-3 border-t border-harley-gray/50">
+            <div className="mt-3 pt-3 border-t border-border-subtle/50">
               <p className="text-[11px] uppercase tracking-wide text-harley-text-muted font-semibold mb-1.5">
                 Core Activities
               </p>
@@ -433,7 +433,7 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
             </div>
           )}
           {(event.giveaway_description || event.rsvp_incentive) && (
-            <div className="mt-3 pt-3 border-t border-harley-gray/50 space-y-2.5">
+            <div className="mt-3 pt-3 border-t border-border-subtle/50 space-y-2.5">
               <p className="text-[11px] uppercase tracking-wide text-harley-text-muted font-semibold">
                 Promotions
               </p>
@@ -478,7 +478,7 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
             </div>
           )}
           {canManageEvents && budgetSummaryForEventMonth && (
-            <div className="mt-3 pt-3 border-t border-harley-gray/50">
+            <div className="mt-3 pt-3 border-t border-border-subtle/50">
               {budgetSummaryForEventMonth.cap > 0 &&
               budgetSummaryForEventMonth.remaining !== null ? (
                 <div className="rounded-xl border border-harley-orange/35 bg-gradient-to-br from-harley-orange/10 to-harley-black/40 p-4 md:p-5 shadow-sm shadow-black/20">
@@ -517,7 +517,7 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
                       ? "over monthly cap"
                       : "remaining this month"}
                   </p>
-                  <div className="mt-4 grid grid-cols-2 gap-3 text-sm border-t border-harley-gray/40 pt-4">
+                  <div className="mt-4 grid grid-cols-2 gap-3 text-sm border-t border-border-subtle/40 pt-4">
                     <div>
                       <p className="text-[11px] uppercase tracking-wide text-harley-text-muted">
                         Monthly cap
@@ -566,7 +566,7 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
                   </p>
                 </div>
               ) : (
-                <div className="rounded-xl border border-harley-gray/50 bg-harley-gray-light/5 p-4 text-sm">
+                <div className="rounded-xl border border-border-subtle/50 bg-harley-gray-light/5 p-4 text-sm">
                   <div className="flex items-center gap-2 text-harley-text-muted mb-2">
                     <Wallet className="w-4 h-4 text-harley-orange shrink-0" />
                     <span className="font-medium text-harley-text">

@@ -1,7 +1,19 @@
-import { InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes, forwardRef, useId } from "react";
+import {
+  InputHTMLAttributes,
+  SelectHTMLAttributes,
+  TextareaHTMLAttributes,
+  forwardRef,
+  useId,
+} from "react";
 
-const baseInput =
-  "w-full px-4 py-2.5 rounded-lg bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text placeholder-harley-text-muted/60 focus:outline-none focus:border-harley-orange/70 focus:ring-1 focus:ring-harley-orange/20 transition-all duration-150";
+import { cn } from "@/lib/cn";
+
+export const baseInputClassName = cn(
+  "w-full rounded-lg border border-border-strong/60 bg-surface-base/50 px-4 py-2.5 text-harley-text",
+  "placeholder:text-harley-text-muted/55",
+  "transition-[border-color,box-shadow,background-color] duration-150",
+  "focus:outline-none focus:border-harley-orange/55 focus:ring-2 focus:ring-harley-orange/18 focus:bg-surface-raised/50"
+);
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -15,11 +27,16 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div>
         {label && (
-          <label htmlFor={id} className="block text-sm text-harley-text-muted mb-1.5">
+          <label htmlFor={id} className="mb-1.5 block text-sm text-harley-text-muted">
             {label}
           </label>
         )}
-        <input ref={ref} id={id} className={`${baseInput} ${className}`} {...props} />
+        <input
+          ref={ref}
+          id={id}
+          className={cn(baseInputClassName, className)}
+          {...props}
+        />
         {error && <p className="mt-1 text-xs text-harley-danger">{error}</p>}
       </div>
     );
@@ -39,14 +56,14 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <div>
         {label && (
-          <label htmlFor={id} className="block text-sm text-harley-text-muted mb-1.5">
+          <label htmlFor={id} className="mb-1.5 block text-sm text-harley-text-muted">
             {label}
           </label>
         )}
         <textarea
           ref={ref}
           id={id}
-          className={`${baseInput} min-h-[80px] resize-y ${className}`}
+          className={cn(baseInputClassName, "min-h-[80px] resize-y", className)}
           {...props}
         />
         {error && <p className="mt-1 text-xs text-harley-danger">{error}</p>}
@@ -69,11 +86,11 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
     return (
       <div>
         {label && (
-          <label htmlFor={id} className="block text-sm text-harley-text-muted mb-1.5">
+          <label htmlFor={id} className="mb-1.5 block text-sm text-harley-text-muted">
             {label}
           </label>
         )}
-        <select ref={ref} id={id} className={`${baseInput} ${className}`} {...props}>
+        <select ref={ref} id={id} className={cn(baseInputClassName, className)} {...props}>
           {options.map((opt) => (
             <option key={opt.value} value={opt.value}>
               {opt.label}

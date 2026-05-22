@@ -1,54 +1,68 @@
 import Link from "next/link";
+import { Calendar, LayoutGrid, Zap } from "lucide-react";
+
 import { Card } from "@/components/ui/card";
 import { buttonStyles } from "@/components/ui/button";
-import { Calendar, LayoutGrid, Zap } from "lucide-react";
+import { cn } from "@/lib/cn";
 
 export default function Home() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-harley-black px-4">
-      <div className="max-w-2xl w-full text-center space-y-8">
-        <div className="space-y-4">
-          <p className="text-harley-orange font-semibold text-lg tracking-wide">
-            Welcome Joseph
+    <div className="relative z-[1] flex min-h-screen flex-col items-center justify-center px-4">
+      <div className="w-full max-w-3xl space-y-10 py-14 text-center">
+        <header className="animate-page-in space-y-5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-harley-orange">
+            Milwaukee HQ · Event operations
           </p>
-          <div className="flex items-center justify-center gap-3">
-            <Zap className="w-10 h-10 text-harley-orange" />
-            <h1 className="text-4xl md:text-5xl font-bold text-harley-text">
+          <div className="flex flex-col items-center gap-5 sm:flex-row sm:justify-center sm:gap-5">
+            <span className="flex h-14 w-14 items-center justify-center rounded-2xl border border-harley-orange/25 bg-harley-orange/10 shadow-[var(--shadow-card)]">
+              <Zap className="h-8 w-8 text-harley-orange" aria-hidden />
+            </span>
+            <h1 className="font-display-heading text-4xl font-bold tracking-tight text-harley-text md:text-5xl">
               Harley Event Dashboard
             </h1>
           </div>
-          <p className="text-harley-text-muted text-lg">
-            Plan, execute, and track events from start to finish.
+          <p className="mx-auto max-w-xl text-lg text-harley-text-muted">
+            Plan execution, synchronize teams, and close the loop with attendance and ROI in one
+            command surface.
           </p>
+        </header>
+
+        <div className="grid grid-cols-1 animate-page-in animate-stagger-1 gap-4 text-left sm:grid-cols-3">
+          <Card hover variant="glass" padding="lg" className="border-border-subtle">
+            <LayoutGrid className="mb-3 h-7 w-7 text-harley-orange" aria-hidden />
+            <h2 className="font-display-heading text-base font-semibold text-harley-text">
+              Kanban board
+            </h2>
+            <p className="mt-1 text-sm text-harley-text-muted">
+              Drag events across planning lanes with readiness signals wired in.
+            </p>
+          </Card>
+          <Card hover variant="glass" padding="lg" className="border-border-subtle">
+            <Calendar className="mb-3 h-7 w-7 text-harley-orange" aria-hidden />
+            <h2 className="font-display-heading text-base font-semibold text-harley-text">
+              Calendar runway
+            </h2>
+            <p className="mt-1 text-sm text-harley-text-muted">
+              Visualize timelines to prevent conflicts across venues and teams.
+            </p>
+          </Card>
+          <Card hover variant="glass" padding="lg" className="border-border-subtle">
+            <Zap className="mb-3 h-7 w-7 text-harley-orange" aria-hidden />
+            <h2 className="font-display-heading text-base font-semibold text-harley-text">
+              Live mode
+            </h2>
+            <p className="mt-1 text-sm text-harley-text-muted">
+              Distraction-free execution tooling for dealers on the showroom floor.
+            </p>
+          </Card>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
-          <Card hover>
-            <LayoutGrid className="w-6 h-6 text-harley-orange mb-3" />
-            <h3 className="font-semibold text-harley-text mb-1">Kanban Board</h3>
-            <p className="text-sm text-harley-text-muted">
-              Drag and drop events through every stage
-            </p>
-          </Card>
-          <Card hover>
-            <Calendar className="w-6 h-6 text-harley-orange mb-3" />
-            <h3 className="font-semibold text-harley-text mb-1">Calendar View</h3>
-            <p className="text-sm text-harley-text-muted">
-              Visualize your event timeline at a glance
-            </p>
-          </Card>
-          <Card hover>
-            <Zap className="w-6 h-6 text-harley-orange mb-3" />
-            <h3 className="font-semibold text-harley-text mb-1">Live Mode</h3>
-            <p className="text-sm text-harley-text-muted">
-              Simplified view for day-of execution
-            </p>
-          </Card>
-        </div>
-
-        <div className="flex justify-center">
-          <Link href="/auth/login" className={buttonStyles.primary("lg")}>
-            Sign In
+        <div className="flex animate-page-in animate-stagger-3 justify-center">
+          <Link
+            href="/auth/login"
+            className={cn(buttonStyles.primary("lg"), "shadow-[var(--shadow-elevated)]")}
+          >
+            Sign in
           </Link>
         </div>
       </div>

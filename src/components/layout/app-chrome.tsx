@@ -2,8 +2,10 @@
 
 import dynamic from "next/dynamic";
 import { useState } from "react";
+
 import { Sidebar } from "@/components/layout/sidebar";
 import { TopHeader } from "@/components/layout/top-header";
+import { cn } from "@/lib/cn";
 
 const PushNotificationPrompt = dynamic(
   () =>
@@ -33,18 +35,26 @@ export function AppChrome({
     <>
       <Sidebar mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
 
-      <div id="app-shell-main" className="lg:pl-64 flex flex-col min-h-screen">
+      <div
+        id="app-shell-main"
+        className="relative z-[1] flex min-h-screen flex-col lg:pl-64"
+      >
         <TopHeader
           onMenuToggle={() => setMobileOpen((v) => !v)}
           userEmail={userEmail}
         />
         <PushNotificationPrompt />
 
-        <main className="flex-1 overflow-y-auto bg-[linear-gradient(180deg,rgba(255,102,0,0.035)_0%,rgba(11,11,12,0)_14rem)]">
+        <main
+          className={cn(
+            "relative flex-1 overflow-y-auto",
+            "bg-[linear-gradient(180deg,rgb(255_102_0/0.04)_0%,transparent_13rem)]"
+          )}
+        >
           <div
             id="app-shell-scroll-inner"
             key={activeOrganizationId ?? "no-org"}
-            className="mx-auto w-full max-w-7xl px-4 py-5 lg:px-8 lg:py-7"
+            className="mx-auto w-full max-w-7xl space-y-8 px-4 py-6 lg:px-8 lg:py-10"
           >
             {children}
           </div>

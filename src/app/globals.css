@@ -40,6 +40,13 @@
   --color-harley-text: #f0eee9;
   --color-harley-text-muted: #a49d92;
 
+  /* Semantic aliases — layered surfaces & borders */
+  --color-surface-base: #0b0b0c;
+  --color-surface-raised: #141312;
+  --color-surface-overlay: #1a1917;
+  --color-border-subtle: rgb(53 51 46 / 0.45);
+  --color-border-strong: rgb(103 94 82 / 0.55);
+
   /* Semantic — no blue; subdued for minimal UI */
   --color-harley-success: #52b768;
   --color-harley-warning: #d9a526;
@@ -47,9 +54,37 @@
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-dm-sans);
 
-  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.035), 0 10px 28px rgba(0, 0, 0, 0.22);
-  --shadow-elevated: 0 1px 0 rgba(255, 255, 255, 0.05), 0 18px 42px rgba(0, 0, 0, 0.42);
+  /* Radius scale */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.625rem;
+  --radius-xl: 0.75rem;
+
+  /* Motion tokens */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --shadow-card:
+    inset 0 1px 0 rgb(255 255 255 / 0.04),
+    0 1px 0 rgb(0 0 0 / 0.28),
+    0 14px 40px rgb(2 2 4 / 0.38),
+    0 0 0 1px rgb(255 102 0 / 0.04);
+  --shadow-elevated:
+    inset 0 1px 0 rgb(255 255 255 / 0.06),
+    0 22px 50px rgb(2 2 4 / 0.55),
+    0 0 0 1px rgb(255 255 255 / 0.035);
+}
+
+/* Display font for headlines & brand wordmark */
+.font-display-heading {
+  font-family: var(--font-display), var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
+
+/* Metric numerals aligned for dashboards */
+.metric-value {
+  font-variant-numeric: tabular-nums;
 }
 
 html {
@@ -58,12 +93,36 @@ html {
 
 body {
   background:
-    linear-gradient(180deg, #11100f 0%, var(--color-harley-black) 18rem),
-    var(--color-harley-black);
+    radial-gradient(ellipse 90% 50% at 50% -20%, rgb(255 102 0 / 0.08), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 0%, rgb(255 102 0 / 0.04), transparent),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 60px,
+      rgb(255 255 255 / 0.012) 60px,
+      rgb(255 255 255 / 0.012) 61px
+    ),
+    linear-gradient(180deg, rgb(21 19 17) 0%, var(--color-surface-base) 18rem),
+    var(--color-surface-base);
   color: var(--color-harley-text);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Grain overlay — faint texture without impacting contrast */
+@media (prefers-reduced-motion: no-preference) {
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    mix-blend-mode: overlay;
+  }
 }
 
 ::selection {
@@ -188,11 +247,58 @@ html.event-live-shell header h1 {
   animation: fade-in-up 200ms ease-out;
 }
 
+/* Page entrance & stagger — used on route wrappers */
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-page-in {
+  animation: page-in 420ms var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1)) forwards;
+}
+
+.animate-stagger-1 {
+  animation-delay: 40ms;
+}
+.animate-stagger-2 {
+  animation-delay: 80ms;
+}
+.animate-stagger-3 {
+  animation-delay: 120ms;
+}
+.animate-stagger-4 {
+  animation-delay: 160ms;
+}
+
+.opacity-0-motion {
+  opacity: 0;
+}
+
 /* Respect reduced-motion preferences */
 @media (prefers-reduced-motion: reduce) {
+  body::before {
+    display: none;
+  }
+
   .animate-check-pop,
   .animate-fade-in-up {
     animation: none;
+  }
+
+  .animate-page-in {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .opacity-0-motion {
+    opacity: 1 !important;
   }
 }
 

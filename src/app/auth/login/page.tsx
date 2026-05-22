@@ -1,13 +1,14 @@
 "use client";
 
-import { Suspense, useMemo, useState } from "react";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import Link from "next/link";
+import { Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { CalendarCheck, Loader2, ShieldCheck, Zap } from "lucide-react";
 
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 const AUTH_REDIRECT_MESSAGES: Record<string, string> = {
   configuration:
     "Sign-in is not available right now (server configuration). Please try again later or contact support.",
@@ -49,107 +50,99 @@ function LoginPageInner() {
   }
 
   return (
-    <div className="min-h-screen bg-harley-black px-4 py-8">
-      <div className="mx-auto grid min-h-[calc(100vh-4rem)] w-full max-w-5xl items-center gap-8 lg:grid-cols-[1fr_26rem]">
+    <div className="relative z-[1] min-h-screen px-4 py-8">
+      <div className="mx-auto grid min-h-[calc(100vh-4rem)] w-full max-w-5xl items-center gap-10 lg:grid-cols-[1fr_26rem]">
         <div className="hidden lg:block">
-          <Link href="/" className="inline-flex items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-lg border border-harley-orange/25 bg-harley-orange/12">
-              <Zap className="h-6 w-6 text-harley-orange" />
+          <Link href="/" className="inline-flex items-center gap-3 animate-page-in">
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-harley-orange/25 bg-harley-orange/12 shadow-[var(--shadow-card)]">
+              <Zap className="h-6 w-6 text-harley-orange" aria-hidden />
             </span>
-            <span className="text-2xl font-bold text-harley-text">
+            <span className="font-display-heading text-2xl font-semibold tracking-tight text-harley-text">
               Harley Events
             </span>
           </Link>
-          <div className="mt-10 max-w-xl">
-            <p className="text-xs font-semibold uppercase text-harley-orange">
+          <div className="mt-10 max-w-xl animate-page-in animate-stagger-1">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-harley-orange">
               Event operations
             </p>
-            <h1 className="mt-3 text-4xl font-bold leading-tight text-harley-text">
+            <h1 className="mt-3 font-display-heading text-4xl font-semibold leading-tight text-harley-text">
               Plan, track, and recap every dealership event from one command view.
             </h1>
             <div className="mt-8 grid max-w-lg gap-3">
-              <div className="flex items-center gap-3 rounded-lg border border-harley-gray/80 bg-harley-dark/70 p-4">
-                <CalendarCheck className="h-5 w-5 shrink-0 text-harley-orange" />
+              <div className="flex items-center gap-3 rounded-xl border border-border-subtle bg-surface-overlay/75 p-4 shadow-[var(--shadow-card)]">
+                <CalendarCheck className="h-5 w-5 shrink-0 text-harley-orange" aria-hidden />
                 <span className="text-sm text-harley-text-muted">
-                  Keep event status, budgets, tasks, and ROI in sync.
+                  Keep status, budgets, tasks, vendors, and ROI signals aligned.
                 </span>
               </div>
-              <div className="flex items-center gap-3 rounded-lg border border-harley-gray/80 bg-harley-dark/70 p-4">
-                <ShieldCheck className="h-5 w-5 shrink-0 text-harley-success" />
+              <div className="flex items-center gap-3 rounded-xl border border-border-subtle bg-surface-overlay/75 p-4 shadow-[var(--shadow-card)]">
+                <ShieldCheck className="h-5 w-5 shrink-0 text-harley-success" aria-hidden />
                 <span className="text-sm text-harley-text-muted">
-                  Dealership-scoped access keeps each team in its own lane.
+                  Dealership-scoped access routes each showroom to the right playbook.
                 </span>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="w-full">
+        <div className="w-full animate-page-in">
           <div className="mb-6 text-center lg:hidden">
             <Link href="/" className="inline-flex items-center gap-2">
-              <Zap className="h-8 w-8 text-harley-orange" />
-              <span className="text-2xl font-bold text-harley-text">
+              <Zap className="h-8 w-8 text-harley-orange" aria-hidden />
+              <span className="font-display-heading text-2xl font-semibold tracking-tight text-harley-text">
                 Harley Events
               </span>
             </Link>
           </div>
 
-          <Card padding="xl" className="bg-harley-dark/88">
-            <p className="text-xs font-semibold uppercase text-harley-orange">
+          <Card padding="xl" variant="glass" className="bg-surface-overlay/90">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-harley-orange">
               Welcome back
             </p>
-            <h2 className="mt-1 text-xl font-semibold text-harley-text mb-6">
+            <h2 className="mb-6 mt-2 font-display-heading text-xl font-semibold text-harley-text">
               Sign in to your account
             </h2>
 
             <form onSubmit={handleLogin} className="space-y-4">
-            {systemNotice ? (
-              <div className="text-sm text-harley-warning bg-harley-warning/10 rounded-lg p-3 border border-harley-warning/30">
-                {systemNotice}
-              </div>
-            ) : null}
+              {systemNotice ? (
+                <div className="rounded-lg border border-harley-warning/30 bg-harley-warning/10 p-3 text-sm text-harley-warning">
+                  {systemNotice}
+                </div>
+              ) : null}
 
-            <div>
-              <label className="block text-sm text-harley-text-muted mb-1.5">
-                Email
-              </label>
-              <input
+              <Input
                 type="email"
+                label="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-2.5 rounded-lg bg-harley-black/28 border border-harley-gray-lighter/50 text-harley-text placeholder-harley-text-muted/60 focus:outline-none focus:border-harley-orange/70 focus:ring-1 focus:ring-harley-orange/20 transition-all duration-150"
+                autoComplete="email"
                 placeholder="you@example.com"
               />
-            </div>
 
-            <div>
-              <label className="block text-sm text-harley-text-muted mb-1.5">
-                Password
-              </label>
-              <input
+              <Input
                 type="password"
+                label="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-4 py-2.5 rounded-lg bg-harley-black/28 border border-harley-gray-lighter/50 text-harley-text placeholder-harley-text-muted/60 focus:outline-none focus:border-harley-orange/70 focus:ring-1 focus:ring-harley-orange/20 transition-all duration-150"
+                autoComplete="current-password"
                 placeholder="••••••••"
               />
-            </div>
 
-            {error && (
-              <div className="text-harley-danger text-sm bg-harley-danger/10 rounded-lg p-3">
-                {error}
-              </div>
-            )}
+              {error ? (
+                <div className="rounded-lg bg-harley-danger/10 p-3 text-sm text-harley-danger">
+                  {error}
+                </div>
+              ) : null}
 
-            <Button type="submit" size="lg" disabled={loading} className="w-full">
-              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-              Sign In
-            </Button>
+              <Button type="submit" size="lg" disabled={loading} className="w-full gap-2">
+                {loading ? <Loader2 className="h-4 w-4 animate-spin shrink-0" aria-hidden /> : null}
+                Sign in
+              </Button>
             </form>
 
-            <p className="mt-6 text-center text-xs text-harley-text-muted/60">
+            <p className="mt-6 text-center text-xs text-harley-text-muted/65">
               Contact your administrator for account access.
             </p>
           </Card>
@@ -163,8 +156,8 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-harley-black px-4">
-          <Loader2 className="w-8 h-8 animate-spin text-harley-orange" />
+        <div className="flex min-h-screen items-center justify-center px-4">
+          <Loader2 className="h-9 w-9 animate-spin text-harley-orange" aria-hidden />
         </div>
       }
     >

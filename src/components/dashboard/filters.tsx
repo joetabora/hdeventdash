@@ -1,9 +1,12 @@
 "use client";
 
 import { useMemo } from "react";
+import { Search, Filter } from "lucide-react";
+
+import { baseInputClassName } from "@/components/ui/input";
 import { Event } from "@/types/database";
 import { normalizeLocationKey } from "@/lib/location-key";
-import { Search, Filter } from "lucide-react";
+import { cn } from "@/lib/cn";
 
 interface FiltersProps {
   events: Event[];
@@ -42,26 +45,31 @@ export function Filters({
     return Array.from(set).sort();
   }, [events]);
 
+  const selectClass = cn(baseInputClassName, "py-2.5 text-sm");
+
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <div className="relative flex-1 min-w-[220px]">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-harley-text-muted" />
+      <div className="relative min-w-[220px] flex-1">
+        <Search
+          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-harley-text-muted"
+          aria-hidden
+        />
         <input
           type="text"
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Search events..."
-          className="w-full rounded-lg border border-harley-gray-lighter/50 bg-harley-black/28 py-2.5 pl-10 pr-4 text-sm text-harley-text placeholder-harley-text-muted/60 transition-all duration-150 focus:border-harley-orange/70 focus:outline-none focus:ring-1 focus:ring-harley-orange/20"
+          className={cn(baseInputClassName, "py-2.5 pl-10 text-sm")}
         />
       </div>
 
       {locationOptions.length > 0 && (
         <div className="flex items-center gap-1.5">
-          <Filter className="w-4 h-4 text-harley-text-muted" />
+          <Filter className="h-4 w-4 shrink-0 text-harley-text-muted" aria-hidden />
           <select
             value={locationKeyFilter}
             onChange={(e) => onLocationKeyFilterChange(e.target.value)}
-            className="rounded-lg border border-harley-gray-lighter/50 bg-harley-black/28 px-3 py-2.5 text-sm text-harley-text transition-all duration-150 focus:border-harley-orange/70 focus:outline-none focus:ring-1 focus:ring-harley-orange/20"
+            className={selectClass}
           >
             <option value="">All Locations</option>
             {locationOptions.map(([key, label]) => (
@@ -77,7 +85,7 @@ export function Filters({
         <select
           value={ownerFilter}
           onChange={(e) => onOwnerFilterChange(e.target.value)}
-          className="rounded-lg border border-harley-gray-lighter/50 bg-harley-black/28 px-3 py-2.5 text-sm text-harley-text transition-all duration-150 focus:border-harley-orange/70 focus:outline-none focus:ring-1 focus:ring-harley-orange/20"
+          className={selectClass}
         >
           <option value="">All Owners</option>
           {owners.map((owner) => (

@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 function chunkSkeleton() {
   return (
     <div
-      className="rounded-xl border border-harley-gray/40 bg-harley-gray/10 min-h-[7rem] animate-pulse"
+      className="rounded-xl border border-border-subtle/40 bg-harley-gray/10 min-h-[7rem] animate-pulse"
       aria-hidden
     />
   );

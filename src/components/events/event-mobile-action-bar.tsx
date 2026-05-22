@@ -102,7 +102,7 @@ export function EventMobileActionBar({
   return (
     <>
       <div
-        className="print:hidden md:hidden fixed bottom-0 left-0 right-0 z-[35] border-t border-harley-gray/70 bg-harley-dark/95 backdrop-blur-xl shadow-[0_-10px_40px_rgba(0,0,0,0.45)]"
+        className="print:hidden md:hidden fixed bottom-0 left-0 right-0 z-[35] border-t border-border-subtle/70 bg-harley-dark/95 backdrop-blur-xl shadow-[0_-10px_40px_rgba(0,0,0,0.45)]"
         style={{
           paddingBottom: "max(0.65rem, env(safe-area-inset-bottom))",
         }}
@@ -188,7 +188,7 @@ export function EventMobileActionBar({
                   type="button"
                   onClick={() => markComplete(item)}
                   disabled={togglingId === item.id}
-                  className="w-full text-left rounded-xl border border-harley-gray/80 bg-harley-gray-light/20 px-4 py-3.5 flex items-start gap-3 hover:border-harley-orange/50 hover:bg-harley-orange/5 transition-colors disabled:opacity-60"
+                  className="w-full text-left rounded-xl border border-border-subtle/80 bg-harley-gray-light/20 px-4 py-3.5 flex items-start gap-3 hover:border-harley-orange/50 hover:bg-harley-orange/5 transition-colors disabled:opacity-60"
                 >
                   <span className="mt-0.5 w-6 h-6 rounded-md border-2 border-harley-gray-lighter shrink-0" />
                   <span className="flex-1 min-w-0">

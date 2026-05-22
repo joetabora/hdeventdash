@@ -43,23 +43,23 @@ export function CalendarView({ events }: CalendarViewProps) {
 
   return (
     <Card padding="none">
-      <div className="flex items-center justify-between px-6 py-4 border-b border-harley-gray">
+      <div className="flex items-center justify-between border-b border-border-subtle px-6 py-4">
         <button
           type="button"
           onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-          className="p-2 hover:bg-harley-gray rounded-lg transition-colors"
+          className="rounded-lg p-2 transition-colors hover:bg-surface-raised"
         >
-          <ChevronLeft className="w-5 h-5 text-harley-text-muted" />
+          <ChevronLeft className="h-5 w-5 text-harley-text-muted" aria-hidden />
         </button>
-        <h2 className="text-lg font-semibold text-harley-text">
+        <h2 className="font-display-heading text-lg font-semibold text-harley-text">
           {format(currentMonth, "MMMM yyyy")}
         </h2>
         <button
           type="button"
           onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-          className="p-2 hover:bg-harley-gray rounded-lg transition-colors"
+          className="rounded-lg p-2 transition-colors hover:bg-surface-raised"
         >
-          <ChevronRight className="w-5 h-5 text-harley-text-muted" />
+          <ChevronRight className="h-5 w-5 text-harley-text-muted" aria-hidden />
         </button>
       </div>
 
@@ -67,7 +67,7 @@ export function CalendarView({ events }: CalendarViewProps) {
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
           <div
             key={day}
-            className="px-2 py-3 text-center text-xs font-medium text-harley-text-muted border-b border-harley-gray"
+            className="border-b border-border-subtle px-2 py-3 text-center text-xs font-semibold uppercase tracking-wide text-harley-text-muted"
           >
             {day}
           </div>
@@ -81,14 +81,14 @@ export function CalendarView({ events }: CalendarViewProps) {
           return (
             <div
               key={dateKey}
-              className={`min-h-[100px] p-2 border-b border-r border-harley-gray ${
-                !isCurrentMonth ? "opacity-30" : ""
+              className={`min-h-[100px] border-b border-r border-border-subtle p-2 ${
+                !isCurrentMonth ? "opacity-35" : ""
               }`}
             >
               <div
-                className={`text-xs mb-1 ${
+                className={`mb-1 text-xs ${
                   isToday
-                    ? "w-6 h-6 flex items-center justify-center rounded-full bg-harley-orange text-white font-bold"
+                    ? "flex h-7 w-7 items-center justify-center rounded-full bg-harley-orange font-bold text-white shadow-sm"
                     : "text-harley-text-muted"
                 }`}
               >

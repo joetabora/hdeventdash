@@ -81,7 +81,7 @@ export function EventMarketingPublishingSection({
       defaultOpen={true}
     >
       <div className="space-y-5">
-        <div className="rounded-lg border border-harley-gray/40 bg-harley-black/25 p-3 text-sm text-harley-text-muted leading-relaxed">
+        <div className="rounded-lg border border-border-subtle/40 bg-harley-black/25 p-3 text-sm text-harley-text-muted leading-relaxed">
           <p className="font-medium text-harley-text mb-1">Copy prompts</p>
           <ul className="list-disc pl-4 space-y-1 text-xs sm:text-sm">
             <li>
@@ -229,7 +229,7 @@ export function EventMarketingPublishingSection({
             {assets.map((row) => (
               <div
                 key={row.key}
-                className="flex gap-2 items-start rounded-lg border border-harley-gray/35 p-2.5 bg-harley-black/20"
+                className="flex gap-2 items-start rounded-lg border border-border-subtle/35 p-2.5 bg-harley-black/20"
               >
                 <input
                   type="checkbox"

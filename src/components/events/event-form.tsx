@@ -388,7 +388,7 @@ export function EventForm({
         rows={3}
       />
 
-      <div className="space-y-3 p-4 rounded-lg border border-harley-gray/30 bg-harley-gray-light/5">
+      <div className="space-y-3 p-4 rounded-lg border border-border-subtle/30 bg-harley-gray-light/5">
         <p className="text-xs font-semibold text-harley-text-muted uppercase tracking-wide">
           Promotions
         </p>
@@ -423,7 +423,7 @@ export function EventForm({
       </div>
 
       {event?.id ? (
-        <div className="space-y-3 p-4 rounded-lg border border-harley-gray/30 bg-harley-gray-light/5">
+        <div className="space-y-3 p-4 rounded-lg border border-border-subtle/30 bg-harley-gray-light/5">
           <p className="text-xs font-semibold text-harley-text-muted uppercase tracking-wide">
             Marketing & publishing (playbook)
           </p>

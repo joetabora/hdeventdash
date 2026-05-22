@@ -15,7 +15,10 @@ import {
 import type { DashboardAggregates } from "@/lib/dashboard-aggregates";
 import { useAppRole } from "@/contexts/app-role-context";
 import { apiFetchJson } from "@/lib/api/api-fetch-json";
-import { Filter, Wallet } from "lucide-react";
+import { Filter } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
+import { baseInputClassName } from "@/components/ui/input";
+import { cn } from "@/lib/cn";
 import { showError } from "@/lib/toast";
 
 export function BudgetPageClient({
@@ -158,18 +161,12 @@ export function BudgetPageClient({
   }
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-        <div className="flex items-center gap-3">
-          <Wallet className="w-7 h-7 text-harley-orange shrink-0" />
-          <div>
-            <h1 className="text-2xl font-bold text-harley-text">Budget</h1>
-            <p className="text-sm text-harley-text-muted mt-0.5">
-              Monthly caps, planned spend by venue, and utilization.
-            </p>
-          </div>
-        </div>
-      </div>
+    <div className="max-w-4xl space-y-8">
+      <PageHeader
+        kicker="Finance & venues"
+        title="Budget"
+        description="Monthly caps, planned spend by venue, and utilization."
+      />
 
       <BudgetMonthTimeline
         timeline={monthTimeline}
@@ -189,7 +186,7 @@ export function BudgetPageClient({
           <select
             value={locationKeyFilter}
             onChange={(e) => setLocationKeyFilter(e.target.value)}
-            className="px-3 py-2 rounded-lg bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-sm focus:outline-none focus:border-harley-orange/70 focus:ring-1 focus:ring-harley-orange/20 transition-all duration-150"
+            className={cn(baseInputClassName, "py-2 text-sm")}
           >
             <option value="">All locations</option>
             {locationOptions.map(([key, label]) => (

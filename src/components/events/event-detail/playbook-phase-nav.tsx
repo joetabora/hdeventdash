@@ -28,7 +28,7 @@ export function PlaybookPhaseNav({
             className={`shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors border ${
               active
                 ? "bg-harley-orange/20 border-harley-orange/50 text-harley-orange"
-                : "bg-harley-black/30 border-harley-gray/40 text-harley-text-muted hover:text-harley-text hover:border-harley-gray"
+                : "bg-harley-black/30 border-border-subtle/40 text-harley-text-muted hover:text-harley-text hover:border-harley-gray"
             }`}
           >
             {PLAYBOOK_PHASE_LABELS[id]}

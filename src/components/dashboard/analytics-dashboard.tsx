@@ -30,8 +30,8 @@ export function AnalyticsDashboard({ aggregate }: AnalyticsDashboardProps) {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-lg font-semibold text-harley-text flex items-center gap-2">
-          <BarChart3 className="w-5 h-5 text-harley-orange" />
+        <h2 className="font-display-heading flex items-center gap-2 text-lg font-semibold text-harley-text">
+          <BarChart3 className="h-5 w-5 text-harley-orange" aria-hidden />
           Event performance
         </h2>
         <p className="text-sm text-harley-text-muted mt-1">
@@ -46,7 +46,7 @@ export function AnalyticsDashboard({ aggregate }: AnalyticsDashboardProps) {
               <p className="text-[10px] font-semibold uppercase tracking-wide text-harley-text-muted">
                 Tracked revenue
               </p>
-              <p className="text-2xl font-bold text-harley-text tabular-nums mt-1">
+              <p className="metric-value mt-1 font-display-heading text-2xl font-bold text-harley-text">
                 {formatUsd(snapshot.totalRevenue)}
               </p>
               <p className="text-xs text-harley-text-muted mt-0.5">
@@ -64,7 +64,7 @@ export function AnalyticsDashboard({ aggregate }: AnalyticsDashboardProps) {
               <p className="text-[10px] font-semibold uppercase tracking-wide text-harley-text-muted">
                 Avg. attendance
               </p>
-              <p className="text-2xl font-bold text-harley-text tabular-nums mt-1">
+              <p className="metric-value mt-1 font-display-heading text-2xl font-bold text-harley-text">
                 {snapshot.avgAttendance != null
                   ? snapshot.avgAttendance.toLocaleString()
                   : "—"}
@@ -85,7 +85,7 @@ export function AnalyticsDashboard({ aggregate }: AnalyticsDashboardProps) {
               <p className="text-[10px] font-semibold uppercase tracking-wide text-harley-text-muted">
                 Checklist completion
               </p>
-              <p className="text-2xl font-bold text-harley-text tabular-nums mt-1">
+              <p className="metric-value mt-1 font-display-heading text-2xl font-bold text-harley-text">
                 {snapshot.avgChecklistCompletion != null
                   ? `${snapshot.avgChecklistCompletion}%`
                   : "—"}
@@ -104,7 +104,7 @@ export function AnalyticsDashboard({ aggregate }: AnalyticsDashboardProps) {
               <p className="text-[10px] font-semibold uppercase tracking-wide text-harley-text-muted">
                 Events in view
               </p>
-              <p className="text-2xl font-bold text-harley-text tabular-nums mt-1">
+              <p className="metric-value mt-1 font-display-heading text-2xl font-bold text-harley-text">
                 {snapshot.eventCount}
               </p>
               <p className="text-xs text-harley-text-muted mt-0.5">
@@ -117,8 +117,8 @@ export function AnalyticsDashboard({ aggregate }: AnalyticsDashboardProps) {
       </div>
 
       <div>
-        <h3 className="text-sm font-semibold text-harley-text flex items-center gap-2 mb-3">
-          <Users className="w-4 h-4 text-harley-orange" />
+        <h3 className="mb-3 flex items-center gap-2 font-display-heading text-sm font-semibold text-harley-text">
+          <Users className="h-4 w-4 text-harley-orange" aria-hidden />
           Attendance trends
         </h3>
         {attendanceSeries.length === 0 ? (
@@ -148,7 +148,7 @@ export function AnalyticsDashboard({ aggregate }: AnalyticsDashboardProps) {
                     >
                       {p.name}
                     </Link>
-                    <div className="flex-1 min-w-[80px] h-2 rounded-full bg-harley-gray/50 overflow-hidden">
+                    <div className="h-2 min-w-[80px] flex-1 overflow-hidden rounded-full bg-surface-overlay/92">
                       <div
                         className="h-full rounded-full bg-gradient-to-r from-harley-orange-dark to-harley-orange"
                         style={{ width: `${Math.max(w, 3)}%` }}
@@ -166,15 +166,15 @@ export function AnalyticsDashboard({ aggregate }: AnalyticsDashboardProps) {
       </div>
 
       <div>
-        <h3 className="text-sm font-semibold text-harley-text mb-3">
+        <h3 className="mb-3 font-display-heading text-sm font-semibold text-harley-text">
           ROI trends
         </h3>
         <RoiTrendsCard trends={roiTrends} />
       </div>
 
       <div>
-        <h3 className="text-sm font-semibold text-harley-text flex items-center gap-2 mb-3">
-          <PieChart className="w-4 h-4 text-harley-orange" />
+        <h3 className="mb-3 flex items-center gap-2 font-display-heading text-sm font-semibold text-harley-text">
+          <PieChart className="h-4 w-4 text-harley-orange" aria-hidden />
           Top performing event types
         </h3>
         <p className="text-xs text-harley-text-muted mb-3">
@@ -190,7 +190,7 @@ export function AnalyticsDashboard({ aggregate }: AnalyticsDashboardProps) {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-harley-gray bg-harley-gray-light/10">
+                  <tr className="border-b border-border-subtle bg-surface-raised/45">
                     <th className="text-left px-4 py-3 text-xs font-medium text-harley-text-muted uppercase tracking-wider">
                       Type
                     </th>
@@ -211,14 +211,14 @@ export function AnalyticsDashboard({ aggregate }: AnalyticsDashboardProps) {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-harley-gray/40">
+                <tbody className="divide-y divide-border-subtle/70">
                   {byEventType.map((row, idx) => (
                     <tr
                       key={row.key}
                       className={
                         idx === 0
                           ? "bg-harley-orange/5"
-                          : "hover:bg-harley-gray-light/10"
+                          : "hover:bg-surface-overlay/55"
                       }
                     >
                       <td className="px-4 py-3 font-medium text-harley-text">

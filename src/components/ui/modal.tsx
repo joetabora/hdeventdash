@@ -3,6 +3,8 @@
 import { useEffect, useRef, useCallback, useId } from "react";
 import { X } from "lucide-react";
 
+import { cn } from "@/lib/cn";
+
 /** Initial focus targets this region so we never focus the header close control. */
 const MODAL_BODY_SELECTOR = "[data-modal-body]";
 
@@ -94,7 +96,7 @@ export function Modal({ isOpen, onClose, title, children, size = "md" }: ModalPr
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-end md:items-center justify-center md:p-4 bg-black/70 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/65 backdrop-blur-md md:items-center md:p-4"
       onClick={(e) => {
         if (e.target === overlayRef.current) onClose();
       }}
@@ -104,14 +106,22 @@ export function Modal({ isOpen, onClose, title, children, size = "md" }: ModalPr
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className={`w-full ${sizeClasses[size]} bg-harley-dark md:rounded-xl border-t md:border border-harley-gray-lighter/30 shadow-[var(--shadow-elevated)] max-h-[92vh] md:max-h-[90vh] flex flex-col rounded-t-2xl`}
+        className={cn(
+          "flex max-h-[92vh] w-full flex-col rounded-t-2xl border-t border-border-subtle bg-surface-overlay/98 shadow-[var(--shadow-elevated)] backdrop-blur-xl md:max-h-[90vh] md:rounded-xl md:border",
+          sizeClasses[size]
+        )}
       >
-        <div className="flex items-center justify-between px-5 md:px-6 py-4 border-b border-harley-gray shrink-0">
-          <h2 id={titleId} className="text-lg font-semibold text-harley-text">{title}</h2>
+        <div className="flex shrink-0 items-center justify-between border-b border-border-subtle px-5 py-4 md:px-6">
+          <h2
+            id={titleId}
+            className="font-display-heading text-lg font-semibold text-harley-text"
+          >
+            {title}
+          </h2>
           <button
             onClick={onClose}
             aria-label="Close"
-            className="p-2 -mr-2 text-harley-text-muted hover:text-harley-text transition-colors rounded-lg hover:bg-harley-gray-light/40"
+            className="-mr-2 rounded-lg p-2 text-harley-text-muted transition-colors hover:bg-surface-raised hover:text-harley-text"
           >
             <X className="w-5 h-5" />
           </button>

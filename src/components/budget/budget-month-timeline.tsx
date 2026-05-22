@@ -88,7 +88,7 @@ export function BudgetMonthTimeline({
                 className={`shrink-0 w-[100px] rounded-lg border px-2 py-2.5 text-left transition-colors ${
                   active
                     ? "border-harley-orange bg-harley-orange/15 ring-1 ring-harley-orange/40"
-                    : "border-harley-gray bg-harley-black/30 hover:border-harley-gray-lighter/60"
+                    : "border-border-subtle bg-surface-base/40 hover:border-harley-text-muted/35"
                 }`}
               >
                 <p

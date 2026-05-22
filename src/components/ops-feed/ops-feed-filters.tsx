@@ -2,7 +2,8 @@
 
 import type { OpsFeedEntryStatus, OpsFeedPriority } from "@/types/database";
 import { OPS_FEED_PRIORITIES } from "@/types/database";
-import { Input, Select } from "@/components/ui/input";
+import { Input, Select, baseInputClassName } from "@/components/ui/input";
+import { cn } from "@/lib/cn";
 import { Search, X } from "lucide-react";
 
 export function OpsFeedFilters({
@@ -51,7 +52,7 @@ export function OpsFeedFilters({
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Search notes…"
-          className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text placeholder-harley-text-muted/60 focus:outline-none focus:border-harley-orange/70 focus:ring-1 focus:ring-harley-orange/20"
+          className={cn(baseInputClassName, "pl-10")}
         />
       </div>
 

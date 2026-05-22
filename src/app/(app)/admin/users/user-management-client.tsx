@@ -11,13 +11,15 @@ import { UserRole } from "@/types/database";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { PageHeader } from "@/components/ui/page-header";
+import { Input, Select, baseInputClassName } from "@/components/ui/input";
+import { cn } from "@/lib/cn";
 import {
   Loader2,
   UserPlus,
   Shield,
   ShieldCheck,
   Trash2,
-  Users,
   AlertTriangle,
   Briefcase,
 } from "lucide-react";
@@ -154,20 +156,18 @@ export function UserManagementClient({
   }
 
   return (
-    <div className="max-w-4xl space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Users className="w-6 h-6 text-harley-orange" />
-          <h1 className="text-2xl font-bold text-harley-text">
-            User Management
-          </h1>
-        </div>
-        <Button onClick={() => setShowCreate(!showCreate)}>
-          <UserPlus className="w-4 h-4" />
-          Create User
-        </Button>
-      </div>
+    <div className="max-w-4xl space-y-8">
+      <PageHeader
+        kicker="Administrators"
+        title="User management"
+        description="Provision accounts, delegate roles, and keep Supabase-aligned access in sync."
+        actions={
+          <Button onClick={() => setShowCreate(!showCreate)}>
+            <UserPlus className="h-4 w-4" />
+            Create user
+          </Button>
+        }
+      />
 
       {/* Create user form */}
       {showCreate && (
@@ -175,45 +175,33 @@ export function UserManagementClient({
           <h3 className="font-semibold text-harley-text mb-4">
             Create New User
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-            <div>
-              <label className="block text-xs text-harley-text-muted mb-1.5">
-                Email
-              </label>
-              <input
-                type="email"
-                value={newEmail}
-                onChange={(e) => setNewEmail(e.target.value)}
-                placeholder="user@example.com"
-                className="w-full px-3 py-2 rounded-lg bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-sm placeholder-harley-text-muted/60 focus:outline-none focus:border-harley-orange/70 focus:ring-1 focus:ring-harley-orange/20 transition-all duration-150"
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-harley-text-muted mb-1.5">
-                Password
-              </label>
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Min 6 characters"
-                className="w-full px-3 py-2 rounded-lg bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-sm placeholder-harley-text-muted/60 focus:outline-none focus:border-harley-orange/70 focus:ring-1 focus:ring-harley-orange/20 transition-all duration-150"
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-harley-text-muted mb-1.5">
-                Role
-              </label>
-              <select
-                value={newRole}
-                onChange={(e) => setNewRole(e.target.value as UserRole)}
-                className="w-full px-3 py-2 rounded-lg bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-sm focus:outline-none focus:border-harley-orange/70 focus:ring-1 focus:ring-harley-orange/20 transition-all duration-150"
-              >
-                <option value="staff">Staff</option>
-                <option value="manager">Manager</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
+          <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <Input
+              type="email"
+              label="Email"
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
+              placeholder="user@example.com"
+              autoComplete="off"
+            />
+            <Input
+              type="password"
+              label="Password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Min 6 characters"
+              autoComplete="new-password"
+            />
+            <Select
+              label="Role"
+              value={newRole}
+              onChange={(e) => setNewRole(e.target.value as UserRole)}
+              options={[
+                { value: "staff", label: "Staff" },
+                { value: "manager", label: "Manager" },
+                { value: "admin", label: "Admin" },
+              ]}
+            />
           </div>
 
           {createError && (
@@ -255,7 +243,7 @@ export function UserManagementClient({
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-harley-gray">
+              <tr className="border-b border-border-subtle bg-surface-base/40">
                 <th className="text-left px-5 py-3 text-xs font-medium text-harley-text-muted uppercase tracking-wider">
                   User
                 </th>
@@ -267,7 +255,7 @@ export function UserManagementClient({
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-harley-gray/50">
+            <tbody className="divide-y divide-border-subtle/72">
               {users.length === 0 && (
                 <tr>
                   <td
@@ -283,7 +271,7 @@ export function UserManagementClient({
                 return (
                   <tr
                     key={user.id}
-                    className="hover:bg-harley-gray-light/15 transition-colors"
+                    className="transition-colors hover:bg-surface-overlay/55"
                   >
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-3">
@@ -311,7 +299,10 @@ export function UserManagementClient({
                           handleRoleChange(user.id, e.target.value as UserRole)
                         }
                         disabled={isSelf}
-                        className="px-2.5 py-1 rounded-md bg-harley-gray-light/40 border border-harley-gray-lighter/50 text-harley-text text-xs focus:outline-none focus:border-harley-orange/70 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className={cn(
+                          baseInputClassName,
+                          "px-2.5 py-1 text-xs disabled:cursor-not-allowed disabled:opacity-50"
+                        )}
                       >
                         <option value="staff">Staff</option>
                         <option value="manager">Manager</option>

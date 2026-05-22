@@ -10,6 +10,8 @@ import { switchOrganization } from "@/app/actions/switch-organization-action";
 import { useAppRole } from "@/contexts/app-role-context";
 import { useCurrentOrganization } from "@/contexts/current-organization-context";
 import { buttonStyles } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/cn";
 import {
   SidebarLogoLink,
   SidebarNavLink,
@@ -42,6 +44,15 @@ const operationsItems = [
 const adminItems = [
   { href: "/admin/users", label: "User Management", icon: ShieldCheck },
 ];
+
+function sidebarNavItemClass(isActive: boolean) {
+  return cn(
+    "relative rounded-lg px-3 py-2.5 text-sm font-medium transition-[color,background-color,box-shadow] duration-150",
+    isActive
+      ? "bg-harley-orange/[0.11] text-harley-text shadow-[inset_0_0_0_1px_rgb(255_102_0/0.18)] before:absolute before:left-0 before:top-1/2 before:h-8 before:w-0.5 before:-translate-y-1/2 before:rounded-full before:bg-harley-orange"
+      : "text-harley-text-muted hover:bg-surface-raised/72 hover:text-harley-text"
+  );
+}
 
 function isNavItemActive(
   pathname: string,
@@ -78,8 +89,8 @@ function SidebarDealershipSwitcher() {
   }
 
   return (
-    <div className="mx-3 rounded-lg border border-harley-gray/80 bg-harley-black/32 p-3 shadow-[var(--shadow-card)]">
-      <p className="text-[10px] font-semibold text-harley-text-muted uppercase">
+    <div className="mx-3 rounded-xl border border-border-subtle bg-surface-base/45 p-3 shadow-[var(--shadow-card)] backdrop-blur-sm">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-harley-text-muted">
         Active dealership
       </p>
       <p
@@ -95,7 +106,7 @@ function SidebarDealershipSwitcher() {
               <input type="hidden" name="organizationId" value={org.id} />
               <button
                 type="submit"
-                className="w-full rounded-md px-2 py-1.5 text-left text-xs font-medium text-harley-text-muted transition-colors duration-100 hover:bg-harley-gray-light/70 hover:text-harley-orange"
+                className="w-full rounded-md px-2 py-1.5 text-left text-xs font-medium text-harley-text-muted transition-colors duration-100 hover:bg-surface-raised/85 hover:text-harley-orange"
               >
                 {org.name}
               </button>
@@ -120,8 +131,8 @@ function SidebarNav({
   const searchParams = useSearchParams();
 
   return (
-    <nav className="flex-1 px-3 pt-2 space-y-1 overflow-y-auto">
-      <p className="px-3 pt-3 pb-2 text-[10px] font-semibold text-harley-text-muted uppercase">
+    <nav className="flex-1 space-y-1 overflow-y-auto px-3 pt-2">
+      <p className="px-3 pb-2 pt-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-harley-text-muted">
         Event views
       </p>
       {eventViewItems.map((item) => {
@@ -133,15 +144,11 @@ function SidebarNav({
             onClick={onClose}
             icon={item.icon}
             label={item.label}
-            className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-100 ${
-              isActive
-                ? "bg-harley-orange text-white shadow-sm shadow-harley-orange/20"
-                : "text-harley-text-muted hover:bg-harley-gray-light/70 hover:text-harley-text"
-            }`}
+            className={sidebarNavItemClass(isActive)}
           />
         );
       })}
-      <p className="px-3 pt-5 pb-2 text-[10px] font-semibold text-harley-text-muted uppercase">
+      <p className="px-3 pb-2 pt-5 text-[10px] font-semibold uppercase tracking-[0.08em] text-harley-text-muted">
         Operations
       </p>
       {operationsItems.map((item) => {
@@ -153,11 +160,7 @@ function SidebarNav({
             onClick={onClose}
             icon={item.icon}
             label={item.label}
-            className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-100 ${
-              isActive
-                ? "bg-harley-orange text-white shadow-sm shadow-harley-orange/20"
-                : "text-harley-text-muted hover:bg-harley-gray-light/70 hover:text-harley-text"
-            }`}
+            className={sidebarNavItemClass(isActive)}
           />
         );
       })}
@@ -167,16 +170,14 @@ function SidebarNav({
           onClick={onClose}
           icon={Store}
           label="Vendors"
-          className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-100 ${
+          className={sidebarNavItemClass(
             pathname === "/vendors" || pathname.startsWith("/vendors/")
-              ? "bg-harley-orange text-white shadow-sm shadow-harley-orange/20"
-              : "text-harley-text-muted hover:bg-harley-gray-light/70 hover:text-harley-text"
-          }`}
+          )}
         />
       )}
       {isAdmin && (
         <>
-          <p className="px-3 pt-5 pb-2 text-[10px] font-semibold text-harley-text-muted uppercase">
+          <p className="px-3 pb-2 pt-5 text-[10px] font-semibold uppercase tracking-[0.08em] text-harley-text-muted">
             Admin
           </p>
           {adminItems.map((item) => {
@@ -188,11 +189,7 @@ function SidebarNav({
                 onClick={onClose}
                 icon={item.icon}
                 label={item.label}
-                className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-100 ${
-                  isActive
-                    ? "bg-harley-orange text-white shadow-sm shadow-harley-orange/20"
-                    : "text-harley-text-muted hover:bg-harley-gray-light/70 hover:text-harley-text"
-                }`}
+                className={sidebarNavItemClass(isActive)}
               />
             );
           })}
@@ -217,16 +214,17 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
 
       <aside
         data-app-sidebar
-        className={`print:hidden fixed inset-y-0 left-0 z-40 w-64 bg-harley-dark/95 backdrop-blur-xl border-r border-harley-gray/80 flex flex-col transform transition-transform duration-200 lg:translate-x-0 ${
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={cn(
+          "print:hidden fixed inset-y-0 left-0 z-40 flex w-64 -translate-x-full transform flex-col border-r border-border-subtle bg-surface-overlay/95 backdrop-blur-xl transition-transform duration-200 lg:translate-x-0",
+          mobileOpen && "translate-x-0"
+        )}
       >
-        <div className="h-16 flex items-center justify-between px-5 border-b border-harley-gray/80 shrink-0">
+        <div className="flex h-14 shrink-0 items-center justify-between border-b border-border-subtle px-5">
           <SidebarLogoLink onClick={onClose} />
           <button
             type="button"
             onClick={onClose}
-            className="lg:hidden p-1 rounded-md text-harley-text-muted hover:text-harley-text"
+            className="rounded-md p-1 text-harley-text-muted transition-colors hover:bg-surface-raised hover:text-harley-text lg:hidden"
           >
             <X className="w-5 h-5" />
           </button>
@@ -247,13 +245,10 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
         <div className="flex-1 flex flex-col min-h-0 min-w-0">
           <Suspense
             fallback={
-              <div className="flex-1 px-4 pt-2 space-y-2 overflow-y-auto min-h-0">
-                <div className="h-4 w-20 rounded bg-harley-gray/40 animate-pulse" />
+              <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-4 pt-2">
+                <Skeleton className="h-4 w-20" />
                 {[1, 2, 3, 4].map((i) => (
-                  <div
-                    key={i}
-                    className="h-9 rounded-lg bg-harley-gray/25 animate-pulse"
-                  />
+                  <Skeleton key={i} className="h-9 rounded-lg" />
                 ))}
               </div>
             }
@@ -266,9 +261,9 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
           </Suspense>
         </div>
 
-        <div className="mt-auto shrink-0 border-t border-harley-gray/80 pt-3 pb-4 space-y-3">
+        <div className="mt-auto shrink-0 space-y-3 border-t border-border-subtle pb-4 pt-3">
           <SidebarDealershipSwitcher />
-          <p className="px-5 text-[10px] text-harley-text-muted/50 text-center">
+          <p className="px-5 text-center text-[10px] text-harley-text-muted/50">
             Harley Event Dashboard v1.0
           </p>
         </div>

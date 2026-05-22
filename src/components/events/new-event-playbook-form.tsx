@@ -133,7 +133,7 @@ function StaticInfoCard({
   children: React.ReactNode;
 }) {
   return (
-    <Card padding="lg" className="border-harley-gray/60 bg-harley-black/30">
+    <Card padding="lg" className="border-border-subtle/60 bg-harley-black/30">
       <h2 className="text-sm font-semibold text-harley-orange uppercase tracking-wide mb-3">
         {title}
       </h2>
@@ -165,7 +165,7 @@ function LineItemBucket({
         {items.map((row, i) => (
           <div
             key={i}
-            className="rounded-lg border border-harley-gray/40 p-3 space-y-2 bg-harley-black/20"
+            className="rounded-lg border border-border-subtle/40 p-3 space-y-2 bg-harley-black/20"
           >
             <div className="flex justify-between gap-2">
               <span className="text-xs text-harley-text-muted">Item {i + 1}</span>
@@ -781,7 +781,7 @@ export function NewEventPlaybookForm({
           Permits / Approvals: food, music, raffles submitted
         </label>
 
-        <div className="border-t border-harley-gray/40 pt-4 space-y-3">
+        <div className="border-t border-border-subtle/40 pt-4 space-y-3">
           <p className="text-sm font-medium text-harley-text">Marketing assets</p>
           <a
             href={SPM_ART_REQUEST_FORM_URL}
@@ -846,7 +846,7 @@ export function NewEventPlaybookForm({
           </label>
         </div>
 
-        <div className="border-t border-harley-gray/40 pt-4">
+        <div className="border-t border-border-subtle/40 pt-4">
           <p className="text-sm font-medium text-harley-text mb-2">
             Assets requested
           </p>
@@ -858,7 +858,7 @@ export function NewEventPlaybookForm({
               return (
                 <label
                   key={row.key}
-                  className="flex items-start gap-2 text-sm text-harley-text cursor-pointer rounded border border-harley-gray/35 p-2"
+                  className="flex items-start gap-2 text-sm text-harley-text cursor-pointer rounded border border-border-subtle/35 p-2"
                 >
                   <input
                     type="checkbox"
@@ -1097,7 +1097,7 @@ export function NewEventPlaybookForm({
           </span>
         </div>
         {savedPrompt1Block != null && (
-          <div className="rounded-lg border border-harley-gray/50 bg-harley-black/40 p-4 space-y-3">
+          <div className="rounded-lg border border-border-subtle/50 bg-harley-black/40 p-4 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-xs font-semibold uppercase tracking-wide text-harley-orange">
                 Copy for AI agent
@@ -1118,7 +1118,7 @@ export function NewEventPlaybookForm({
                 {prompt1Copied ? "Copied" : "Copy"}
               </Button>
             </div>
-            <pre className="text-sm text-harley-text whitespace-pre-wrap font-sans leading-relaxed max-h-80 overflow-y-auto rounded-md bg-harley-black/50 p-3 border border-harley-gray/30 select-all">
+            <pre className="text-sm text-harley-text whitespace-pre-wrap font-sans leading-relaxed max-h-80 overflow-y-auto rounded-md bg-harley-black/50 p-3 border border-border-subtle/30 select-all">
               {savedPrompt1Block}
             </pre>
           </div>
@@ -1200,7 +1200,7 @@ export function NewEventPlaybookForm({
             }}
           />
           {(webGraphicFile && !webGraphicDataUrl) || (webGraphicDataUrl || webGraphicServerUrl) ? (
-            <div className="mt-2 rounded-lg border border-harley-gray/50 overflow-hidden bg-harley-black/20 max-w-md min-h-[5rem] flex items-center justify-center">
+            <div className="mt-2 rounded-lg border border-border-subtle/50 overflow-hidden bg-harley-black/20 max-w-md min-h-[5rem] flex items-center justify-center">
               {webGraphicFile && !webGraphicDataUrl ? (
                 <p className="text-xs text-harley-text-muted px-3 py-4">
                   Loading preview…
@@ -1244,7 +1244,7 @@ export function NewEventPlaybookForm({
             }}
           />
           {(pageBannerFile && !pageBannerDataUrl) || (pageBannerDataUrl || pageBannerServerUrl) ? (
-            <div className="mt-2 rounded-lg border border-harley-gray/50 overflow-hidden bg-harley-black/20 max-w-md min-h-[5rem] flex items-center justify-center">
+            <div className="mt-2 rounded-lg border border-border-subtle/50 overflow-hidden bg-harley-black/20 max-w-md min-h-[5rem] flex items-center justify-center">
               {pageBannerFile && !pageBannerDataUrl ? (
                 <p className="text-xs text-harley-text-muted px-3 py-4">
                   Loading preview…
@@ -1385,7 +1385,7 @@ export function NewEventPlaybookForm({
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left border-collapse">
             <thead>
-              <tr className="border-b border-harley-gray/50 text-harley-text-muted">
+              <tr className="border-b border-border-subtle/50 text-harley-text-muted">
                 <th className="py-2 pr-3 font-medium">Item</th>
                 <th className="py-2 pr-3 font-medium">Description</th>
                 <th className="py-2 font-medium">Notes / Executed</th>
@@ -1393,13 +1393,13 @@ export function NewEventPlaybookForm({
             </thead>
             <tbody>
               {(workflow.materials_checklist ?? []).map((row, i) => (
-                <tr key={row.item} className="border-b border-harley-gray/30">
+                <tr key={row.item} className="border-b border-border-subtle/30">
                   <td className="py-2 pr-3 text-harley-text align-top">
                     {row.item}
                   </td>
                   <td className="py-2 pr-3 align-top">
                     <input
-                      className="w-full min-w-[8rem] px-2 py-1.5 rounded-md bg-harley-black/40 border border-harley-gray/50 text-harley-text text-xs"
+                      className="w-full min-w-[8rem] px-2 py-1.5 rounded-md bg-harley-black/40 border border-border-subtle/50 text-harley-text text-xs"
                       value={row.description ?? ""}
                       onChange={(e) => {
                         const v = e.target.value || null;
@@ -1413,7 +1413,7 @@ export function NewEventPlaybookForm({
                   </td>
                   <td className="py-2 align-top">
                     <input
-                      className="w-full min-w-[8rem] px-2 py-1.5 rounded-md bg-harley-black/40 border border-harley-gray/50 text-harley-text text-xs"
+                      className="w-full min-w-[8rem] px-2 py-1.5 rounded-md bg-harley-black/40 border border-border-subtle/50 text-harley-text text-xs"
                       value={row.notes ?? ""}
                       onChange={(e) => {
                         const v = e.target.value || null;
@@ -1433,7 +1433,7 @@ export function NewEventPlaybookForm({
       </Card>
 
       {yearMonth && (
-        <Card padding="lg" className="border-harley-gray/50">
+        <Card padding="lg" className="border-border-subtle/50">
           <p className="text-sm font-medium text-harley-text mb-2">
             Monthly budget check
           </p>

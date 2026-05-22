@@ -150,10 +150,10 @@ export function VendorDetailClient({
             No events yet. Attach this vendor from an event&apos;s Vendors section.
           </Card>
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-harley-gray/60">
+          <div className="overflow-x-auto rounded-xl border border-border-subtle/60">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-harley-gray/60 bg-harley-gray/40 text-left text-xs text-harley-text-muted uppercase tracking-wide">
+                <tr className="border-b border-border-subtle/60 bg-harley-gray/40 text-left text-xs text-harley-text-muted uppercase tracking-wide">
                   <th className="px-4 py-3 font-medium">Event</th>
                   <th className="px-4 py-3 font-medium">Date</th>
                   <th className="px-4 py-3 font-medium">Status</th>
@@ -168,7 +168,7 @@ export function VendorDetailClient({
                   return (
                     <tr
                       key={row.id}
-                      className="border-b border-harley-gray/40 last:border-0 hover:bg-harley-gray/20"
+                      className="border-b border-border-subtle/40 last:border-0 hover:bg-harley-gray/20"
                     >
                       <td className="px-4 py-3">
                         <Link

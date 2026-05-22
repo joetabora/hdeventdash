@@ -1,7 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { DM_Sans, Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
+
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,7 +39,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${dmSans.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         {children}
@@ -43,9 +49,10 @@ export default function RootLayout({
           position="bottom-right"
           toastOptions={{
             style: {
-              background: "#1a1a1a",
-              border: "1px solid #3a3a3a",
-              color: "#e8e8e8",
+              background: "var(--color-surface-overlay)",
+              border: "1px solid color-mix(in srgb, var(--color-harley-gray-lighter) 55%, transparent)",
+              color: "var(--color-harley-text)",
+              boxShadow: "var(--shadow-elevated)",
             },
           }}
         />

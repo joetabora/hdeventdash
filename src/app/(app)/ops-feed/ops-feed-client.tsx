@@ -21,6 +21,8 @@ import { OpsFeedQuickAdd } from "@/components/ops-feed/ops-feed-quick-add";
 import { OpsFeedFilters } from "@/components/ops-feed/ops-feed-filters";
 import { OpsFeedEntryCard } from "@/components/ops-feed/ops-feed-entry-card";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Loader2, Radio } from "lucide-react";
 import { showError } from "@/lib/toast";
 
@@ -162,17 +164,12 @@ export function OpsFeedClient({
   const hasMore = page * PAGE_SIZE < total;
 
   return (
-    <div className="max-w-3xl mx-auto pb-16 md:pb-8 space-y-6">
-      <header className="space-y-1">
-        <div className="flex items-center gap-2">
-          <Radio className="w-6 h-6 text-harley-orange" />
-          <h1 className="text-2xl font-bold text-harley-text">Ops Feed</h1>
-        </div>
-        <p className="text-sm text-harley-text-muted">
-          Your team&apos;s operational memory — dump ideas, call notes, and
-          reminders in one searchable place.
-        </p>
-      </header>
+    <div className="mx-auto max-w-3xl space-y-8 pb-16 md:pb-10">
+      <PageHeader
+        kicker="Field notes"
+        title="Ops Feed"
+        description="Your team's operational memory — ideas, call notes, and reminders in one searchable timeline."
+      />
 
       <OpsFeedQuickAdd events={events} onSubmit={handleCreate} />
 
@@ -192,41 +189,45 @@ export function OpsFeedClient({
         availableTags={availableTags}
       />
 
-      <div className="relative space-y-6 min-h-[8rem]">
-        {listLoading && (
-          <div className="absolute inset-0 z-10 flex items-start justify-center pt-8 bg-harley-black/30 backdrop-blur-[1px] rounded-xl">
-            <Loader2 className="w-6 h-6 text-harley-orange animate-spin" />
+      <div className="relative min-h-[8rem] space-y-6">
+        {listLoading ? (
+          <div className="absolute inset-0 z-10 flex items-start justify-center rounded-xl bg-surface-base/45 pt-8 backdrop-blur-[2px]">
+            <Loader2 className="h-6 w-6 animate-spin text-harley-orange" aria-hidden />
           </div>
-        )}
+        ) : null}
 
-        {groups.length === 0 && !listLoading ? (
-          <p className="text-center text-sm text-harley-text-muted py-12">
-            No entries yet. Type something above and hit Save.
-          </p>
-        ) : (
-          groups.map((group) => (
-            <section key={group.dayKey} className="space-y-3">
-              <h2 className="sticky top-16 z-[5] py-1 text-xs font-semibold uppercase tracking-wide text-harley-text-muted bg-harley-black/80 backdrop-blur-sm">
-                {group.label}
-              </h2>
-              <div className="space-y-2">
-                {group.entries.map((entry) => (
-                  <OpsFeedEntryCard
-                    key={entry.id}
-                    entry={entry}
-                    busy={actionBusyId === entry.id}
-                    onArchive={(id) => void patchEntry(id, { status: "archived" })}
-                    onResolve={(id) => void patchEntry(id, { status: "resolved" })}
-                    onDelete={(id) => void handleDelete(id)}
-                    onPriorityChange={(id, p) =>
-                      void patchEntry(id, { priority: p })
-                    }
-                  />
-                ))}
-              </div>
-            </section>
-          ))
-        )}
+        {!listLoading && groups.length === 0 ? (
+          <EmptyState
+            icon={Radio}
+            title="No entries yet"
+            description="Capture quick notes above — they anchor to dealerships and searchable tags."
+          />
+        ) : null}
+
+        {!listLoading && groups.length > 0
+          ? groups.map((group) => (
+              <section key={group.dayKey} className="space-y-3">
+                <h2 className="sticky top-14 z-[5] border-b border-border-subtle/70 bg-surface-base/75 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-harley-text-muted backdrop-blur-md">
+                  {group.label}
+                </h2>
+                <div className="space-y-2">
+                  {group.entries.map((entry) => (
+                    <OpsFeedEntryCard
+                      key={entry.id}
+                      entry={entry}
+                      busy={actionBusyId === entry.id}
+                      onArchive={(id) => void patchEntry(id, { status: "archived" })}
+                      onResolve={(id) => void patchEntry(id, { status: "resolved" })}
+                      onDelete={(id) => void handleDelete(id)}
+                      onPriorityChange={(id, p) =>
+                        void patchEntry(id, { priority: p })
+                      }
+                    />
+                  ))}
+                </div>
+              </section>
+            ))
+          : null}
       </div>
 
       {hasMore && (

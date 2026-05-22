@@ -20,7 +20,7 @@ function formatPct(n: number): string {
   return `${n.toFixed(n >= 100 && n % 1 < 0.05 ? 0 : 1)}%`;
 }
 
-const DIVIDER = "border-t border-harley-gray";
+const DIVIDER = "border-t border-border-subtle";
 
 const statusCopy: Record<
   BudgetCardStatus,
@@ -167,7 +167,7 @@ export function BudgetSummaryCard({
   }
 
   return (
-    <Card className="!p-0 overflow-hidden border-harley-gray shadow-none">
+    <Card className="!p-0 overflow-hidden border-border-subtle shadow-none">
       <div className="p-6 md:p-8">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>
@@ -202,7 +202,7 @@ export function BudgetSummaryCard({
               type="month"
               value={budgetMonth}
               onChange={(e) => onBudgetMonthChange(e.target.value)}
-              className="px-3 py-2 rounded-lg bg-harley-black border border-harley-gray text-harley-text text-sm font-medium focus:outline-none focus:ring-1 focus:ring-harley-orange/50"
+              className="px-3 py-2 rounded-lg bg-harley-black border border-border-subtle text-harley-text text-sm font-medium focus:outline-none focus:ring-1 focus:ring-harley-orange/50"
             />
           </label>
         </div>
@@ -231,7 +231,7 @@ export function BudgetSummaryCard({
                 ? "border-harley-danger/35 bg-harley-danger/[0.06]"
                 : status === "warning"
                   ? "border-harley-orange/35 bg-harley-orange/[0.06]"
-                  : "border-harley-gray bg-harley-black/40"
+                  : "border-border-subtle bg-harley-black/40"
             }`}
           >
             <p className="text-xs font-medium text-harley-text-muted uppercase tracking-wider">
@@ -281,7 +281,7 @@ export function BudgetSummaryCard({
       </div>
 
       {canManageBudgets && (
-        <div className={`border-t border-harley-gray px-6 py-5 md:px-8 md:py-6 bg-harley-black/30`}>
+        <div className="border-t border-border-subtle bg-surface-base/42 px-6 py-5 md:px-8 md:py-6">
           <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-harley-text-muted">
             Manage caps
           </p>
@@ -301,7 +301,7 @@ export function BudgetSummaryCard({
               {monthlyBudgets.map((row) => (
                 <li
                   key={row.id}
-                  className="flex flex-wrap items-center gap-2 text-sm rounded-lg px-3 py-2.5 border border-harley-gray bg-harley-dark/50"
+                  className="flex flex-wrap items-center gap-2 text-sm rounded-lg px-3 py-2.5 border border-border-subtle bg-harley-dark/50"
                 >
                   <span className="font-medium text-harley-text min-w-[100px]">
                     {row.location || "(default)"}
@@ -314,7 +314,7 @@ export function BudgetSummaryCard({
                     key={`${row.id}-${row.updated_at}`}
                     disabled={busyId === row.id}
                     onBlur={(e) => handleAmountBlur(row, e.target.value)}
-                    className="w-32 px-2 py-1.5 rounded-md bg-harley-black border border-harley-gray text-harley-text text-sm tabular-nums disabled:opacity-50"
+                    className="w-32 px-2 py-1.5 rounded-md bg-harley-black border border-border-subtle text-harley-text text-sm tabular-nums disabled:opacity-50"
                   />
                   {busyId === row.id ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin text-harley-text-muted" />
@@ -344,7 +344,7 @@ export function BudgetSummaryCard({
                 value={newLocation}
                 onChange={(e) => setNewLocation(e.target.value)}
                 placeholder="e.g. Milwaukee, WI"
-                className="w-full px-3 py-2 rounded-lg bg-harley-black border border-harley-gray text-sm text-harley-text"
+                className="w-full px-3 py-2 rounded-lg bg-harley-black border border-border-subtle text-sm text-harley-text"
               />
             </div>
             <div className="w-full sm:w-36">
@@ -357,7 +357,7 @@ export function BudgetSummaryCard({
                 step={0.01}
                 value={newAmount}
                 onChange={(e) => setNewAmount(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-harley-black border border-harley-gray text-sm text-harley-text tabular-nums"
+                className="w-full px-3 py-2 rounded-lg bg-harley-black border border-border-subtle text-sm text-harley-text tabular-nums"
               />
             </div>
             <Button type="submit" disabled={saving} size="sm" className="w-full sm:w-auto">

@@ -204,7 +204,7 @@ export function MarketingCopyGenerator({
       ) : null}
 
       {ai.status === "success" && ai.data?.text ? (
-        <div className="rounded-lg border border-harley-gray/40 bg-harley-black/40 p-3 space-y-2">
+        <div className="rounded-lg border border-border-subtle/40 bg-harley-black/40 p-3 space-y-2">
           <div className="flex flex-wrap justify-between gap-2 items-center">
             <p className="text-xs font-semibold text-harley-text">
               AI draft
@@ -232,7 +232,7 @@ export function MarketingCopyGenerator({
               {copied ? "Copied" : "Copy"}
             </Button>
           </div>
-          <pre className="text-sm text-harley-text whitespace-pre-wrap font-sans leading-relaxed max-h-[28rem] overflow-y-auto rounded-md bg-harley-black/50 p-3 border border-harley-gray/30 select-all">
+          <pre className="text-sm text-harley-text whitespace-pre-wrap font-sans leading-relaxed max-h-[28rem] overflow-y-auto rounded-md bg-harley-black/50 p-3 border border-border-subtle/30 select-all">
             {ai.data.text}
           </pre>
         </div>

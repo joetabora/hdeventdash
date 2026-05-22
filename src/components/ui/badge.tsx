@@ -1,4 +1,6 @@
-import { EventStatus } from "@/types/database";
+import type { EventStatus } from "@/types/database";
+
+import { cn } from "@/lib/cn";
 
 type BadgeVariant = "default" | "success" | "warning" | "danger" | "muted" | "orange";
 
@@ -9,18 +11,28 @@ interface BadgeProps {
 }
 
 const variantStyles: Record<BadgeVariant, string> = {
-  default: "bg-harley-gray text-harley-text-muted border border-harley-gray",
-  muted: "bg-harley-black/50 text-harley-text-muted border border-harley-gray",
-  success: "bg-harley-success/12 text-harley-success",
-  warning: "bg-harley-warning/12 text-harley-warning",
-  danger: "bg-harley-danger/12 text-harley-danger",
-  orange: "bg-harley-orange/12 text-harley-orange",
+  default:
+    "bg-surface-overlay/95 text-harley-text-muted ring-1 ring-inset ring-border-subtle shadow-[inset_0_1px_0_rgb(255_255_255_/_0.04)]",
+  muted:
+    "bg-surface-base/72 text-harley-text-muted/95 ring-1 ring-inset ring-border-subtle",
+  success:
+    "bg-harley-success/[0.12] text-harley-success ring-1 ring-inset ring-harley-success/25",
+  warning:
+    "bg-harley-warning/[0.12] text-harley-warning ring-1 ring-inset ring-harley-warning/28",
+  danger:
+    "bg-harley-danger/[0.12] text-harley-danger ring-1 ring-inset ring-harley-danger/25",
+  orange:
+    "bg-harley-orange/[0.12] text-harley-orange ring-1 ring-inset ring-harley-orange/22",
 };
 
 export function Badge({ children, variant = "default", className = "" }: BadgeProps) {
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${variantStyles[variant]} ${className}`}
+      className={cn(
+        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium leading-tight",
+        variantStyles[variant],
+        className
+      )}
     >
       {children}
     </span>
@@ -46,7 +58,5 @@ const statusLabelMap: Record<EventStatus, string> = {
 };
 
 export function StatusBadge({ status }: { status: EventStatus }) {
-  return (
-    <Badge variant={statusVariantMap[status]}>{statusLabelMap[status]}</Badge>
-  );
+  return <Badge variant={statusVariantMap[status]}>{statusLabelMap[status]}</Badge>;
 }

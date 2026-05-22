@@ -296,7 +296,7 @@ function ChecklistItemRow({
 
   if (liveMode) {
     return (
-      <div className="rounded-xl px-2 py-2 sm:px-3 sm:py-2.5 bg-harley-black/40 border border-harley-gray/40">
+      <div className="rounded-xl px-2 py-2 sm:px-3 sm:py-2.5 bg-harley-black/40 border border-border-subtle/40">
         <div className="flex items-start gap-3 sm:gap-4 min-h-[3rem] sm:min-h-[3.25rem]">
           <button
             type="button"

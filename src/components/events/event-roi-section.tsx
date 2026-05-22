@@ -99,7 +99,7 @@ export function EventRoiSection({
         ? "text-harley-danger border-harley-danger/30 bg-harley-danger/10"
         : verdict.tone === "warning"
           ? "text-harley-orange border-harley-orange/30 bg-harley-orange/10"
-          : "text-harley-text-muted border-harley-gray/40 bg-harley-gray-light/20";
+          : "text-harley-text-muted border-border-subtle/40 bg-harley-gray-light/20";
 
   return (
     <div className="space-y-4">
@@ -112,7 +112,7 @@ export function EventRoiSection({
 
       {hasAnyRoiData(event) || totalRev > 0 || Number(event.roi_event_cost) > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <Card className="!p-3 border-harley-gray/50">
+          <Card className="!p-3 border-border-subtle/50">
             <p className="text-[10px] uppercase tracking-wide text-harley-text-muted mb-0.5">
               Total revenue
             </p>
@@ -120,7 +120,7 @@ export function EventRoiSection({
               {formatUsd(totalRev)}
             </p>
           </Card>
-          <Card className="!p-3 border-harley-gray/50">
+          <Card className="!p-3 border-border-subtle/50">
             <p className="text-[10px] uppercase tracking-wide text-harley-text-muted mb-0.5">
               Est. cost
             </p>
@@ -130,7 +130,7 @@ export function EventRoiSection({
                 : "—"}
             </p>
           </Card>
-          <Card className="!p-3 border-harley-gray/50">
+          <Card className="!p-3 border-border-subtle/50">
             <p className="text-[10px] uppercase tracking-wide text-harley-text-muted mb-0.5">
               Net (est.)
             </p>
@@ -146,7 +146,7 @@ export function EventRoiSection({
               {Number(event.roi_event_cost) > 0 ? formatUsd(net) : "—"}
             </p>
           </Card>
-          <Card className="!p-3 border-harley-gray/50">
+          <Card className="!p-3 border-border-subtle/50">
             <p className="text-[10px] uppercase tracking-wide text-harley-text-muted mb-0.5">
               ROI on cost
             </p>
