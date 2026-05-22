@@ -8,6 +8,41 @@ import { Button } from "@/components/ui/button";
 
 const DISMISS_KEY = "harley-push-banner-dismissed-v1";
 
+function notificationsApiAvailable(): boolean {
+  return (
+    typeof globalThis !== "undefined" &&
+    typeof globalThis.Notification !== "undefined"
+  );
+}
+
+/** Safe Notification.permission for WebViews without the Notifications API. */
+function safeNotificationPermission():
+  | typeof Notification.permission
+  | "unsupported" {
+  if (!notificationsApiAvailable()) return "unsupported";
+  try {
+    return Notification.permission;
+  } catch {
+    return "unsupported";
+  }
+}
+
+function readDismissBanner(): boolean {
+  try {
+    return localStorage.getItem(DISMISS_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function persistDismissBanner() {
+  try {
+    localStorage.setItem(DISMISS_KEY, "1");
+  } catch {
+    /* private mode / storage blocked */
+  }
+}
+
 export function PushNotificationPrompt() {
   const [showBanner, setShowBanner] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -18,83 +53,104 @@ export function PushNotificationPrompt() {
   const syncToken = useCallback(async () => {
     if (!vapidKey || !isFirebaseConfigured()) return;
 
-    const { initializeApp, getApps, getApp } = await import("firebase/app");
-    const { getMessaging, getToken, isSupported, onMessage } = await import(
-      "firebase/messaging"
-    );
+    try {
+      if (typeof navigator === "undefined" || !navigator.serviceWorker?.register)
+        return;
 
-    if (!(await isSupported())) return;
+      const { initializeApp, getApps, getApp } = await import("firebase/app");
+      const { getMessaging, getToken, isSupported, onMessage } =
+        await import("firebase/messaging");
 
-    const config = {
-      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
-      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN!,
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!,
-      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET!,
-      messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID!,
-      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
-    };
+      if (!(await isSupported())) return;
 
-    const app = getApps().length ? getApp() : initializeApp(config);
-    const messaging = getMessaging(app);
+      const config = {
+        apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
+        authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN!,
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!,
+        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET!,
+        messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID!,
+        appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
+      };
 
-    await navigator.serviceWorker.register("/firebase-messaging-sw.js", {
-      scope: "/",
-    });
+      const app = getApps().length ? getApp() : initializeApp(config);
+      const messaging = getMessaging(app);
 
-    const token = await getToken(messaging, { vapidKey });
-    if (!token) return;
-
-    const supabase = getSupabaseBrowserClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return;
-
-    await supabase.from("push_tokens").upsert(
-      {
-        user_id: user.id,
-        token,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id" }
-    );
-
-    if (!onMessageRegistered.current) {
-      onMessageRegistered.current = true;
-      onMessage(messaging, (payload) => {
-        const title = payload.notification?.title ?? "Harley Event Dashboard";
-        const body = payload.notification?.body ?? "";
-        if (
-          Notification.permission === "granted" &&
-          document.visibilityState === "visible"
-        ) {
-          try {
-            new Notification(title, { body, icon: "/favicon.ico" });
-          } catch {
-            /* ignore */
-          }
-        }
+      await navigator.serviceWorker.register("/firebase-messaging-sw.js", {
+        scope: "/",
       });
+
+      const token = await getToken(messaging, { vapidKey });
+      if (!token) return;
+
+      const supabase = getSupabaseBrowserClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      await supabase.from("push_tokens").upsert(
+        {
+          user_id: user.id,
+          token,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id" }
+      );
+
+      if (!onMessageRegistered.current) {
+        onMessageRegistered.current = true;
+        onMessage(messaging, (payload) => {
+          const title =
+            payload.notification?.title ?? "Harley Event Dashboard";
+          const body = payload.notification?.body ?? "";
+          if (
+            notificationsApiAvailable() &&
+            Notification.permission === "granted" &&
+            document.visibilityState === "visible"
+          ) {
+            try {
+              new Notification(title, { body, icon: "/favicon.ico" });
+            } catch {
+              /* ignore */
+            }
+          }
+        });
+      }
+    } catch (e) {
+      console.warn("Firebase push sync failed (non-fatal):", e);
     }
   }, [vapidKey]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (!isFirebaseConfigured() || !vapidKey) return;
-    if (localStorage.getItem(DISMISS_KEY)) return;
+    try {
+      if (readDismissBanner()) return;
 
-    const perm = Notification.permission;
-    if (perm === "granted") {
-      void syncToken();
-      return;
+      const perm = safeNotificationPermission();
+      if (perm === "unsupported") return;
+
+      if (perm === "granted") {
+        void syncToken();
+        return;
+      }
+      if (perm === "denied") return;
+      setShowBanner(true);
+    } catch (e) {
+      console.warn("Push prompt init skipped:", e);
     }
-    if (perm === "denied") return;
-    setShowBanner(true);
   }, [syncToken, vapidKey]);
 
   async function enableNotifications() {
     setBusy(true);
     try {
+      if (
+        typeof Notification === "undefined" ||
+        typeof Notification.requestPermission !== "function"
+      ) {
+        setShowBanner(false);
+        return;
+      }
       const perm = await Notification.requestPermission();
       if (perm !== "granted") {
         setShowBanner(false);
@@ -110,7 +166,7 @@ export function PushNotificationPrompt() {
   }
 
   function dismiss() {
-    localStorage.setItem(DISMISS_KEY, "1");
+    persistDismissBanner();
     setShowBanner(false);
   }
 
