@@ -12,6 +12,7 @@ import { useCurrentOrganization } from "@/contexts/current-organization-context"
 import { buttonStyles } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/cn";
+import type { Organization } from "@/types/database";
 import {
   SidebarLogoLink,
   SidebarNavLink,
@@ -76,6 +77,12 @@ function isNavItemActive(
 interface SidebarProps {
   mobileOpen: boolean;
   onClose: () => void;
+}
+
+/** Matches seeded `Milwaukee Harley-Davidson` (hyphen spelling) — not West Bend etc. */
+function isMilwaukeeHarleyOrganization(org: Organization | null): boolean {
+  const name = org?.name?.trim().toLowerCase() ?? "";
+  return name.startsWith("milwaukee");
 }
 
 function SidebarDealershipSwitcher() {
@@ -201,6 +208,8 @@ function SidebarNav({
 
 export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
   const { isAdmin, canManageEvents } = useAppRole();
+  const { currentOrganization } = useCurrentOrganization();
+  const showMkeLogo = isMilwaukeeHarleyOrganization(currentOrganization);
 
   return (
     <>
@@ -230,15 +239,29 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
           </button>
         </div>
 
-        {canManageEvents && (
-          <div className="px-3 pt-5 pb-2">
-            <SidebarNavLink
-              href="/events/new"
-              onClick={onClose}
-              icon={PlusCircle}
-              label="New Event"
-              className={`${buttonStyles.primary("md")} w-full`}
-            />
+        {(showMkeLogo || canManageEvents) && (
+          <div className="space-y-4 px-3 pb-2 pt-5">
+            {showMkeLogo && (
+              <div className="flex justify-center px-1">
+                <img
+                  src="/MKElogo.png"
+                  alt="Milwaukee Harley-Davidson"
+                  className="mx-auto h-auto max-h-[4.25rem] w-full max-w-[13rem] object-contain"
+                  width={208}
+                  height={68}
+                  decoding="async"
+                />
+              </div>
+            )}
+            {canManageEvents ? (
+              <SidebarNavLink
+                href="/events/new"
+                onClick={onClose}
+                icon={PlusCircle}
+                label="New Event"
+                className={`${buttonStyles.primary("md")} w-full`}
+              />
+            ) : null}
           </div>
         )}
 
