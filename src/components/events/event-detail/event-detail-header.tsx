@@ -17,6 +17,7 @@ import { formatEngagementGoalLine } from "@/lib/playbook-marketing";
 import {
   ArrowLeft,
   Edit,
+  FileText,
   Trash2,
   Zap,
   ZapOff,
@@ -253,6 +254,14 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
                     <span className="hidden md:inline">Notes</span>
                   </Link>
                 )}
+                <Link
+                  href={`/events/${event.id}/report`}
+                  className={`${buttonStyles.secondary("sm")} !px-2.5 md:!px-3`}
+                  title="Executive printable event report"
+                >
+                  <FileText className="w-4 h-4" />
+                  <span className="hidden md:inline">Print Report</span>
+                </Link>
                 {canManageEvents && (
                   <Button
                     variant="secondary"

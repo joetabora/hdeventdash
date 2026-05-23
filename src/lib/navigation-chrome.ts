@@ -10,6 +10,7 @@ export function shouldSuppressTopHeaderTitle(pathname: string): boolean {
   if (pathname === "/admin/users") return true;
   if (pathname === "/events/new") return true;
   if (/^\/events\/[^/]+\/notes$/.test(pathname)) return true;
+  if (/^\/events\/[^/]+\/report$/.test(pathname)) return true;
   if (/^\/events\/[^/]+$/.test(pathname)) return true;
   return false;
 }

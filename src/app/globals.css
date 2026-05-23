@@ -605,4 +605,65 @@ html.event-live-shell header h1 {
     color: #555 !important;
     text-align: center;
   }
+
+  /* Executive event report — dedicated route /events/[id]/report */
+  .event-report-screen-only {
+    display: none !important;
+  }
+
+  .event-report-root {
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .event-report-print {
+    font-family: var(--font-dm-sans), "DM Sans", system-ui, sans-serif;
+    font-size: 10pt;
+    line-height: 1.45;
+    max-width: none !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    ring: none !important;
+  }
+
+  .event-report-print .ereport-cover {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  .event-report-print .ereport-section {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .event-report-print .ereport-section-title {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  .event-report-print .ereport-table {
+    page-break-inside: auto;
+  }
+
+  .event-report-print .ereport-table tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .event-report-print .ereport-image {
+    max-height: 3.25in;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .event-report-print .ereport-footer {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    margin-top: 1rem;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
 }
