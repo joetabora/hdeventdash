@@ -1,11 +1,16 @@
-import type { AiMessage, AiProvider } from "@/lib/ai/types";
+import type { AiMessage } from "@/lib/ai/types";
 import {
   assertAiEnabled,
   loadAiRuntimeEnv,
   resolveModelId,
   type AiRuntimeEnv,
 } from "@/lib/ai/env";
-import { OllamaProvider } from "@/lib/ai/providers/ollama";
+import {
+  ollamaCompleteMessages,
+  toAiClientFailure,
+  type AiClientFailure,
+  type AiClientResult,
+} from "@/lib/ai/client";
 import { AiProviderError } from "@/lib/ai/errors";
 
 const DEFAULT_SYSTEM_POLICY = [
@@ -27,32 +32,12 @@ export type AiChatServiceCompleteResult = {
   model: string;
 };
 
-/** Recalculate each request so .env.local edits apply without stale module cache during dev. */
+export type AiChatServiceCompleteOutcome =
+  | { ok: true; data: AiChatServiceCompleteResult }
+  | AiClientFailure;
+
 function getEnv(): AiRuntimeEnv {
   return loadAiRuntimeEnv();
-}
-
-let cachedProvider: AiProvider | null = null;
-let cachedProviderKey = "";
-
-function providerCacheKey(env: AiRuntimeEnv): string {
-  return [
-    env.ollamaBaseUrl,
-    String(env.timeoutMs),
-    String(env.ollamaRetryExtraAttempts),
-    String(env.maxCompletionChars),
-    String(env.maxTokens),
-    [...env.hostAllowlist].sort().join(","),
-  ].join("|");
-}
-
-function getProvider(env: AiRuntimeEnv): AiProvider {
-  const key = providerCacheKey(env);
-  if (!cachedProvider || cachedProviderKey !== key) {
-    cachedProviderKey = key;
-    cachedProvider = new OllamaProvider(env);
-  }
-  return cachedProvider;
 }
 
 function countPromptChars(messages: AiMessage[]): number {
@@ -60,15 +45,26 @@ function countPromptChars(messages: AiMessage[]): number {
 }
 
 /**
- * Server-only entry: validates env, resolves model, enforces size limits, calls Ollama.
+ * Server-only entry: validates env, resolves model, enforces size limits, calls Ollama client.
+ * Never throws for Ollama/network failures — returns structured failure instead.
  */
-export async function aiCompleteText(
+export async function aiCompleteTextSafe(
   input: AiChatServiceCompleteInput
-): Promise<AiChatServiceCompleteResult> {
+): Promise<AiChatServiceCompleteOutcome> {
   const env = getEnv();
-  assertAiEnabled(env);
+  try {
+    assertAiEnabled(env);
+  } catch (e) {
+    return toAiClientFailure(e);
+  }
 
-  const model = resolveModelId(env, input.model);
+  let model: string;
+  try {
+    model = resolveModelId(env, input.model);
+  } catch (e) {
+    return toAiClientFailure(e);
+  }
+
   const system = [DEFAULT_SYSTEM_POLICY, input.system].filter(Boolean).join("\n\n");
   const messages: AiMessage[] = [
     { role: "system", content: system },
@@ -77,20 +73,35 @@ export async function aiCompleteText(
 
   const promptChars = countPromptChars(messages);
   if (promptChars > env.maxPromptChars) {
-    throw new AiProviderError(
-      `Prompt exceeds maximum size (${env.maxPromptChars} characters).`,
-      undefined,
-      `Prompt is too large (${env.maxPromptChars} characters max). Shorten playbook fields and try again.`
-    );
+    return {
+      ok: false,
+      error: `Prompt is too large (${env.maxPromptChars} characters max). Shorten playbook fields and try again.`,
+      code: "AI_PROVIDER_ERROR",
+      status: 502,
+    };
   }
 
-  const provider = getProvider(env);
-  const out = await provider.complete({
-    messages,
-    model,
-    ...(input.temperature != null ? { temperature: input.temperature } : {}),
-  });
-  return { text: out.text, model: out.model };
+  const result: AiClientResult<{ text: string; model: string; done: boolean }> =
+    await ollamaCompleteMessages({
+      env,
+      messages,
+      model,
+      ...(input.temperature != null ? { temperature: input.temperature } : {}),
+    });
+
+  if (!result.ok) return result;
+  return { ok: true, data: { text: result.data.text, model: result.data.model } };
+}
+
+/** @deprecated Prefer aiCompleteTextSafe in route handlers. Throws on failure. */
+export async function aiCompleteText(
+  input: AiChatServiceCompleteInput
+): Promise<AiChatServiceCompleteResult> {
+  const outcome = await aiCompleteTextSafe(input);
+  if (!outcome.ok) {
+    throw new AiProviderError(outcome.error, undefined, outcome.error);
+  }
+  return outcome.data;
 }
 
 export function listAllowedModelIds(): string[] {

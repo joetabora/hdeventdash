@@ -1,15 +1,12 @@
 /**
- * Central AI / Ollama configuration.
- * Values are read from environment at call time (never inlined at build).
- *
- * Switch models: set OLLAMA_DEFAULT_MODEL (e.g. qwen3:8b) and optionally
- * OLLAMA_ALLOWED_MODELS for a comma-separated allowlist.
+ * Static AI defaults. Runtime URL always comes from OLLAMA_BASE_URL
+ * (fallback: http://127.0.0.1:11434 — see resolveOllamaBaseUrl in env.ts).
  */
 
-/** Default model tag when env is unset. Optimized for RTX 2060 6GB class hardware. */
+/** Default model tag when OLLAMA_DEFAULT_MODEL is unset. */
 export const DEFAULT_OLLAMA_MODEL = "qwen3:8b";
 
-/** Ordered fallbacks when the preferred model is not installed locally. */
+/** Model tags tried when the preferred model is not installed (same host only). */
 export const OLLAMA_MODEL_FALLBACK_CHAIN = [
   "qwen3:8b",
   "qwen2.5:7b",
@@ -17,37 +14,16 @@ export const OLLAMA_MODEL_FALLBACK_CHAIN = [
 ] as const;
 
 export const AI_CONFIG_DEFAULTS = {
-  /** Ollama base URL (no trailing slash). */
-  baseUrl: "http://localhost:11434",
+  /** Safe local fallback when OLLAMA_BASE_URL is missing or empty. */
+  baseUrl: "http://127.0.0.1:11434",
   defaultModel: DEFAULT_OLLAMA_MODEL,
-  /** Server-side fetch deadline per inference request. */
   timeoutMs: 90_000,
-  /** Extra attempts after the first failure (1 = retry once). */
   retries: 1,
-  /** Default sampling temperature when a template does not override. */
   temperature: 0.7,
-  /** Ollama `num_predict` — caps completion length for low-VRAM GPUs. */
   maxTokens: 2048,
-  /** Server routes use non-streaming `/api/generate` by default. */
   streamingEnabled: false,
   maxPromptChars: 48_000,
   maxCompletionChars: 24_000,
-  /** How long cached `/api/tags` results remain valid. */
   modelTagsCacheTtlMs: 60_000,
-  /** Only one Ollama inference at a time (protects FX-class CPUs + 6GB VRAM). */
   maxConcurrentInferences: 1,
 } as const;
-
-export type AiConfigSnapshot = {
-  enabled: boolean;
-  baseUrl: string;
-  defaultModel: string;
-  fallbackModels: readonly string[];
-  timeoutMs: number;
-  retries: number;
-  temperature: number;
-  maxTokens: number;
-  streamingEnabled: boolean;
-  maxPromptChars: number;
-  maxCompletionChars: number;
-};

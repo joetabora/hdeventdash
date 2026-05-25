@@ -13,131 +13,77 @@ Primary server:
 
 ### Ollama (direct integration)
 
-Running locally — the Event Dashboard talks to Ollama **directly** via its REST API. There is no Open WebUI, OpenAI compatibility layer, or intermediary proxy in the app.
+The Event Dashboard talks to Ollama **directly** via its REST API (`POST /api/generate`, `GET /api/tags`). There is no Open WebUI, OpenAI compatibility layer, or intermediary proxy in the app.
 
-Container:
+Default port: **11434**
 
-- ollama
+Configure the URL with **`OLLAMA_BASE_URL`** — never hardcode a hostname in application code.
 
-Port:
+Examples (set in `.env.local` or deployment env):
 
-- 11434
+| Environment | `OLLAMA_BASE_URL` |
+|-------------|-------------------|
+| Next.js and Ollama on the same machine | `http://127.0.0.1:11434` |
+| Next.js in Docker, Ollama on Mac host | `http://host.docker.internal:11434` |
+| Next.js in Docker, Ollama on LAN host | `http://192.168.1.79:11434` |
 
-Accessible internally via:
+Default model: **`qwen3:8b`**
 
-- [http://ollama:11434](http://ollama:11434) (Docker Compose service name)
-- [http://127.0.0.1:11434](http://127.0.0.1:11434) (same host)
-- [http://192.168.1.79:11434](http://192.168.1.79:11434) (LAN)
+## Architecture
 
-Default model:
+1. Browser → `POST /api/ai/complete` (or event-scoped variant)
+2. Next.js server → **`src/lib/ai/client.ts`** (sole Ollama fetch layer)
+3. Ollama at `OLLAMA_BASE_URL`
 
-- `qwen3:8b` (tuned for local RTX 2060 6GB class hardware)
+On first server load, the resolved URL is logged:
 
-Primary use:
+```text
+[ai] OLLAMA_BASE_URL=http://127.0.0.1:11434 AI_ENABLED=true OLLAMA_DEFAULT_MODEL=qwen3:8b
+```
 
-- Local LLM inference
-- Social media generation
-- Marketing copy
-- Event content generation
-- Assistant/chat features
+## Environment variables
 
-## Event Dashboard Goals
+See [.env.local.example](.env.local.example).
 
-The event dashboard integrates directly with Ollama for:
+| Variable | Purpose |
+|----------|---------|
+| `AI_ENABLED` | Master switch |
+| `OLLAMA_BASE_URL` | Ollama base URL (defaults to `http://127.0.0.1:11434` if unset) |
+| `OLLAMA_DEFAULT_MODEL` | Default model tag |
+| `OLLAMA_ALLOWED_MODELS` | Optional allowlist |
+| `OLLAMA_HOST_ALLOWLIST` | Optional hostname allowlist for hardening |
+| `AI_REQUEST_TIMEOUT_MS` | Per-request timeout (min 90s) |
+| `AI_OLLAMA_RETRIES` | Extra retries (default 1 = retry once) |
+| `AI_MAX_TOKENS` | Ollama `num_predict` cap |
 
-- social media generation
-- Facebook event descriptions
-- ad copy
-- SEO content
-- vendor outreach emails
-- sponsor outreach
-- event schedule generation
-- hashtag generation
-- title optimization
+## HTTP API
 
-## Preferred Architecture
+- `POST /api/ai/complete` — template-based completion
+- `POST /api/events/[eventId]/ai/complete` — same, with trusted event context
+- `GET /api/ai/models` — allowed + installed models
+- `GET /api/ai/health` — reachability + model check
 
-The dashboard:
+All AI routes use **`runtime = nodejs`**. Failures return structured JSON `{ error, code }` — routes do not crash on unreachable Ollama.
 
-1. Sends prompts to a backend API route (`POST /api/ai/complete` or event-scoped variant)
-2. Backend calls Ollama **`POST /api/generate`** on the server (never from the browser)
-3. Prompt templates live in `src/lib/ai/prompt-templates/` (central registry + catalog)
-4. Configuration is centralized in `src/config/ai.ts` + `.env.local`
-5. Health checks via **`GET /api/ai/health`**
+## Service layer
 
-## Docker Environment
+| Module | Role |
+|--------|------|
+| `src/config/ai.ts` | Static defaults (fallback URL, model chain, limits) |
+| `src/lib/ai/env.ts` | Reads `process.env`, resolves `OLLAMA_BASE_URL`, startup log |
+| `src/lib/ai/client.ts` | **Only** module that `fetch()`es Ollama |
+| `src/lib/ai/chat-service.ts` | Prompt assembly + safe completion wrapper |
+| `src/lib/ai/prompt-templates/` | Template registry + catalog |
 
-Current deployment method:
+## Switching models
 
-- Docker build
-- Self-hosted GitHub Actions runner
-- [deploy.sh](http://deploy.sh) automation
+1. `ollama pull <model-tag>`
+2. Set `OLLAMA_DEFAULT_MODEL=<model-tag>`
+3. Restart Next.js
+4. `GET /api/ai/health`
 
-## Important Notes
-
-- Prefer self-hosted/local AI over external APIs
-- Keep infrastructure Docker-compatible
-- Environment variables should use `.env.local`
-- Maintain production-safe architecture
-- Only one concurrent Ollama inference is queued server-side (protects modest CPUs/GPUs)
+If the preferred model is missing, the client falls back through `OLLAMA_MODEL_FALLBACK_CHAIN` in `src/config/ai.ts`.
 
 ## Cloudflare Tunnel / long-lived AI requests
 
-Tune tunnel **ingress** timeouts (e.g. `noResponseTimeoutSeconds`, `proxyType: http`) and any reverse proxy **`proxy_read_timeout`** so they are **greater than `AI_REQUEST_TIMEOUT_MS`**. Defaults around ~60–100 s routinely kill slow Ollama calls even when Docker and DNS are healthy.
-
-## App integration (Event Dashboard)
-
-The Next.js app talks to **Ollama only on the server**. The browser calls dashboard API routes; it never opens `OLLAMA_BASE_URL` directly.
-
-### Environment variables
-
-See [.env.local.example](.env.local.example). Typical local values:
-
-| Variable | Example |
-|----------|---------|
-| `AI_ENABLED` | `true` |
-| `OLLAMA_BASE_URL` | `http://127.0.0.1:11434` |
-| `OLLAMA_DEFAULT_MODEL` | `qwen3:8b` |
-| `OLLAMA_ALLOWED_MODELS` | Optional comma list; if omitted, only the default model is accepted |
-| `OLLAMA_HOST_ALLOWLIST` | Optional comma list of allowed URL hostnames for `OLLAMA_BASE_URL` |
-| `AI_REQUEST_TIMEOUT_MS` | Server-side deadline per `/api/generate` fetch (minimum **90 000** enforced) |
-| `AI_OLLAMA_RETRIES` | Extra attempts on transient failures (default `1` = retry once, max `5`) |
-| `AI_MAX_TOKENS` | Ollama `num_predict` cap (default `2048`) |
-| `AI_DEFAULT_TEMPERATURE` | Default sampling temperature when a template does not override |
-| `AI_MAX_PROMPT_CHARS` / `AI_MAX_COMPLETION_CHARS` | Guardrails for payload size |
-
-### HTTP API
-
-- **`POST /api/ai/complete`** — JSON body: `{ templateId, variables?, model?, temperature? }`. Caller supplies all template variables (validated per template).
-- **`POST /api/events/[eventId]/ai/complete`** — Same body; the server merges **trusted event fields** into `variables` so clients cannot spoof another event’s context.
-- **`GET /api/ai/models`** — Returns `{ enabled, models, installed, defaultModel? }` from Ollama `/api/tags`.
-- **`GET /api/ai/health`** — Pings Ollama, verifies model availability, returns `{ ok, reachable, modelInstalled, resolvedModel, … }`.
-
-All routes require a logged-in user with an active organization (except health still requires session).
-
-### Prompt templates
-
-Templates live under `src/lib/ai/prompt-templates/` (IDs in `ids.ts`, catalog in `catalog.ts`). Adding a template means registering it in `registry.ts` with a Zod variable schema and optional JSON response parsing on the client.
-
-### Service layer
-
-- **`src/config/ai.ts`** — defaults (model, timeout, tokens, retries)
-- **`src/lib/ai/ollama-client.ts`** — direct Ollama REST (`/api/generate`, `/api/tags`)
-- **`src/lib/ai/providers/ollama.ts`** — `AiProvider` adapter
-- **`src/lib/ai/chat-service.ts`** — server entry used by API routes
-
-### Frontend
-
-- **`useAiCompletion`** (`src/hooks/use-ai-completion.ts`) — POST helper with loading/error/retry/cancel.
-- **`AiGenerationStatus`** — shared loading, error, retry, and cancel UI.
-- Event playbook **AI Assistant** uses `/api/events/.../ai/complete` via `src/lib/ai-generate.ts`.
-
-### Switching models later
-
-1. Pull the model in Ollama: `ollama pull <model-tag>`
-2. Set `OLLAMA_DEFAULT_MODEL=<model-tag>` in `.env.local`
-3. Optionally set `OLLAMA_ALLOWED_MODELS` to permit multiple tags
-4. Restart the Next.js server
-5. Verify with `GET /api/ai/health`
-
-If the preferred model is missing, the server falls back through `OLLAMA_MODEL_FALLBACK_CHAIN` in `src/config/ai.ts`.
+Tune tunnel ingress timeouts to exceed `AI_REQUEST_TIMEOUT_MS`.

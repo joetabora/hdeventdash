@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getPromptTemplate } from "@/lib/ai/prompt-templates/registry";
 import { parseWithSchema } from "@/lib/validation/request-json";
-import { aiCompleteText } from "@/lib/ai/chat-service";
+import { aiCompleteTextSafe } from "@/lib/ai/chat-service";
+import { aiClientFailureResponse } from "@/lib/ai/http-errors";
 
 export async function runAiPromptTemplate(params: {
   templateId: string;
@@ -22,7 +23,10 @@ export async function runAiPromptTemplate(params: {
   if (!tpl) {
     return {
       ok: false,
-      response: NextResponse.json({ error: "Unknown template." }, { status: 400 }),
+      response: NextResponse.json(
+        { error: "Unknown template.", code: "AI_UNKNOWN" },
+        { status: 400 }
+      ),
     };
   }
 
@@ -32,16 +36,22 @@ export async function runAiPromptTemplate(params: {
   const rendered = tpl.render(parsedVars.data);
   const temperature =
     params.temperature ?? rendered.temperature ?? undefined;
-  const out = await aiCompleteText({
+
+  const out = await aiCompleteTextSafe({
     system: rendered.system,
     user: rendered.user,
     model: params.model,
     temperature,
   });
+
+  if (!out.ok) {
+    return { ok: false, response: aiClientFailureResponse(out) };
+  }
+
   return {
     ok: true,
-    text: out.text,
-    model: out.model,
+    text: out.data.text,
+    model: out.data.model,
     templateId: tpl.id,
     templateVersion: tpl.version,
   };

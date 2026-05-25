@@ -6,9 +6,10 @@ import { aiCompleteRequestSchema } from "@/lib/validation/ai-schemas";
 import { parseUuidParam, parseWithSchema, readJsonBody } from "@/lib/validation/request-json";
 import { mergeClientVarsWithEvent } from "@/lib/ai/event-template-vars";
 import { runAiPromptTemplate } from "@/lib/ai/run-template";
-import { aiExceptionResponse } from "@/lib/ai/http-errors";
+import { aiClientFailureResponse } from "@/lib/ai/http-errors";
+import { toAiClientFailure } from "@/lib/ai/client";
 
-/** Long Ollama runs: see `src/app/api/ai/complete/route.ts` (`maxDuration`). */
+export const runtime = "nodejs";
 export const maxDuration = 900;
 
 export async function POST(
@@ -19,7 +20,7 @@ export async function POST(
   if (!session.ok) return session.response;
   if (!session.organizationId) {
     return NextResponse.json(
-      { error: "No organization membership." },
+      { error: "No organization membership.", code: "AI_UNKNOWN" },
       { status: 400 }
     );
   }
@@ -39,7 +40,7 @@ export async function POST(
   try {
     event = await getEvent(session.supabase, idCheck.id, session.organizationId);
   } catch {
-    return NextResponse.json({ error: "Event not found." }, { status: 404 });
+    return NextResponse.json({ error: "Event not found.", code: "AI_UNKNOWN" }, { status: 404 });
   }
 
   const raw = await readJsonBody(request);
@@ -65,6 +66,6 @@ export async function POST(
       model: result.model,
     });
   } catch (e) {
-    return aiExceptionResponse(e);
+    return aiClientFailureResponse(toAiClientFailure(e));
   }
 }

@@ -17,7 +17,6 @@ export class AiModelNotAllowedError extends Error {
 export class AiProviderError extends Error {
   readonly code = "AI_PROVIDER_ERROR" as const;
   readonly causeUnknown?: unknown;
-  /** Safe to expose in API JSON (`502` responses); omit for generic wording. */
   readonly clientMessage?: string;
   constructor(message: string, causeUnknown?: unknown, clientMessage?: string) {
     super(message);
@@ -27,12 +26,12 @@ export class AiProviderError extends Error {
   }
 }
 
-/** User-facing message when Ollama is unreachable or offline. */
+/** User-facing message when Ollama is unreachable (no hardcoded hostnames). */
 export const LOCAL_AI_UNAVAILABLE_MESSAGE =
-  "Local AI server unavailable. Start Ollama on http://localhost:11434 and ensure qwen3:8b is pulled.";
+  "Local AI server unavailable. Check OLLAMA_BASE_URL, ensure Ollama is running, and pull the configured model.";
 
 const AI_TIMEOUT_DEFAULT_USER_MESSAGE =
-  "AI request timed out. Local models on modest hardware may need shorter prompts or a higher AI_REQUEST_TIMEOUT_MS (minimum 90s).";
+  "AI request timed out. Try shorter prompts or increase AI_REQUEST_TIMEOUT_MS (minimum 90s).";
 
 export class AiTimeoutError extends Error {
   readonly code = "AI_TIMEOUT" as const;
@@ -49,3 +48,11 @@ export class AiOutputTooLargeError extends Error {
     this.name = "AiOutputTooLargeError";
   }
 }
+
+export type AiErrorCode =
+  | typeof AiDisabledError.prototype.code
+  | typeof AiModelNotAllowedError.prototype.code
+  | typeof AiProviderError.prototype.code
+  | typeof AiTimeoutError.prototype.code
+  | typeof AiOutputTooLargeError.prototype.code
+  | "AI_UNKNOWN";

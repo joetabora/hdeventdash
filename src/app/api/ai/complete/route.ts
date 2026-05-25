@@ -3,9 +3,10 @@ import { requireSession } from "@/lib/api/require-session";
 import { aiCompleteRequestSchema } from "@/lib/validation/ai-schemas";
 import { parseWithSchema, readJsonBody } from "@/lib/validation/request-json";
 import { runAiPromptTemplate } from "@/lib/ai/run-template";
-import { aiExceptionResponse } from "@/lib/ai/http-errors";
+import { aiClientFailureResponse } from "@/lib/ai/http-errors";
+import { toAiClientFailure } from "@/lib/ai/client";
 
-/** Hosts/CDN proxies often enforce ~100s; allow long Ollama runs on runners that honor Next.js hints. Tunnel ingress still needs aligned timeouts. */
+export const runtime = "nodejs";
 export const maxDuration = 900;
 
 export async function POST(request: Request) {
@@ -13,7 +14,7 @@ export async function POST(request: Request) {
   if (!session.ok) return session.response;
   if (!session.organizationId) {
     return NextResponse.json(
-      { error: "No organization membership." },
+      { error: "No organization membership.", code: "AI_UNKNOWN" },
       { status: 400 }
     );
   }
@@ -39,6 +40,6 @@ export async function POST(request: Request) {
       model: result.model,
     });
   } catch (e) {
-    return aiExceptionResponse(e);
+    return aiClientFailureResponse(toAiClientFailure(e));
   }
 }

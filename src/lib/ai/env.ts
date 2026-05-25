@@ -11,23 +11,22 @@ import {
 
 export type AiRuntimeEnv = {
   enabled: boolean;
+  /** Resolved from OLLAMA_BASE_URL; never empty after load. */
   ollamaBaseUrl: string;
   defaultModel: string;
   allowedModels: string[];
   timeoutMs: number;
-  /** Extra Ollama fetch attempts beyond the first (transient/network errors only). */
   ollamaRetryExtraAttempts: number;
   maxPromptChars: number;
   maxCompletionChars: number;
-  /** Ollama `num_predict` cap per request. */
   maxTokens: number;
   defaultTemperature: number;
   streamingEnabled: boolean;
-  /** When non-empty, `OLLAMA_BASE_URL` hostname must match one entry. */
   hostAllowlist: string[];
 };
 
 let aiDotfilesPrimed = false;
+let startupConfigLogged = false;
 
 function primeAiDotenv(): void {
   if (aiDotfilesPrimed) return;
@@ -72,9 +71,24 @@ function parseCsvHosts(raw: string | undefined): string[] {
     .filter(Boolean);
 }
 
+/** Safe fallback: http://127.0.0.1:11434 when OLLAMA_BASE_URL is unset or blank. */
+export function resolveOllamaBaseUrl(): string {
+  const raw = env("OLLAMA_BASE_URL")?.trim();
+  return raw && raw.length > 0 ? raw : AI_CONFIG_DEFAULTS.baseUrl;
+}
+
+function logStartupConfig(snapshot: AiRuntimeEnv): void {
+  if (startupConfigLogged) return;
+  startupConfigLogged = true;
+  if (typeof process === "undefined") return;
+  console.info(
+    `[ai] OLLAMA_BASE_URL=${snapshot.ollamaBaseUrl} AI_ENABLED=${snapshot.enabled} OLLAMA_DEFAULT_MODEL=${snapshot.defaultModel}`
+  );
+}
+
 export function loadAiRuntimeEnv(): AiRuntimeEnv {
   const enabled = parseBool(env("AI_ENABLED"));
-  const ollamaBaseUrl = (env("OLLAMA_BASE_URL") ?? AI_CONFIG_DEFAULTS.baseUrl).trim();
+  const ollamaBaseUrl = resolveOllamaBaseUrl();
   const defaultModel = (env("OLLAMA_DEFAULT_MODEL") ?? DEFAULT_OLLAMA_MODEL).trim();
   const allowedModels = parseCsvModels(env("OLLAMA_ALLOWED_MODELS"));
   const timeoutMsParsed = Number(env("AI_REQUEST_TIMEOUT_MS"));
@@ -115,7 +129,7 @@ export function loadAiRuntimeEnv(): AiRuntimeEnv {
     : AI_CONFIG_DEFAULTS.streamingEnabled;
   const hostAllowlist = parseCsvHosts(env("OLLAMA_HOST_ALLOWLIST"));
 
-  return {
+  const snapshot: AiRuntimeEnv = {
     enabled,
     ollamaBaseUrl,
     defaultModel,
@@ -129,6 +143,9 @@ export function loadAiRuntimeEnv(): AiRuntimeEnv {
     streamingEnabled,
     hostAllowlist,
   };
+
+  logStartupConfig(snapshot);
+  return snapshot;
 }
 
 export function assertAiEnabled(envSnapshot: AiRuntimeEnv): void {
@@ -139,11 +156,6 @@ export function assertAiEnabled(envSnapshot: AiRuntimeEnv): void {
         ? "Add AI_ENABLED=true to .env.local (or deployment env). Restart after changing env files."
         : `AI_ENABLED is set to "${raw.trim()}" — use true, 1, yes, or on.`;
     throw new AiDisabledError(`AI features are disabled. ${hint}`);
-  }
-  if (!envSnapshot.ollamaBaseUrl) {
-    throw new AiDisabledError(
-      "AI is enabled but OLLAMA_BASE_URL is not configured."
-    );
   }
 }
 
@@ -179,7 +191,7 @@ export function validateOllamaBaseUrl(
     throw new AiProviderError(
       `OLLAMA_BASE_URL hostname "${url.hostname}" is not in OLLAMA_HOST_ALLOWLIST.`,
       undefined,
-      `OLLAMA_HOST_ALLOWLIST does not include "${url.hostname}". Add this host, or remove OLLAMA_HOST_ALLOWLIST if you intentionally use LAN IPs like 192.168.x.x.`
+      `OLLAMA_HOST_ALLOWLIST does not include "${url.hostname}". Add this host or remove OLLAMA_HOST_ALLOWLIST.`
     );
   }
   return url;
