@@ -19,6 +19,7 @@ import { AI_TEMPLATE_IDS } from "@/lib/ai/prompt-templates/ids";
 import { parseJsonFromModelText } from "@/lib/ai/parse-json-response";
 import { rawHashtagsResponseSchema } from "@/lib/ai/marketing-response-schemas";
 import { useAiCompletion } from "@/hooks/use-ai-completion";
+import { AiGenerationStatus } from "@/components/ui/ai-generation-status";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -49,6 +50,8 @@ const inputClass =
 export function AiAssistant({ event }: AiAssistantProps) {
   const {
     run: runAiCompletion,
+    retry: retryHashtags,
+    abort: abortHashtags,
     status: hashtagAiStatus,
     error: hashtagAiError,
   } = useAiCompletion();
@@ -299,7 +302,7 @@ export function AiAssistant({ event }: AiAssistantProps) {
           <div>
             <h3 className="font-semibold text-harley-text">AI Assistant</h3>
             <p className="text-xs text-harley-text-muted mt-0.5">
-              Social posts, email ideas, and event descriptions — edit and copy anything.
+              Social posts, email ideas, and event descriptions — powered by local Ollama.
             </p>
             <div className="flex flex-wrap items-center gap-2 mt-2">
               <Button
@@ -307,7 +310,7 @@ export function AiAssistant({ event }: AiAssistantProps) {
                 variant="secondary"
                 size="sm"
                 className="text-xs h-8"
-                onClick={handleSuggestHashtags}
+                onClick={() => void handleSuggestHashtags()}
                 disabled={hashtagAiStatus === "loading"}
               >
                 {hashtagAiStatus === "loading" ? (
@@ -317,10 +320,15 @@ export function AiAssistant({ event }: AiAssistantProps) {
                 )}
                 Suggest hashtags
               </Button>
-              {hashtagAiError ? (
-                <span className="text-xs text-red-400">{hashtagAiError}</span>
-              ) : null}
             </div>
+            <AiGenerationStatus
+              status={hashtagAiStatus}
+              error={hashtagAiError}
+              loadingMessage="Suggesting hashtags via local Ollama…"
+              onRetry={() => void retryHashtags()}
+              onCancel={abortHashtags}
+              className="mt-2"
+            />
             {hashtagPreview ? (
               <p className="text-xs text-harley-text-muted mt-2 leading-relaxed">
                 <span className="text-harley-text-muted font-medium">Hashtags: </span>

@@ -41,6 +41,7 @@ function providerCacheKey(env: AiRuntimeEnv): string {
     String(env.timeoutMs),
     String(env.ollamaRetryExtraAttempts),
     String(env.maxCompletionChars),
+    String(env.maxTokens),
     [...env.hostAllowlist].sort().join(","),
   ].join("|");
 }

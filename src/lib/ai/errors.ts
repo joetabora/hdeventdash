@@ -27,8 +27,12 @@ export class AiProviderError extends Error {
   }
 }
 
+/** User-facing message when Ollama is unreachable or offline. */
+export const LOCAL_AI_UNAVAILABLE_MESSAGE =
+  "Local AI server unavailable. Start Ollama on http://localhost:11434 and ensure qwen3:8b is pulled.";
+
 const AI_TIMEOUT_DEFAULT_USER_MESSAGE =
-  "AI is taking longer than the server's allow-list time. Local 7B+ models often need several minutes—increase AI_REQUEST_TIMEOUT_MS (min 180s) and Cloudflare Tunnel ingress timeouts (noResponseTimeoutSeconds / origin timeouts), shorten inputs, or retry.";
+  "AI request timed out. Local models on modest hardware may need shorter prompts or a higher AI_REQUEST_TIMEOUT_MS (minimum 90s).";
 
 export class AiTimeoutError extends Error {
   readonly code = "AI_TIMEOUT" as const;

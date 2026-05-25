@@ -1,5 +1,9 @@
 import { loadEnvConfig } from "@next/env";
 import {
+  AI_CONFIG_DEFAULTS,
+  DEFAULT_OLLAMA_MODEL,
+} from "@/config/ai";
+import {
   AiDisabledError,
   AiModelNotAllowedError,
   AiProviderError,
@@ -15,28 +19,26 @@ export type AiRuntimeEnv = {
   ollamaRetryExtraAttempts: number;
   maxPromptChars: number;
   maxCompletionChars: number;
+  /** Ollama `num_predict` cap per request. */
+  maxTokens: number;
+  defaultTemperature: number;
+  streamingEnabled: boolean;
   /** When non-empty, `OLLAMA_BASE_URL` hostname must match one entry. */
   hostAllowlist: string[];
 };
 
 let aiDotfilesPrimed = false;
 
-/**
- * Ensures `.env*` files are merged into `process.env` for this Node process.
- * Needed because route bundles may otherwise miss `.env.local`, and because static
- * `process.env.FOO` reads can be inlined at build time as `undefined`.
- */
 function primeAiDotenv(): void {
   if (aiDotfilesPrimed) return;
   aiDotfilesPrimed = true;
   try {
     loadEnvConfig(process.cwd(), process.env.NODE_ENV !== "production", undefined, true);
   } catch {
-    /* Non-fatal: fall through to whatever is already on process.env */
+    /* Non-fatal */
   }
 }
 
-/** Resolve env without static `process.env.KEY` access (avoids Next build-time inlining). */
 function env(key: string): string | undefined {
   primeAiDotenv();
   return Reflect.get(process.env, key) as string | undefined;
@@ -72,30 +74,45 @@ function parseCsvHosts(raw: string | undefined): string[] {
 
 export function loadAiRuntimeEnv(): AiRuntimeEnv {
   const enabled = parseBool(env("AI_ENABLED"));
-  const ollamaBaseUrl = (env("OLLAMA_BASE_URL") ?? "").trim();
-  const defaultModel = (env("OLLAMA_DEFAULT_MODEL") ?? "llama3.1:8b").trim();
+  const ollamaBaseUrl = (env("OLLAMA_BASE_URL") ?? AI_CONFIG_DEFAULTS.baseUrl).trim();
+  const defaultModel = (env("OLLAMA_DEFAULT_MODEL") ?? DEFAULT_OLLAMA_MODEL).trim();
   const allowedModels = parseCsvModels(env("OLLAMA_ALLOWED_MODELS"));
-  const AI_TIMEOUT_FALLBACK_MS = 180_000;
-  const AI_TIMEOUT_MIN_MS = 180_000;
   const timeoutMsParsed = Number(env("AI_REQUEST_TIMEOUT_MS"));
   const timeoutMsRaw =
     Number.isFinite(timeoutMsParsed) && timeoutMsParsed > 0
       ? timeoutMsParsed
-      : AI_TIMEOUT_FALLBACK_MS;
-  const timeoutMs = Math.max(AI_TIMEOUT_MIN_MS, timeoutMsRaw);
-  const retriesParsed = Number(env("AI_OLLAMA_RETRIES") ?? 1);
+      : AI_CONFIG_DEFAULTS.timeoutMs;
+  const timeoutMs = Math.max(AI_CONFIG_DEFAULTS.timeoutMs, timeoutMsRaw);
+  const retriesParsed = Number(env("AI_OLLAMA_RETRIES") ?? AI_CONFIG_DEFAULTS.retries);
   const retryExtraRaw = Number.isFinite(retriesParsed)
     ? Math.floor(retriesParsed)
-    : 1;
+    : AI_CONFIG_DEFAULTS.retries;
   const ollamaRetryExtraAttempts = Math.min(5, Math.max(0, retryExtraRaw));
-  const maxPromptRaw = Number(env("AI_MAX_PROMPT_CHARS") ?? 48_000);
+  const maxPromptRaw = Number(env("AI_MAX_PROMPT_CHARS") ?? AI_CONFIG_DEFAULTS.maxPromptChars);
   const maxPromptChars =
-    Number.isFinite(maxPromptRaw) && maxPromptRaw >= 1000 ? maxPromptRaw : 48_000;
-  const maxCompletionRaw = Number(env("AI_MAX_COMPLETION_CHARS") ?? 24_000);
+    Number.isFinite(maxPromptRaw) && maxPromptRaw >= 1000
+      ? maxPromptRaw
+      : AI_CONFIG_DEFAULTS.maxPromptChars;
+  const maxCompletionRaw = Number(
+    env("AI_MAX_COMPLETION_CHARS") ?? AI_CONFIG_DEFAULTS.maxCompletionChars
+  );
   const maxCompletionChars =
     Number.isFinite(maxCompletionRaw) && maxCompletionRaw >= 500
       ? maxCompletionRaw
-      : 24_000;
+      : AI_CONFIG_DEFAULTS.maxCompletionChars;
+  const maxTokensRaw = Number(env("AI_MAX_TOKENS") ?? AI_CONFIG_DEFAULTS.maxTokens);
+  const maxTokens =
+    Number.isFinite(maxTokensRaw) && maxTokensRaw >= 256
+      ? Math.floor(maxTokensRaw)
+      : AI_CONFIG_DEFAULTS.maxTokens;
+  const temperatureRaw = Number(env("AI_DEFAULT_TEMPERATURE") ?? AI_CONFIG_DEFAULTS.temperature);
+  const defaultTemperature =
+    Number.isFinite(temperatureRaw) && temperatureRaw >= 0 && temperatureRaw <= 2
+      ? temperatureRaw
+      : AI_CONFIG_DEFAULTS.temperature;
+  const streamingEnabled = parseBool(env("AI_STREAMING_ENABLED"))
+    ? true
+    : AI_CONFIG_DEFAULTS.streamingEnabled;
   const hostAllowlist = parseCsvHosts(env("OLLAMA_HOST_ALLOWLIST"));
 
   return {
@@ -107,6 +124,9 @@ export function loadAiRuntimeEnv(): AiRuntimeEnv {
     ollamaRetryExtraAttempts,
     maxPromptChars,
     maxCompletionChars,
+    maxTokens,
+    defaultTemperature,
+    streamingEnabled,
     hostAllowlist,
   };
 }
@@ -170,7 +190,7 @@ export function resolveModelId(
   requested?: string | null
 ): string {
   const def = env.defaultModel;
-  const resolved = (requested?.trim() || def);
+  const resolved = requested?.trim() || def;
   if (!resolved) {
     throw new AiModelNotAllowedError("Model is required.");
   }

@@ -14,6 +14,8 @@ export type AiCompletionRunBody = {
   temperature?: number;
 };
 
+type AiCompletionPath = "/api/ai/complete" | `/api/events/${string}/ai/complete`;
+
 function wasAbortError(e: unknown): boolean {
   return (
     (typeof DOMException !== "undefined" &&
@@ -24,15 +26,17 @@ function wasAbortError(e: unknown): boolean {
 }
 
 /**
- * POST to `/api/ai/complete` or `/api/events/:eventId/ai/complete` with loading/error state.
- * The hook's `AbortController` only cancels the browser→API `fetch`; the route runs inference
- * with `AI_REQUEST_TIMEOUT_MS` and does not mirror Cloudflare/proxy inbound disconnects.
+ * POST to `/api/ai/complete` or `/api/events/:eventId/ai/complete` with loading/error/retry/cancel.
+ * Inference runs on the server against local Ollama (`/api/generate`).
  */
 export function useAiCompletion() {
   const [status, setStatus] = useState<AiCompletionStatus>("idle");
   const [data, setData] = useState<AiCompleteApiResponse | null>(null);
   const [error, setError] = useState("");
   const abortRef = useRef<AbortController | null>(null);
+  const lastRequestRef = useRef<{ path: AiCompletionPath; body: AiCompletionRunBody } | null>(
+    null
+  );
 
   const abort = useCallback(() => {
     abortRef.current?.abort();
@@ -48,12 +52,13 @@ export function useAiCompletion() {
 
   const run = useCallback(
     async (
-      path: "/api/ai/complete" | `/api/events/${string}/ai/complete`,
+      path: AiCompletionPath,
       body: AiCompletionRunBody
     ): Promise<AiCompleteApiResponse | undefined> => {
       abortRef.current?.abort();
       const ac = new AbortController();
       abortRef.current = ac;
+      lastRequestRef.current = { path, body };
       setStatus("loading");
       setError("");
       setData(null);
@@ -87,7 +92,13 @@ export function useAiCompletion() {
     []
   );
 
+  const retry = useCallback(async () => {
+    const last = lastRequestRef.current;
+    if (!last) return undefined;
+    return run(last.path, last.body);
+  }, [run]);
+
   useEffect(() => () => abortRef.current?.abort(), []);
 
-  return { status, data, error, run, abort, reset };
+  return { status, data, error, run, retry, abort, reset };
 }

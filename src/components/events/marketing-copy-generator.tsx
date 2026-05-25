@@ -16,6 +16,7 @@ import {
 } from "@/lib/ai/marketing-prompt/types";
 import { buildCopyDevelopmentAiBriefing } from "@/lib/new-event-playbook-copy";
 import { useAiCompletion } from "@/hooks/use-ai-completion";
+import { AiGenerationStatus } from "@/components/ui/ai-generation-status";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/input";
 import { Copy, Loader2, Sparkles } from "lucide-react";
@@ -186,22 +187,25 @@ export function MarketingCopyGenerator({
             </>
           )}
         </Button>
+        {ai.status === "loading" ? (
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={ai.abort}
+          >
+            Cancel
+          </Button>
+        ) : null}
       </div>
 
-      {ai.status === "loading" ? (
-        <p className="text-[11px] text-harley-text-muted leading-relaxed">
-          Running Ollama — social modes use higher creativity; SEO modes stay
-          tighter. Increase{" "}
-          <code className="text-[10px] px-1 rounded bg-harley-black/60">
-            AI_REQUEST_TIMEOUT_MS
-          </code>{" "}
-          if needed.
-        </p>
-      ) : null}
-
-      {ai.error ? (
-        <p className="text-xs text-red-400">{ai.error}</p>
-      ) : null}
+      <AiGenerationStatus
+        status={ai.status}
+        error={ai.error}
+        loadingMessage="Running local Ollama (qwen3:8b) — social modes use higher creativity."
+        onRetry={() => void ai.retry()}
+        onCancel={ai.abort}
+      />
 
       {ai.status === "success" && ai.data?.text ? (
         <div className="rounded-lg border border-border-subtle/40 bg-harley-black/40 p-3 space-y-2">
