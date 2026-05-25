@@ -54,7 +54,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
   }
 
   try {
-    await deleteUserRole(ctx.supabase, userId);
+    await deleteUserRole(ctx.supabase, userId, ctx.organizationId);
     return NextResponse.json({ ok: true });
   } catch (e) {
     const message =

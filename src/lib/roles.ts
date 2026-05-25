@@ -1,22 +1,53 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { UserRole, UserRoleRecord } from "@/types/database";
+
+/**
+ * Resolve the user's role for the active organization.
+ * Falls back when org-scoped lookup misses (legacy rows, migration drift).
+ */
 export async function getUserRole(
   supabase: SupabaseClient,
   userId: string,
   organizationId?: string | null
 ): Promise<UserRole | null> {
-  let q = supabase.from("user_roles").select("role").eq("user_id", userId);
   if (organizationId != null) {
-    q = q.eq("organization_id", organizationId);
-  }
-  const { data, error } = await q.maybeSingle();
+    const { data, error } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("organization_id", organizationId)
+      .maybeSingle();
 
-  if (error) {
-    console.error("getUserRole error:", error.message);
+    if (error) {
+      console.error("getUserRole error:", error.message);
+    } else if (data?.role) {
+      return data.role as UserRole;
+    }
+  }
+
+  const { data: rows, error: listError } = await supabase
+    .from("user_roles")
+    .select("role, organization_id")
+    .eq("user_id", userId);
+
+  if (listError) {
+    console.error("getUserRole list error:", listError.message);
     return null;
   }
 
-  return (data?.role as UserRole) ?? null;
+  if (!rows?.length) return null;
+
+  if (organizationId != null) {
+    const match = rows.find((r) => r.organization_id === organizationId);
+    if (match?.role) return match.role as UserRole;
+  }
+
+  // Single global role row (pre–multi-org or one dealership only).
+  if (rows.length === 1 && rows[0]?.role) {
+    return rows[0].role as UserRole;
+  }
+
+  return null;
 }
 
 export async function isAdmin(
@@ -63,7 +94,7 @@ export async function setUserRole(
 ): Promise<void> {
   const { error } = await supabase.from("user_roles").upsert(
     { user_id: userId, role, organization_id: organizationId },
-    { onConflict: "user_id" }
+    { onConflict: "user_id,organization_id" }
   );
 
   if (error) throw error;
@@ -71,12 +102,13 @@ export async function setUserRole(
 
 export async function deleteUserRole(
   supabase: SupabaseClient,
-  userId: string
+  userId: string,
+  organizationId?: string | null
 ): Promise<void> {
-  const { error } = await supabase
-    .from("user_roles")
-    .delete()
-    .eq("user_id", userId);
-
+  let q = supabase.from("user_roles").delete().eq("user_id", userId);
+  if (organizationId != null) {
+    q = q.eq("organization_id", organizationId);
+  }
+  const { error } = await q;
   if (error) throw error;
 }

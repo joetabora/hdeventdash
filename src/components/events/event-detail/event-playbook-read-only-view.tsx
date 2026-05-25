@@ -35,7 +35,7 @@ export function EventPlaybookReadOnlyView({
         <EventPlaybookPrintDocument
           event={event}
           eventMedia={eventMedia}
-          orgMarketingArtFormUrl={orgMarketingArtFormUrl}
+          orgMarketingArtFormUrl={orgMarketingArtFormUrl ?? null}
           swapMeetSpots={swapMeetSpots}
           eventVendors={eventVendors}
         />
