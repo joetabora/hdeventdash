@@ -12,6 +12,7 @@ import { EventCommentsModule } from "@/components/events/event-detail/event-comm
 import { EventDetailHeader } from "@/components/events/event-detail/event-detail-header";
 import { EventPlanningNotesPanel } from "@/components/events/event-detail/event-planning-notes-panel";
 import { EventPlaybookPrintDocument } from "@/components/events/event-detail/event-playbook-print-document";
+import { EventPlaybookReadOnlyView } from "@/components/events/event-detail/event-playbook-read-only-view";
 import { EventDetailChecklist } from "@/components/events/event-detail/event-detail-checklist";
 import { EventDetailMedia } from "@/components/events/event-detail/event-detail-media";
 import { EventDetailVendors } from "@/components/events/event-detail/event-detail-vendors";
@@ -311,10 +312,13 @@ export function EventDetailClient({
                   onSubmit={handlePlaybookEditSave}
                 />
               ) : (
-                <p className="text-sm text-harley-text-muted">
-                  You don&apos;t have permission to edit this event&apos;s
-                  playbook. Contact a manager for updates.
-                </p>
+                <EventPlaybookReadOnlyView
+                  event={c.event}
+                  eventMedia={c.media}
+                  orgMarketingArtFormUrl={orgMarketingArtFormUrl}
+                  swapMeetSpots={c.swapMeetSpots}
+                  eventVendors={c.eventVendors}
+                />
               )}
             </div>
 
