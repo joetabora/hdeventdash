@@ -72,7 +72,12 @@ type OllamaTagsResponse = {
 
 type OllamaGenerateResponse = {
   model?: string;
+  /** Final completion (`/api/generate` classic field). */
   response?: string;
+  /** Present on some builds / thinking payloads. */
+  message?: { role?: string; content?: string; thinking?: string };
+  /** Reasoning trace when thinking is enabled. */
+  thinking?: string;
   done?: boolean;
   error?: string;
 };
@@ -267,6 +272,11 @@ async function invokeGenerate(
       model: opts.model,
       prompt: opts.prompt,
       stream: false,
+      /**
+       * Thinking-capable models (e.g. qwen3) may default think=true and spend the
+       * whole budget on reasoning, yielding an empty `response` while HTTP 200.
+       */
+      think: false,
     };
     if (opts.system?.trim()) body.system = opts.system.trim();
     const options: Record<string, number> = {
@@ -316,7 +326,10 @@ async function invokeGenerate(
       );
     }
 
-    const text = parsed.response ?? "";
+    const fromResponse = typeof parsed.response === "string" ? parsed.response : "";
+    const fromMessage =
+      typeof parsed.message?.content === "string" ? parsed.message.content : "";
+    const text = (fromResponse.trim() ? fromResponse : fromMessage).trim();
     if (text.length > env.maxCompletionChars) {
       throw new AiOutputTooLargeError();
     }

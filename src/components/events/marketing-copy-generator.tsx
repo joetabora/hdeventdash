@@ -224,6 +224,15 @@ export function MarketingCopyGenerator({
         onCancel={ai.abort}
       />
 
+      {ai.status === "success" && !ai.data?.text?.trim() ? (
+        <p className="text-xs text-harley-warning leading-relaxed">
+          The API succeeded but returned no copy. On recent Ollama versions, thinking-capable
+          models can burn the whole output budget on internal reasoning so the visible answer
+          is empty. Deploy this app version (generate requests disable that path), retry, and if
+          it persists raise your AI token/output limits or shorten the playbook briefing.
+        </p>
+      ) : null}
+
       {ai.status === "success" && ai.data?.text ? (
         <div className="rounded-lg border border-border-subtle/40 bg-harley-black/40 p-3 space-y-2">
           <div className="flex flex-wrap justify-between gap-2 items-center">
