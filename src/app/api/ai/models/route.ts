@@ -6,9 +6,9 @@ import { listInstalledModelNamesSafe } from "@/lib/ai/client";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const session = await requireSession();
+    const session = await requireSession(req);
     if (!session.ok) return session.response;
     if (!session.organizationId) {
       return NextResponse.json(

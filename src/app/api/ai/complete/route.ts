@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { requireSession } from "@/lib/api/require-session";
 import { aiCompleteRequestSchema } from "@/lib/validation/ai-schemas";
 import { parseWithSchema, readJsonBody } from "@/lib/validation/request-json";
 import { runAiPromptTemplate } from "@/lib/ai/run-template";
@@ -9,17 +8,8 @@ import { toAiClientFailure } from "@/lib/ai/client";
 export const runtime = "nodejs";
 export const maxDuration = 900;
 
-export async function POST(request: Request) {
-  const session = await requireSession();
-  if (!session.ok) return session.response;
-  if (!session.organizationId) {
-    return NextResponse.json(
-      { error: "No organization membership.", code: "AI_UNKNOWN" },
-      { status: 400 }
-    );
-  }
-
-  const raw = await readJsonBody(request);
+export async function POST(req: Request) {
+  const raw = await readJsonBody(req);
   if (!raw.ok) return raw.response;
 
   const parsed = parseWithSchema(aiCompleteRequestSchema, raw.body);
@@ -32,7 +22,9 @@ export async function POST(request: Request) {
       model: parsed.data.model,
       temperature: parsed.data.temperature,
     });
+
     if (!result.ok) return result.response;
+
     return NextResponse.json({
       text: result.text,
       templateId: result.templateId,
