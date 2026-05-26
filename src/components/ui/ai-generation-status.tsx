@@ -2,6 +2,7 @@
 
 import { Loader2, RefreshCw, Square, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DEFAULT_OLLAMA_MODEL } from "@/config/ai";
 import type { AiCompletionStatus } from "@/hooks/use-ai-completion";
 
 type AiGenerationStatusProps = {
@@ -19,7 +20,7 @@ type AiGenerationStatusProps = {
 export function AiGenerationStatus({
   status,
   error,
-  loadingMessage = "Generating with local Ollama (qwen3:8b)…",
+  loadingMessage = `Generating with local Ollama (${DEFAULT_OLLAMA_MODEL})…`,
   onRetry,
   onCancel,
   className = "",

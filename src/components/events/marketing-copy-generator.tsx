@@ -17,6 +17,7 @@ import {
 import { buildCopyDevelopmentAiBriefing } from "@/lib/new-event-playbook-copy";
 import { useAiCompletion } from "@/hooks/use-ai-completion";
 import { AiGenerationStatus } from "@/components/ui/ai-generation-status";
+import { DEFAULT_OLLAMA_MODEL } from "@/config/ai";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/input";
 import { Copy, Loader2, Sparkles } from "lucide-react";
@@ -202,7 +203,7 @@ export function MarketingCopyGenerator({
       <AiGenerationStatus
         status={ai.status}
         error={ai.error}
-        loadingMessage="Running local Ollama (qwen3:8b) — social modes use higher creativity."
+        loadingMessage={`Running local Ollama (${DEFAULT_OLLAMA_MODEL}) — social modes use higher creativity.`}
         onRetry={() => void ai.retry()}
         onCancel={ai.abort}
       />

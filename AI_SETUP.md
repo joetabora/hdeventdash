@@ -27,7 +27,7 @@ Examples (set in `.env.local` or deployment env):
 | Next.js in Docker, Ollama on Mac host | `http://host.docker.internal:11434` |
 | Next.js in Docker, Ollama on LAN host | `http://192.168.1.79:11434` |
 
-Default model: **`qwen3:8b`**
+Default model: **`qwen2.5:7b-instruct`**
 
 ## Architecture
 
@@ -38,7 +38,7 @@ Default model: **`qwen3:8b`**
 On first server load, the resolved URL is logged:
 
 ```text
-[ai] OLLAMA_BASE_URL=http://127.0.0.1:11434 AI_ENABLED=true OLLAMA_DEFAULT_MODEL=qwen3:8b
+[ai] OLLAMA_BASE_URL=http://127.0.0.1:11434 AI_ENABLED=true OLLAMA_DEFAULT_MODEL=qwen2.5:7b-instruct
 ```
 
 ## Environment variables
