@@ -19,9 +19,15 @@ export const AI_CONFIG_DEFAULTS = {
   baseUrl: "http://127.0.0.1:11434",
   defaultModel: DEFAULT_OLLAMA_MODEL,
   timeoutMs: 90_000,
+  /**
+   * Cap per-generate wall time so the app returns JSON before common CDN/tunnel
+   * idle timeouts (~90s). Set AI_PROXY_SAFE_TIMEOUT_MS=0 to disable the cap.
+   */
+  proxySafeTimeoutMs: 75_000,
   retries: 1,
   temperature: 0.7,
-  maxTokens: 2048,
+  /** Default Ollama num_predict — marketing templates often override lower. */
+  maxTokens: 1024,
   streamingEnabled: false,
   maxPromptChars: 48_000,
   maxCompletionChars: 24_000,

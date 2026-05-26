@@ -53,8 +53,9 @@ See [.env.local.example](.env.local.example).
 | `OLLAMA_ALLOWED_MODELS` | Optional allowlist |
 | `OLLAMA_HOST_ALLOWLIST` | Optional hostname allowlist for hardening |
 | `AI_REQUEST_TIMEOUT_MS` | Per-request timeout (min 90s) |
+| `AI_PROXY_SAFE_TIMEOUT_MS` | Cap each Ollama generate call (default 75s) so JSON returns before CDN/tunnel idle timeouts; set `0` to disable |
 | `AI_OLLAMA_RETRIES` | Extra retries (default 1 = retry once) |
-| `AI_MAX_TOKENS` | Ollama `num_predict` cap |
+| `AI_MAX_TOKENS` | Default Ollama `num_predict` cap (marketing templates use lower values) |
 
 ## HTTP API
 
@@ -86,4 +87,23 @@ If the preferred model is missing, the client falls back through `OLLAMA_MODEL_F
 
 ## Cloudflare Tunnel / long-lived AI requests
 
-Tune tunnel ingress timeouts to exceed `AI_REQUEST_TIMEOUT_MS`.
+Cloudflare Tunnel (and many reverse proxies) return **HTML 502** when the origin is silent longer than their idle timeout (~90s). The browser then shows a generic “Bad gateway” message instead of the app’s JSON error.
+
+**App-side mitigations (defaults in code):**
+
+- `AI_PROXY_SAFE_TIMEOUT_MS=75000` — cap each Ollama `/api/generate` call so the app responds with JSON before the tunnel gives up
+- Marketing templates use a lower `num_predict` than `AI_MAX_TOKENS` so copy generation finishes faster
+
+**Host-side (required for very slow hardware or long copy):**
+
+Tune tunnel ingress so idle timeout exceeds inference time, e.g. in `config.yml`:
+
+```yaml
+ingress:
+  - hostname: your-app.example.com
+    service: http://localhost:3000
+    originRequest:
+      noResponseTimeoutSeconds: 120
+```
+
+Also confirm **`OLLAMA_BASE_URL`** from inside the Docker container (not from the host shell). Loopback `127.0.0.1` inside a container does not reach Ollama on the host — use `host.docker.internal` or the LAN IP (see table above).

@@ -22,6 +22,8 @@ export type RenderedPrompt = {
   user: string;
   /** Template-suggested sampling temperature (Ollama). */
   temperature?: number;
+  /** Template-suggested Ollama num_predict cap (shorter for marketing copy). */
+  numPredict?: number;
 };
 
 export type PromptTemplateDefinition<TVars> = {

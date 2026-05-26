@@ -61,4 +61,5 @@ export type ComposedMarketingPrompt = {
   system: string;
   user: string;
   temperature: number;
+  numPredict: number;
 };

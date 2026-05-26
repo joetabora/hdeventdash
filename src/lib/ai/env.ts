@@ -16,6 +16,8 @@ export type AiRuntimeEnv = {
   defaultModel: string;
   allowedModels: string[];
   timeoutMs: number;
+  /** Upper bound for a single /api/generate call (keeps responses under proxy idle limits). */
+  proxySafeTimeoutMs: number;
   ollamaRetryExtraAttempts: number;
   maxPromptChars: number;
   maxCompletionChars: number;
@@ -77,13 +79,30 @@ export function resolveOllamaBaseUrl(): string {
   return raw && raw.length > 0 ? raw : AI_CONFIG_DEFAULTS.baseUrl;
 }
 
+function isLoopbackOllamaHost(baseUrl: string): boolean {
+  try {
+    const host = new URL(baseUrl).hostname.toLowerCase();
+    return host === "127.0.0.1" || host === "localhost" || host === "::1";
+  } catch {
+    return false;
+  }
+}
+
 function logStartupConfig(snapshot: AiRuntimeEnv): void {
   if (startupConfigLogged) return;
   startupConfigLogged = true;
   if (typeof process === "undefined") return;
   console.info(
-    `[ai] OLLAMA_BASE_URL=${snapshot.ollamaBaseUrl} AI_ENABLED=${snapshot.enabled} OLLAMA_DEFAULT_MODEL=${snapshot.defaultModel}`
+    `[ai] OLLAMA_BASE_URL=${snapshot.ollamaBaseUrl} AI_ENABLED=${snapshot.enabled} OLLAMA_DEFAULT_MODEL=${snapshot.defaultModel} AI_PROXY_SAFE_TIMEOUT_MS=${snapshot.proxySafeTimeoutMs}`
   );
+  if (
+    process.env.NODE_ENV === "production" &&
+    isLoopbackOllamaHost(snapshot.ollamaBaseUrl)
+  ) {
+    console.warn(
+      "[ai] OLLAMA_BASE_URL uses a loopback host in production. If Next.js runs in Docker, 127.0.0.1 points at the container — use host.docker.internal or your LAN IP (see AI_SETUP.md)."
+    );
+  }
 }
 
 export function loadAiRuntimeEnv(): AiRuntimeEnv {
@@ -97,6 +116,15 @@ export function loadAiRuntimeEnv(): AiRuntimeEnv {
       ? timeoutMsParsed
       : AI_CONFIG_DEFAULTS.timeoutMs;
   const timeoutMs = Math.max(AI_CONFIG_DEFAULTS.timeoutMs, timeoutMsRaw);
+  const proxySafeRaw = Number(
+    env("AI_PROXY_SAFE_TIMEOUT_MS") ?? AI_CONFIG_DEFAULTS.proxySafeTimeoutMs
+  );
+  const proxySafeTimeoutMs =
+    Number.isFinite(proxySafeRaw) && proxySafeRaw === 0
+      ? 0
+      : Number.isFinite(proxySafeRaw) && proxySafeRaw > 0
+        ? Math.floor(proxySafeRaw)
+        : AI_CONFIG_DEFAULTS.proxySafeTimeoutMs;
   const retriesParsed = Number(env("AI_OLLAMA_RETRIES") ?? AI_CONFIG_DEFAULTS.retries);
   const retryExtraRaw = Number.isFinite(retriesParsed)
     ? Math.floor(retriesParsed)
@@ -135,6 +163,7 @@ export function loadAiRuntimeEnv(): AiRuntimeEnv {
     defaultModel,
     allowedModels,
     timeoutMs,
+    proxySafeTimeoutMs,
     ollamaRetryExtraAttempts,
     maxPromptChars,
     maxCompletionChars,

@@ -244,6 +244,12 @@ async function fetchTags(env: AiRuntimeEnv): Promise<string[]> {
   }
 }
 
+/** Single /api/generate wall-clock cap — keeps JSON responses ahead of CDN idle timeouts. */
+function effectiveGenerateTimeoutMs(env: AiRuntimeEnv): number {
+  if (env.proxySafeTimeoutMs <= 0) return env.timeoutMs;
+  return Math.min(env.timeoutMs, env.proxySafeTimeoutMs);
+}
+
 async function invokeGenerate(
   env: AiRuntimeEnv,
   opts: OllamaGenerateOptions
@@ -253,7 +259,7 @@ async function invokeGenerate(
   const onExternalAbort = () => timeout.abort();
   opts.signal?.addEventListener("abort", onExternalAbort, { once: true });
 
-  const t = setTimeout(() => timeout.abort(), env.timeoutMs);
+  const t = setTimeout(() => timeout.abort(), effectiveGenerateTimeoutMs(env));
   try {
     const body: Record<string, unknown> = {
       model: opts.model,
@@ -413,6 +419,7 @@ export async function ollamaCompleteMessages(input: {
   messages: AiMessage[];
   model: string;
   temperature?: number;
+  numPredict?: number;
   env?: AiRuntimeEnv;
 }): Promise<AiClientResult<OllamaGenerateResult>> {
   const { system, prompt } = messagesToPrompt(input.messages);
@@ -423,7 +430,7 @@ export async function ollamaCompleteMessages(input: {
     prompt,
     system,
     temperature: input.temperature,
-    numPredict: env.maxTokens,
+    numPredict: input.numPredict ?? env.maxTokens,
   });
 }
 

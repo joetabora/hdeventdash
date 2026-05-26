@@ -25,6 +25,7 @@ export type AiChatServiceCompleteInput = {
   user: string;
   model?: string | null;
   temperature?: number | null;
+  numPredict?: number | null;
 };
 
 export type AiChatServiceCompleteResult = {
@@ -87,6 +88,7 @@ export async function aiCompleteTextSafe(
       messages,
       model,
       ...(input.temperature != null ? { temperature: input.temperature } : {}),
+      ...(input.numPredict != null ? { numPredict: input.numPredict } : {}),
     });
 
   if (!result.ok) return result;

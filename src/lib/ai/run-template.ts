@@ -36,12 +36,14 @@ export async function runAiPromptTemplate(params: {
   const rendered = tpl.render(parsedVars.data);
   const temperature =
     params.temperature ?? rendered.temperature ?? undefined;
+  const numPredict = rendered.numPredict ?? undefined;
 
   const out = await aiCompleteTextSafe({
     system: rendered.system,
     user: rendered.user,
     model: params.model,
     temperature,
+    numPredict,
   });
 
   if (!out.ok) {

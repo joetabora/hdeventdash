@@ -49,6 +49,17 @@ export function resolveMarketingTemperature(input: MarketingPromptInput): number
   return 0.8;
 }
 
+/** Keep marketing generations short enough to finish before CDN/tunnel idle timeouts. */
+export function resolveMarketingNumPredict(input: MarketingPromptInput): number {
+  let base =
+    input.copyLength === "short" ? 384 : input.copyLength === "long" ? 960 : 640;
+  if (input.options.shorterCopy) base = Math.min(base, 384);
+  if (input.options.longerCopy) base = Math.min(base + 256, 1280);
+  const variationBoost = (input.variationCount - 1) * 192;
+  const packBoost = input.platform === "full_copy_pack" ? 512 : 0;
+  return Math.min(1536, base + variationBoost + packBoost);
+}
+
 export function composeMarketingPrompt(
   input: MarketingPromptInput
 ): ComposedMarketingPrompt {
@@ -76,6 +87,7 @@ export function composeMarketingPrompt(
     system: systemParts.join("\n\n"),
     user: userParts.join("\n"),
     temperature: resolveMarketingTemperature(input),
+    numPredict: resolveMarketingNumPredict(input),
   };
 }
 
