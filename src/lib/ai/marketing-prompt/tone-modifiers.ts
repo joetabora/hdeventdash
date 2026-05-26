@@ -14,7 +14,7 @@ const TONE_MODIFIERS: Record<MarketingTone, string> = {
   vintage_harley:
     "Tone: Vintage Harley — heritage, classic Americana, timeless riding culture. Nods to tradition and the open road.",
   high_energy:
-    "Tone: High energy — fast-paced, bold, festival vibes. Short sentences. Maximum momentum.",
+    "Tone: High energy — bold, festival-forward momentum. Mix punchy one-liners with fuller sentences; keep rhythm varied (avoid only choppy fragments).",
   casual:
     "Tone: Casual — like texting a riding buddy who works at the dealership. Relaxed, friendly, zero corporate stiffness.",
   aggressive_sales:

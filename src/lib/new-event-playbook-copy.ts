@@ -19,8 +19,7 @@ export const AI_PROMPT_2_FIXED =
 
 export const AI_PROMPT_3_FIXED = "Now create a social media campaign";
 
-/** Single copy-paste block for an AI agent; omits lines when the field is empty. */
-export function buildCopyDevelopmentPrompt1(fields: {
+export type MarketingBriefingFields = {
   event_name?: string | null;
   event_date_text?: string | null;
   location?: string | null;
@@ -31,7 +30,10 @@ export function buildCopyDevelopmentPrompt1(fields: {
   tone?: string | null;
   phrases?: string | null;
   rsvp_notes?: string | null;
-}): string {
+};
+
+/** Single copy-paste block for an AI agent; omits lines when the field is empty. */
+export function buildCopyDevelopmentPrompt1(fields: MarketingBriefingFields): string {
   const parts: string[] = [AI_PROMPT_1_FIXED.trim()];
   const pushIf = (label: string, value: string | null | undefined) => {
     const t = (value ?? "").trim();
@@ -50,20 +52,16 @@ export function buildCopyDevelopmentPrompt1(fields: {
   return parts.join("\n\n");
 }
 
-/** Full briefing for local AI: Prompt 1 field block plus fixed Prompt 2 / Prompt 3 lines from the playbook. */
-export function buildCopyDevelopmentAiBriefing(fields: {
-  event_name?: string | null;
-  event_date_text?: string | null;
-  location?: string | null;
-  who_its_for?: string | null;
-  food?: string | null;
-  entertainment?: string | null;
-  perks_discounts?: string | null;
-  tone?: string | null;
-  phrases?: string | null;
-  rsvp_notes?: string | null;
-}): string {
+/**
+ * Briefing for the marketing assistant. When follow-ups are omitted, the model stays
+ * focused on the current platform/task (avoid Prompt 2+3 distracting short outputs).
+ */
+export function buildMarketingBriefing(
+  fields: MarketingBriefingFields,
+  options?: { includeFollowUpPrompts?: boolean }
+): string {
   const p1 = buildCopyDevelopmentPrompt1(fields);
+  if (!options?.includeFollowUpPrompts) return p1;
   return [
     p1,
     "",
@@ -75,6 +73,11 @@ export function buildCopyDevelopmentAiBriefing(fields: {
     "",
     `Prompt 3: ${AI_PROMPT_3_FIXED}`,
   ].join("\n");
+}
+
+/** Full briefing for manual copy/paste blocks: Prompt 1 + playbook Prompt 2/3. */
+export function buildCopyDevelopmentAiBriefing(fields: MarketingBriefingFields): string {
+  return buildMarketingBriefing(fields, { includeFollowUpPrompts: true });
 }
 
 export const INTERNAL_COMMUNICATION_LINES = [

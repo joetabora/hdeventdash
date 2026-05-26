@@ -42,6 +42,8 @@ export type OllamaGenerateOptions = {
   system?: string;
   temperature?: number;
   numPredict?: number;
+  topP?: number;
+  repeatPenalty?: number;
   signal?: AbortSignal;
 };
 
@@ -271,6 +273,8 @@ async function invokeGenerate(
       num_predict: opts.numPredict ?? env.maxTokens,
     };
     if (opts.temperature != null) options.temperature = opts.temperature;
+    if (opts.topP != null) options.top_p = opts.topP;
+    if (opts.repeatPenalty != null) options.repeat_penalty = opts.repeatPenalty;
     body.options = options;
 
     let res: Response;
@@ -420,6 +424,8 @@ export async function ollamaCompleteMessages(input: {
   model: string;
   temperature?: number;
   numPredict?: number;
+  topP?: number;
+  repeatPenalty?: number;
   env?: AiRuntimeEnv;
 }): Promise<AiClientResult<OllamaGenerateResult>> {
   const { system, prompt } = messagesToPrompt(input.messages);
@@ -431,6 +437,8 @@ export async function ollamaCompleteMessages(input: {
     system,
     temperature: input.temperature,
     numPredict: input.numPredict ?? env.maxTokens,
+    ...(input.topP != null ? { topP: input.topP } : {}),
+    ...(input.repeatPenalty != null ? { repeatPenalty: input.repeatPenalty } : {}),
   });
 }
 

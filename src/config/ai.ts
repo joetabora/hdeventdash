@@ -4,14 +4,15 @@
  */
 
 /** Default model tag when OLLAMA_DEFAULT_MODEL is unset. */
-export const DEFAULT_OLLAMA_MODEL = "qwen2.5:7b-instruct";
+export const DEFAULT_OLLAMA_MODEL = "qwen3:8b";
 
 /** Model tags tried when the preferred model is not installed (same host only). */
 export const OLLAMA_MODEL_FALLBACK_CHAIN = [
+  "qwen3:8b",
   "qwen2.5:7b-instruct",
   "qwen2.5:7b",
-  "qwen3:8b",
   "llama3.1:8b",
+  "qwen2.5:14b-instruct",
 ] as const;
 
 export const AI_CONFIG_DEFAULTS = {

@@ -56,7 +56,7 @@ export function apiMessageFromBody(
 
 /** Shown instead of scraped CDN/nginx 502 HTML (noisy truncated links). */
 const BAD_GATEWAY_502_PROXY_MESSAGE =
-  "Request failed (502): Bad gateway — your CDN/proxy timed out or could not reach the app before the AI request finished. If this happens during copy generation: (1) increase Cloudflare Tunnel ingress `noResponseTimeoutSeconds` above AI_REQUEST_TIMEOUT_MS, (2) in Docker set OLLAMA_BASE_URL to host.docker.internal or your LAN IP (not 127.0.0.1 inside the container), (3) verify GET /api/ai/health and that the model is pulled (`ollama pull qwen2.5:7b-instruct`).";
+  "Request failed (502): Bad gateway — your CDN/proxy timed out or could not reach the app before the AI request finished. If this happens during copy generation: (1) increase Cloudflare Tunnel ingress `noResponseTimeoutSeconds` above AI_REQUEST_TIMEOUT_MS, (2) in Docker set OLLAMA_BASE_URL to host.docker.internal or your LAN IP (not 127.0.0.1 inside the container), (3) verify GET /api/ai/health and that the model is pulled (`ollama pull qwen3:8b`; the fallback chain may use other installed tags).";
 
 /** HTML error pages served by proxies (Cloudflare, nginx, etc.) when the origin fails. */
 function looksLikeProxied502Page(raw: string): boolean {

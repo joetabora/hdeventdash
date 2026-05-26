@@ -24,6 +24,8 @@ export type RenderedPrompt = {
   temperature?: number;
   /** Template-suggested Ollama num_predict cap (shorter for marketing copy). */
   numPredict?: number;
+  topP?: number;
+  repeatPenalty?: number;
 };
 
 export type PromptTemplateDefinition<TVars> = {
@@ -316,7 +318,7 @@ Tone preset: {{tone}}.`
 
   [AI_TEMPLATE_IDS.PLAYBOOK_COPY_DEVELOPMENT_PACK]: {
     id: AI_TEMPLATE_IDS.PLAYBOOK_COPY_DEVELOPMENT_PACK,
-    version: "2",
+    version: "3",
     varsSchema: playbookCopyDevelopmentPackVarsSchema,
     render: (vars) => {
       const v = vars as { briefing: string };
@@ -326,7 +328,7 @@ Tone preset: {{tone}}.`
 
   [AI_TEMPLATE_IDS.PLAYBOOK_MARKETING_ASSISTANT]: {
     id: AI_TEMPLATE_IDS.PLAYBOOK_MARKETING_ASSISTANT,
-    version: "1",
+    version: "2",
     varsSchema: playbookMarketingAssistantVarsSchema,
     render: (vars) => {
       const v = vars as {

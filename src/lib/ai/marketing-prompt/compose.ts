@@ -10,6 +10,9 @@ import {
   buildLengthModifier,
 } from "./toggle-modifiers";
 
+const MARKETING_OLLAMA_TOP_P = 0.9;
+const MARKETING_OLLAMA_REPEAT_PENALTY = 1.1;
+
 function buildVariationInstructions(count: 1 | 2 | 3): string {
   if (count === 1) {
     return "Produce ONE final version of the requested copy.";
@@ -49,14 +52,26 @@ export function resolveMarketingTemperature(input: MarketingPromptInput): number
   return 0.8;
 }
 
-/** Keep marketing generations short enough to finish before CDN/tunnel idle timeouts. */
+/** Keep marketing generations within proxy-safe limits while allowing richer FB copy. */
 export function resolveMarketingNumPredict(input: MarketingPromptInput): number {
+  const { platform, copyLength, variationCount, options } = input;
+
   let base =
-    input.copyLength === "short" ? 384 : input.copyLength === "long" ? 960 : 640;
-  if (input.options.shorterCopy) base = Math.min(base, 384);
-  if (input.options.longerCopy) base = Math.min(base + 256, 1280);
-  const variationBoost = (input.variationCount - 1) * 192;
-  const packBoost = input.platform === "full_copy_pack" ? 512 : 0;
+    copyLength === "short" ? 448 : copyLength === "long" ? 992 : 768;
+
+  if (platform === "facebook_post") {
+    base =
+      copyLength === "short" ? 512 : copyLength === "long" ? 1280 : 1024;
+  }
+
+  if (options.shorterCopy) {
+    base = Math.min(base, platform === "facebook_post" ? 512 : 384);
+  }
+  if (options.longerCopy) {
+    base = Math.min(base + 256, 1408);
+  }
+  const variationBoost = (variationCount - 1) * 192;
+  const packBoost = platform === "full_copy_pack" ? 512 : 0;
   return Math.min(1536, base + variationBoost + packBoost);
 }
 
@@ -70,7 +85,7 @@ export function composeMarketingPrompt(
     buildPlatformModifier(input.platform),
     buildSeoModifier(input.platform, input.options.moreSeoFocus),
     buildToggleModifiers(input.options),
-    buildLengthModifier(input.copyLength, input.options),
+    buildLengthModifier(input.copyLength, input.options, input.platform),
   ].filter(Boolean);
 
   const userParts = [
@@ -88,6 +103,8 @@ export function composeMarketingPrompt(
     user: userParts.join("\n"),
     temperature: resolveMarketingTemperature(input),
     numPredict: resolveMarketingNumPredict(input),
+    topP: MARKETING_OLLAMA_TOP_P,
+    repeatPenalty: MARKETING_OLLAMA_REPEAT_PENALTY,
   };
 }
 

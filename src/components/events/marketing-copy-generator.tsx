@@ -14,7 +14,10 @@ import {
   type MarketingToggleOptions,
   type MarketingTone,
 } from "@/lib/ai/marketing-prompt/types";
-import { buildCopyDevelopmentAiBriefing } from "@/lib/new-event-playbook-copy";
+import {
+  buildMarketingBriefing,
+  type MarketingBriefingFields,
+} from "@/lib/new-event-playbook-copy";
 import { useAiCompletion } from "@/hooks/use-ai-completion";
 import { AiGenerationStatus } from "@/components/ui/ai-generation-status";
 import { DEFAULT_OLLAMA_MODEL } from "@/config/ai";
@@ -48,12 +51,20 @@ const TOGGLE_OPTIONS: { key: ToggleKey; label: string }[] = [
   { key: "moreHype", label: "More hype" },
 ];
 
-function briefingFromFields(fields: CopyPromptFields): string {
-  return buildCopyDevelopmentAiBriefing(fields);
+function briefingFromFields(
+  fields: CopyPromptFields,
+  platform: MarketingPlatform
+): string {
+  return buildMarketingBriefing(fields as MarketingBriefingFields, {
+    includeFollowUpPrompts: platform === "full_copy_pack",
+  });
 }
 
-function hasMinimumBriefing(fields: CopyPromptFields): boolean {
-  const b = briefingFromFields(fields);
+function hasMinimumBriefing(
+  fields: CopyPromptFields,
+  platform: MarketingPlatform
+): boolean {
+  const b = briefingFromFields(fields, platform);
   return b.trim().length >= 40;
 }
 
@@ -65,14 +76,17 @@ export function MarketingCopyGenerator({
   const ai = useAiCompletion();
   const [platform, setPlatform] = useState<MarketingPlatform>("facebook_post");
   const [tone, setTone] = useState<MarketingTone>("hype");
-  const [copyLength, setCopyLength] = useState<MarketingCopyLength>("standard");
+  const [copyLength, setCopyLength] = useState<MarketingCopyLength>("long");
   const [variationCount, setVariationCount] = useState<"1" | "2" | "3">("1");
-  const [toggles, setToggles] = useState<MarketingToggleOptions>({
+  const [toggles, setToggles] = useState<MarketingToggleOptions>(() => ({
     ...DEFAULT_MARKETING_TOGGLES,
-  });
+    moreEmojis: true,
+    strongerCta: true,
+    moreEngagement: true,
+  }));
   const [copied, setCopied] = useState(false);
 
-  const canGenerate = hasMinimumBriefing(copyPromptFields);
+  const canGenerate = hasMinimumBriefing(copyPromptFields, platform);
 
   function patchToggle(key: ToggleKey, checked: boolean) {
     setToggles((prev) => ({ ...prev, [key]: checked }));
@@ -83,7 +97,7 @@ export function MarketingCopyGenerator({
     await ai.run("/api/ai/complete", {
       templateId: AI_TEMPLATE_IDS.PLAYBOOK_MARKETING_ASSISTANT,
       variables: {
-        briefing: briefingFromFields(copyPromptFields),
+        briefing: briefingFromFields(copyPromptFields, platform),
         platform,
         tone,
         copyLength,
@@ -102,7 +116,9 @@ export function MarketingCopyGenerator({
         </p>
         <p className="text-xs text-harley-text-muted leading-relaxed">
           Platform-aware copy with tone presets, SEO guidance, and natural emojis.
-          Fill in the copy development fields above first.
+          Fill in the copy development fields above first. For Facebook Event
+          details, <strong className="text-harley-text-muted">Long</strong> length
+          and More emojis usually match best.
         </p>
       </div>
 

@@ -27,7 +27,7 @@ Examples (set in `.env.local` or deployment env):
 | Next.js in Docker, Ollama on Mac host | `http://host.docker.internal:11434` |
 | Next.js in Docker, Ollama on LAN host | `http://192.168.1.79:11434` |
 
-Default model: **`qwen2.5:7b-instruct`**
+Default model: **`qwen3:8b`** (falls back automatically if unavailable — see `OLLAMA_MODEL_FALLBACK_CHAIN` in `src/config/ai.ts`). Pull with `ollama pull qwen3:8b`. For heavier quality at the cost of speed/VRAM use `OLLAMA_DEFAULT_MODEL=qwen2.5:14b-instruct`.
 
 ## Architecture
 
@@ -38,7 +38,7 @@ Default model: **`qwen2.5:7b-instruct`**
 On first server load, the resolved URL is logged:
 
 ```text
-[ai] OLLAMA_BASE_URL=http://127.0.0.1:11434 AI_ENABLED=true OLLAMA_DEFAULT_MODEL=qwen2.5:7b-instruct
+[ai] OLLAMA_BASE_URL=http://127.0.0.1:11434 AI_ENABLED=true OLLAMA_DEFAULT_MODEL=qwen3:8b AI_PROXY_SAFE_TIMEOUT_MS=75000
 ```
 
 ## Environment variables
@@ -92,9 +92,9 @@ Cloudflare Tunnel (and many reverse proxies) return **HTML 502** when the origin
 **App-side mitigations (defaults in code):**
 
 - `AI_PROXY_SAFE_TIMEOUT_MS=75000` — cap each Ollama `/api/generate` call so the app responds with JSON before the tunnel gives up
-- Marketing templates use a lower `num_predict` than `AI_MAX_TOKENS` so copy generation finishes faster
+- Marketing templates tune `num_predict` per platform (Facebook Event drafts use a larger budget than very short modes)
 
-**Host-side (required for very slow hardware or long copy):**
+**Host-side (required for very slow hardware, 14B models, or long copy):**
 
 Tune tunnel ingress so idle timeout exceeds inference time, e.g. in `config.yml`:
 
@@ -105,5 +105,7 @@ ingress:
     originRequest:
       noResponseTimeoutSeconds: 120
 ```
+
+Using larger models (14B+) increases latency. If generations time out behind Cloudflare, increase `noResponseTimeoutSeconds` toward **180** or use a faster model (e.g. `OLLAMA_DEFAULT_MODEL=qwen2.5:7b-instruct`).
 
 Also confirm **`OLLAMA_BASE_URL`** from inside the Docker container (not from the host shell). Loopback `127.0.0.1` inside a container does not reach Ollama on the host — use `host.docker.internal` or the LAN IP (see table above).

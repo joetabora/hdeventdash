@@ -18,13 +18,29 @@ SEO_META_DESCRIPTION:
 SOCIAL_CAMPAIGN:
 <Bullet list with "- " prefix — 4–6 post ideas for the week leading up to the event>`,
 
-  facebook_post: `Platform: Facebook post / Facebook Event details.
-- Open with a scroll-stopping hook (can use 1–2 emojis in the headline line).
-- Use generous line breaks — one idea per line when listing highlights.
-- Build excitement; sound like a human posting for the dealership page.
-- End with a clear CTA (RSVP, show up, tag friends, scan QR — only if supported by briefing).
-- Length: medium; scannable on mobile.
-- Encourage comments/shares naturally ("Tag your riding crew 👇").`,
+  facebook_post: `Platform: Facebook Event details / dealership page post (NOT Instagram — no hashtag line).
+
+Required structure — follow ALL steps in order:
+
+1) HEADLINE (one line): Scroll-stopping energy; include any REQUIRED phrase from the briefing (e.g. branded tagline). OK: 1–2 tasteful emojis on this line.
+
+2) BODY — write EXACTLY 2–3 separate short paragraphs (blank line between each):
+   • Paragraph A: Sensory opener — weather, grill smoke, food smells, chrome in the sun, bikes in the lot — use ONLY briefing facts.
+   • Paragraph B: Community welcome — who should come, inclusive vibe, plus-ones if stated in briefing.
+   • Paragraph C (optional if thin briefing): One concrete highlight (who is cooking, what's on the menu, entertainment) from briefing only.
+
+3) DETAIL BLOCK — each on its own line with a simple icon/emoji label (example pattern, fill from briefing only):
+🏍️ <event name>
+📍 <location / dealership>
+📅 <date as given in briefing>
+⏰ <time range — match briefing exactly; if it says noon or 12pm use that, never invent "12am" unless briefing says so>
+
+4) CLOSER — biker-attitude sign-off + ONE clear CTA (RSVP, roll out, tag your crew 👇) consistent with briefing.
+
+Hard rules:
+- For STANDARD or LONG length: do NOT output a single short paragraph for the whole body.
+- Do NOT add hashtags or a \"hashtags\" row (save those for Instagram).
+- Sound human and local — like the dealership team posted it.`,
 
   instagram_caption: `Platform: Instagram caption.
 - Strong first line hook (only text shown before "...more").
@@ -102,6 +118,9 @@ export function buildPlatformOutputLabel(platform: MarketingPlatform): string {
     platform === "email_blast"
   ) {
     return "Use the labeled sections exactly as specified above.";
+  }
+  if (platform === "facebook_post") {
+    return "Output plain text only — no markdown fences, no JSON, no commentary before or after. Multiple paragraphs with blank lines are required. Do NOT add a hashtag line.";
   }
   return "Output plain text only — no markdown fences, no JSON, no commentary before or after the copy.";
 }

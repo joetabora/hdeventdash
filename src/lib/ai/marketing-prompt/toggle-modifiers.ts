@@ -1,4 +1,8 @@
-import type { MarketingCopyLength, MarketingToggleOptions } from "./types";
+import type {
+  MarketingCopyLength,
+  MarketingPlatform,
+  MarketingToggleOptions,
+} from "./types";
 
 export function buildToggleModifiers(options: MarketingToggleOptions): string {
   const lines: string[] = [];
@@ -38,15 +42,23 @@ export function buildToggleModifiers(options: MarketingToggleOptions): string {
 
 export function buildLengthModifier(
   copyLength: MarketingCopyLength,
-  options: MarketingToggleOptions
+  options: MarketingToggleOptions,
+  platform?: MarketingPlatform
 ): string {
+  const fb = platform === "facebook_post";
   if (options.shorterCopy || copyLength === "short") {
-    return "Length: SHORT — punchy, minimal fluff, under ~120 words unless format requires more.";
+    return fb
+      ? "Length: SHORT — punchy and scannable; aim ~80–120 words unless the briefing is very thin."
+      : "Length: SHORT — punchy, minimal fluff, under ~120 words unless format requires more.";
   }
   if (options.longerCopy || copyLength === "long") {
-    return "Length: LONG — richer detail from briefing, still scannable with line breaks.";
+    return fb
+      ? "Length: LONG — rich Facebook Event vibe; aim ~180–260 words with blank lines between blocks — still easy to skim on phones."
+      : "Length: LONG — richer detail from briefing, still scannable with line breaks.";
   }
-  return "Length: STANDARD — balanced; enough detail to excite, not a wall of text.";
+  return fb
+    ? "Length: STANDARD — for Facebook Event details aim ~120–200 words; use generous line breaks and multiple paragraphs (not a single block)."
+    : "Length: STANDARD — balanced; enough detail to excite, not a wall of text.";
 }
 
 export function buildEmojiPolicy(options: MarketingToggleOptions): string {

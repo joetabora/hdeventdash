@@ -62,4 +62,6 @@ export type ComposedMarketingPrompt = {
   user: string;
   temperature: number;
   numPredict: number;
+  topP?: number;
+  repeatPenalty?: number;
 };

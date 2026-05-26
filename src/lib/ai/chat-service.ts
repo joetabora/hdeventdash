@@ -18,7 +18,24 @@ const DEFAULT_SYSTEM_POLICY = [
   "Be concise, accurate, and on-brand (community, riding culture, professionalism).",
   "Do not invent specific legal claims, discounts, or guarantees unless provided in context.",
   "Do not include private or sensitive data beyond what the user supplied in the prompt context.",
-].join(" ");
+].join("\n");
+
+/**
+ * Prepended when `policyMode === "marketing"` (playbook marketing + copy-pack templates).
+ * Ollama receives this as part of `system`; template rules (`input.system`) follow.
+ */
+const MARKETING_SYSTEM_POLICY = [
+  "You are a fast professional marketing copywriter.",
+  "Generate polished final copy immediately.",
+  "Do not explain your reasoning.",
+  "Do not think aloud.",
+  "Output only the final result.",
+  "",
+  "Context: Harley-Davidson dealership event marketing. Honor length, structure, tone, and platform rules in the following instructions.",
+  "Write publish-ready, emotionally engaging copy with concrete sensory detail when the briefing supports it.",
+  "Do not invent sponsors, discounts, legal claims, or perks unless stated in the briefing.",
+  "Do not include private or sensitive data beyond what the briefing supplies.",
+].join("\n");
 
 export type AiChatServiceCompleteInput = {
   system?: string;
@@ -26,6 +43,11 @@ export type AiChatServiceCompleteInput = {
   model?: string | null;
   temperature?: number | null;
   numPredict?: number | null;
+  /** Use marketing policy instead of concise default policy (playbook marketing templates). */
+  policyMode?: "default" | "marketing";
+  /** Optional Ollama sampling (marketing generations). */
+  topP?: number | null;
+  repeatPenalty?: number | null;
 };
 
 export type AiChatServiceCompleteResult = {
@@ -66,7 +88,9 @@ export async function aiCompleteTextSafe(
     return toAiClientFailure(e);
   }
 
-  const system = [DEFAULT_SYSTEM_POLICY, input.system].filter(Boolean).join("\n\n");
+  const basePolicy =
+    input.policyMode === "marketing" ? MARKETING_SYSTEM_POLICY : DEFAULT_SYSTEM_POLICY;
+  const system = [basePolicy, input.system].filter(Boolean).join("\n\n");
   const messages: AiMessage[] = [
     { role: "system", content: system },
     { role: "user", content: input.user },
@@ -89,6 +113,8 @@ export async function aiCompleteTextSafe(
       model,
       ...(input.temperature != null ? { temperature: input.temperature } : {}),
       ...(input.numPredict != null ? { numPredict: input.numPredict } : {}),
+      ...(input.topP != null ? { topP: input.topP } : {}),
+      ...(input.repeatPenalty != null ? { repeatPenalty: input.repeatPenalty } : {}),
     });
 
   if (!result.ok) return result;
