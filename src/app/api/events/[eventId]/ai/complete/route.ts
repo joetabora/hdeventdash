@@ -10,7 +10,7 @@ import { aiClientFailureResponse } from "@/lib/ai/http-errors";
 import { toAiClientFailure } from "@/lib/ai/client";
 
 export const runtime = "nodejs";
-export const maxDuration = 900;
+export const maxDuration = 300;
 
 export async function POST(
   request: Request,
