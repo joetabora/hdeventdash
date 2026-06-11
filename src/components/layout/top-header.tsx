@@ -2,7 +2,8 @@
 
 import { useState, Suspense } from "react";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
-import { Menu, ChevronDown, LogOut, Building2 } from "lucide-react";
+import Link from "next/link";
+import { Menu, ChevronDown, LogOut, Building2, Settings } from "lucide-react";
 
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useCurrentOrganization } from "@/contexts/current-organization-context";
@@ -20,6 +21,7 @@ const pageTitles: Record<string, string> = {
   "/events/new": "Create New Event",
   "/vendors": "Vendors",
   "/admin/users": "User Management",
+  "/settings": "Settings",
 };
 
 function TopHeaderInner({ onMenuToggle, userEmail }: TopHeaderProps) {
@@ -126,6 +128,15 @@ function TopHeaderInner({ onMenuToggle, userEmail }: TopHeaderProps) {
                   {userEmail ?? "—"}
                 </p>
               </div>
+              <Link
+                href="/settings"
+                role="menuitem"
+                onClick={() => setMenuOpen(false)}
+                className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-harley-text-muted transition-colors hover:bg-surface-raised hover:text-harley-text"
+              >
+                <Settings className="h-4 w-4" />
+                Settings
+              </Link>
               <button
                 type="button"
                 role="menuitem"

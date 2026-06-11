@@ -15,6 +15,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/input";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import {
   Plus,
   Trash2,
@@ -47,6 +48,7 @@ export function SwapMeetSection({
 }: SwapMeetSectionProps) {
   const [adding, setAdding] = useState(false);
   const { saved, flash } = useSavedFields();
+  const { confirm, confirmDialog } = useConfirm();
 
   const [newName, setNewName] = useState("");
   const [newPhone, setNewPhone] = useState("");
@@ -101,8 +103,13 @@ export function SwapMeetSection({
       });
   }
 
-  function handleDelete(spotId: string) {
-    if (!confirm("Remove this swap meet spot?")) return;
+  async function handleDelete(spotId: string) {
+    const ok = await confirm({
+      title: "Remove swap meet spot?",
+      message: "The spot and its contact details will be removed from this event.",
+      confirmLabel: "Remove",
+    });
+    if (!ok) return;
     onOptimisticRemove?.(spotId);
     apiDeleteSwapMeetSpot(eventId, spotId).catch((err) => {
       console.error(err);
@@ -126,6 +133,7 @@ export function SwapMeetSection({
 
   return (
     <div className="space-y-4">
+      {confirmDialog}
       {canMutate && (
         <Card className="!p-4">
           <form onSubmit={handleAdd} className="space-y-3">

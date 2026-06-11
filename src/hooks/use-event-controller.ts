@@ -22,6 +22,7 @@ import {
   apiDeleteEvent,
   apiPatchEvent,
 } from "@/lib/events-api-client";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import type { EventStatus } from "@/types/database";
 import { showError, errorMessage } from "@/lib/toast";
 
@@ -48,6 +49,7 @@ export function useEventController(
   } = useEventDetailData(eventId, initial);
 
   const [showStatusPills, setShowStatusPills] = useState(false);
+  const { confirm, confirmDialog } = useConfirm();
 
   const eventMonthYearMonth = useMemo(() => {
     if (!event?.date || event.date.length < 7) return null;
@@ -215,12 +217,12 @@ export function useEventController(
 
   const handleDelete = useCallback(async () => {
     if (!event) return;
-    if (
-      !confirm(
-        "Are you sure you want to delete this event? This cannot be undone."
-      )
-    )
-      return;
+    const ok = await confirm({
+      title: "Delete event?",
+      message: `"${event.name}" and all of its checklist items, documents, media, and comments will be deleted permanently. This cannot be undone.`,
+      confirmLabel: "Delete event",
+    });
+    if (!ok) return;
     try {
       await apiDeleteEvent(event.id);
       router.push("/dashboard");
@@ -228,7 +230,7 @@ export function useEventController(
       console.error("Failed to delete event:", err);
       showError("Failed to delete event.");
     }
-  }, [event, router]);
+  }, [event, router, confirm]);
 
   return {
     event,
@@ -264,6 +266,8 @@ export function useEventController(
     handleToggleSwapMeet,
     handleStatusChange,
     handleDelete,
+    /** Render this once in the consuming page so the delete confirmation can appear. */
+    confirmDialog,
     onBudgetPeersMonthChange: (yearMonth: string) => {
       void refetch.budgetContextForMonth(yearMonth);
     },

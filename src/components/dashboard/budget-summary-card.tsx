@@ -13,6 +13,7 @@ import { formatUsd } from "@/lib/format-currency";
 import { Event, MonthlyBudget } from "@/types/database";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { Loader2, Trash2, Plus } from "lucide-react";
 import { showError } from "@/lib/toast";
 
@@ -82,6 +83,7 @@ export function BudgetSummaryCard({
   const [newAmount, setNewAmount] = useState("");
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const { confirm, confirmDialog } = useConfirm();
 
   const filterLocationLabel = useMemo(() => {
     if (!locationKeyFilter) return "";
@@ -128,7 +130,12 @@ export function BudgetSummaryCard({
   }
 
   async function handleDeleteRow(id: string) {
-    if (!confirm("Remove this monthly budget row?")) return;
+    const ok = await confirm({
+      title: "Remove budget cap?",
+      message: "This monthly budget row will be removed for this venue.",
+      confirmLabel: "Remove",
+    });
+    if (!ok) return;
     setBusyId(id);
     try {
       await apiFetchJson(`/api/budgets/${encodeURIComponent(id)}`, {
@@ -168,6 +175,7 @@ export function BudgetSummaryCard({
 
   return (
     <Card className="!p-0 overflow-hidden border-border-subtle shadow-none">
+      {confirmDialog}
       <div className="p-6 md:p-8">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>

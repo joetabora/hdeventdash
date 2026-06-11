@@ -17,6 +17,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/input";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { SavedCheck } from "@/components/ui/saved-check";
 import { useSavedFields } from "@/hooks/use-saved-fields";
 import { formatUsd } from "@/lib/format-currency";
@@ -100,6 +101,7 @@ export function EventVendorsSection({
   }, [availableVendors, pinnedAttachVendor, vendorId]);
 
   const { saved, flash } = useSavedFields();
+  const { confirm, confirmDialog } = useConfirm();
 
   // Selection is no longer valid once that vendor is attached (e.g. refetch before local clear)
   useEffect(() => {
@@ -167,10 +169,14 @@ export function EventVendorsSection({
       });
   }
 
-  function handleDetach(linkId: string) {
-    if (!confirm("Remove this vendor from the event? Their participation stays in history on their profile.")) {
-      return;
-    }
+  async function handleDetach(linkId: string) {
+    const ok = await confirm({
+      title: "Remove vendor from event?",
+      message:
+        "Their participation stays in history on their vendor profile, and re-attaching restores the same link.",
+      confirmLabel: "Remove",
+    });
+    if (!ok) return;
     onOptimisticRemove?.(linkId);
     apiFetchJson(`/api/events/${eventId}/vendors/${linkId}`, {
       method: "DELETE",
@@ -183,6 +189,7 @@ export function EventVendorsSection({
 
   return (
     <div className="space-y-4">
+      {confirmDialog}
       {canMutate && (
         <Card className="!p-4">
           <p className="text-xs text-harley-text-muted mb-3">

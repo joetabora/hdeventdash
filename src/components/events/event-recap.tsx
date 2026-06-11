@@ -6,6 +6,7 @@ import { Event } from "@/types/database";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { Archive, Save, Loader2 } from "lucide-react";
 import { showError } from "@/lib/toast";
 
@@ -24,6 +25,7 @@ export function EventRecap({ event, onUpdate, canEdit = true }: EventRecapProps)
     event.sales_estimate?.toString() || ""
   );
   const [saving, setSaving] = useState(false);
+  const { confirm, confirmDialog } = useConfirm();
 
   async function handleSave() {
     setSaving(true);
@@ -43,12 +45,14 @@ export function EventRecap({ event, onUpdate, canEdit = true }: EventRecapProps)
   }
 
   async function handleArchive() {
-    if (
-      !confirm(
-        "Archive this event? It will be hidden from the dashboard."
-      )
-    )
-      return;
+    const ok = await confirm({
+      title: "Archive event?",
+      message:
+        "This event will be hidden from the dashboard. You can still find it in archived views.",
+      confirmLabel: "Archive",
+      tone: "primary",
+    });
+    if (!ok) return;
     try {
       await apiPatchEvent(event.id, {
         is_archived: true,
@@ -63,6 +67,7 @@ export function EventRecap({ event, onUpdate, canEdit = true }: EventRecapProps)
 
   return (
     <Card className="!p-3.5 md:!p-5">
+      {confirmDialog}
       <h3 className="font-semibold text-harley-text mb-4">Event Recap</h3>
 
       <div className="space-y-4">

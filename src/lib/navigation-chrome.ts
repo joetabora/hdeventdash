@@ -8,6 +8,7 @@ export function shouldSuppressTopHeaderTitle(pathname: string): boolean {
   if (pathname === "/ops-feed") return true;
   if (pathname === "/vendors" || pathname.startsWith("/vendors/")) return true;
   if (pathname === "/admin/users") return true;
+  if (pathname === "/settings") return true;
   if (pathname === "/events/new") return true;
   if (/^\/events\/[^/]+\/notes$/.test(pathname)) return true;
   if (/^\/events\/[^/]+\/report$/.test(pathname)) return true;

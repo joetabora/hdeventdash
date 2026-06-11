@@ -23,6 +23,7 @@ import { OpsFeedEntryCard } from "@/components/ops-feed/ops-feed-entry-card";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { Loader2, Radio } from "lucide-react";
 import { showError } from "@/lib/toast";
 
@@ -57,6 +58,7 @@ export function OpsFeedClient({
   const [status, setStatus] = useState<OpsFeedEntryStatus | "">("active");
 
   const skipInitialFetch = useRef(true);
+  const { confirm, confirmDialog } = useConfirm();
 
   const loadPage = useCallback(
     async (p: number, append = false) => {
@@ -147,7 +149,12 @@ export function OpsFeedClient({
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Delete this entry permanently?")) return;
+    const ok = await confirm({
+      title: "Delete entry?",
+      message: "This entry will be deleted permanently. This cannot be undone.",
+      confirmLabel: "Delete",
+    });
+    if (!ok) return;
     setActionBusyId(id);
     try {
       await apiDeleteOpsFeedEntry(id);
@@ -165,6 +172,7 @@ export function OpsFeedClient({
 
   return (
     <div className="mx-auto max-w-3xl space-y-8 pb-16 md:pb-10">
+      {confirmDialog}
       <PageHeader
         kicker="Field notes"
         title="Ops Feed"

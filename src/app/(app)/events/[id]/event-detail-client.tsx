@@ -237,6 +237,7 @@ export function EventDetailClient({
 
   return (
     <>
+      {c.confirmDialog}
       <div
         id="event-playbook-root"
         className="print-playbook-root max-w-5xl pb-28 md:pb-0"

@@ -18,6 +18,7 @@ import { EventMedia, MediaTag, MEDIA_TAGS } from "@/types/database";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import {
   Upload,
   Trash2,
@@ -59,6 +60,7 @@ export function MediaGallery({
   const [urlsLoading, setUrlsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const supabase = getSupabaseBrowserClient();
+  const { confirm, confirmDialog } = useConfirm();
 
   useEffect(() => {
     let cancelled = false;
@@ -107,7 +109,12 @@ export function MediaGallery({
   }
 
   async function handleDelete(item: EventMedia) {
-    if (!confirm(`Delete "${item.file_name}"?`)) return;
+    const ok = await confirm({
+      title: "Delete media?",
+      message: `"${item.file_name}" will be deleted permanently.`,
+      confirmLabel: "Delete",
+    });
+    if (!ok) return;
     try {
       await apiDeleteMedia(eventId, item.id);
       onUpdate();
@@ -141,6 +148,7 @@ export function MediaGallery({
 
   return (
     <Card className="!p-3.5 md:!p-5">
+      {confirmDialog}
       <h3 className="font-semibold text-harley-text mb-4">Media</h3>
 
       {canMutate && (

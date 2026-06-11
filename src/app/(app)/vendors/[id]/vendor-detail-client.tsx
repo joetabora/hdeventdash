@@ -19,6 +19,7 @@ import {
   vendorFormValuesToPayload,
   type VendorFormValues,
 } from "@/components/forms/vendor-form-fields";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { useFormSubmitState } from "@/hooks/use-form-submit-state";
 import { useAppRole } from "@/contexts/app-role-context";
 import { apiFetchJson } from "@/lib/api/api-fetch-json";
@@ -41,6 +42,7 @@ export function VendorDetailClient({
     vendorFormValuesFromVendor(initialVendor)
   );
   const { pending, error, setError, clearError, run } = useFormSubmitState();
+  const { confirm, confirmDialog } = useConfirm();
 
   function patchForm(field: keyof VendorFormValues, value: string) {
     setFormValues((prev) => ({ ...prev, [field]: value }));
@@ -68,9 +70,13 @@ export function VendorDetailClient({
   }
 
   async function handleDelete() {
-    if (!confirm("Delete this vendor permanently? Event participation rows will be removed.")) {
-      return;
-    }
+    const ok = await confirm({
+      title: "Delete vendor?",
+      message:
+        "This vendor will be deleted permanently and their event participation rows will be removed. This cannot be undone.",
+      confirmLabel: "Delete vendor",
+    });
+    if (!ok) return;
     if (!vendor) return;
     try {
       await apiFetchJson(`/api/vendors/${vendor.id}`, { method: "DELETE" });
@@ -105,6 +111,7 @@ export function VendorDetailClient({
 
   return (
     <div className="max-w-4xl">
+      {confirmDialog}
       <Link
         href="/vendors"
         className="inline-flex items-center gap-2 text-sm text-harley-text-muted hover:text-harley-orange mb-5"

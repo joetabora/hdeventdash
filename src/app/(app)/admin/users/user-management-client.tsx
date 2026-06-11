@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/ui/page-header";
 import { Input, Select, baseInputClassName } from "@/components/ui/input";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/cn";
 import {
   Loader2,
@@ -55,6 +56,7 @@ export function UserManagementClient({
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
   const [createSuccess, setCreateSuccess] = useState("");
+  const { confirm, confirmDialog } = useConfirm();
 
   async function handleCreateUser() {
     setCreateError("");
@@ -123,8 +125,12 @@ export function UserManagementClient({
   }
 
   async function handleDeleteUser(userId: string, email: string) {
-    if (!confirm(`Remove role for "${email}"? This won't delete their auth account.`))
-      return;
+    const ok = await confirm({
+      title: "Remove user role?",
+      message: `Remove the role for "${email}" in this dealership? Their auth account is kept and they can be re-added later.`,
+      confirmLabel: "Remove role",
+    });
+    if (!ok) return;
     try {
       await apiFetchJson(`/api/admin/users/${userId}/role`, {
         method: "DELETE",
@@ -157,6 +163,7 @@ export function UserManagementClient({
 
   return (
     <div className="max-w-4xl space-y-8">
+      {confirmDialog}
       <PageHeader
         kicker="Administrators"
         title="User management"

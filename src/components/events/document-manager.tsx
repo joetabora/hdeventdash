@@ -22,6 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import {
   Upload,
   FileText,
@@ -50,6 +51,7 @@ export function DocumentManager({
   const [selectedTag, setSelectedTag] = useState<DocumentTag>("other");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const supabase = getSupabaseBrowserClient();
+  const { confirm, confirmDialog } = useConfirm();
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
@@ -69,7 +71,12 @@ export function DocumentManager({
   }
 
   async function handleDelete(doc: EventDocument) {
-    if (!confirm(`Delete "${doc.file_name}"?`)) return;
+    const ok = await confirm({
+      title: "Delete document?",
+      message: `"${doc.file_name}" will be deleted permanently.`,
+      confirmLabel: "Delete",
+    });
+    if (!ok) return;
     try {
       await apiDeleteDocument(eventId, doc.id);
       onUpdate();
@@ -119,6 +126,7 @@ export function DocumentManager({
 
   return (
     <Card className="!p-3.5 md:!p-5">
+      {confirmDialog}
       <h3 className="font-semibold text-harley-text mb-4">Documents</h3>
 
       {canMutate && (
