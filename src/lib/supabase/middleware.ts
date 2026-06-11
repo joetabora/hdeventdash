@@ -7,6 +7,9 @@ function isPublicPath(pathname: string): boolean {
   if (pathname.startsWith("/api/cron/")) return true;
   if (pathname === "/api/fcm-service-worker") return true;
   if (pathname === "/firebase-messaging-sw.js") return true;
+  // Hosted registration: public event pages + RSVP API.
+  if (pathname.startsWith("/e/")) return true;
+  if (pathname.startsWith("/api/public/")) return true;
   return false;
 }
 

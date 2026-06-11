@@ -120,6 +120,10 @@ export const eventManagerPatchSchema = z
     rsvp_incentive: z.union([z.string().max(5000), z.null()]).optional(),
     rsvp_link: z.union([z.string().max(2000), z.null()]).optional(),
     has_swap_meet: z.boolean().optional(),
+    registration_enabled: z.boolean().optional(),
+    registration_capacity: z
+      .union([z.number().int().min(1).max(1_000_000), z.null()])
+      .optional(),
     playbook_marketing: playbookMarketingSchema.optional(),
     event_time_start: z.union([z.string().max(80), z.null()]).optional(),
     event_time_end: z.union([z.string().max(80), z.null()]).optional(),
@@ -178,6 +182,25 @@ export const checklistManagerPatchSchema = z
 export const commentCreateSchema = z
   .object({
     content: z.string().trim().min(1).max(10_000),
+  })
+  .strict();
+
+/** Body for PATCH /api/events/[eventId]/registrations/[registrationId]. */
+export const registrationStatusPatchSchema = z
+  .object({
+    status: z.enum(["registered", "checked_in", "cancelled"]),
+  })
+  .strict();
+
+/** Body for POST /api/public/events/[slug]/register (public RSVP form). */
+export const publicRegistrationSchema = z
+  .object({
+    name: z.string().trim().min(1).max(200),
+    email: z.string().trim().email().max(320),
+    phone: z.string().trim().max(50).default(""),
+    party_size: z.number().int().min(1).max(20),
+    /** Honeypot — bots fill it, humans never see it. */
+    website: z.string().max(0).optional(),
   })
   .strict();
 

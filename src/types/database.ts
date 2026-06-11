@@ -116,6 +116,28 @@ export interface Event {
    */
   playbook_workflow?: unknown | null;
   playbook_marketing?: unknown | null;
+  /** Hosted registration (public RSVP page at /e/<public_slug>). */
+  registration_enabled?: boolean;
+  /** Max total attendees (sum of party sizes); null = unlimited. */
+  registration_capacity?: number | null;
+  public_slug?: string | null;
+}
+
+export type RegistrationStatus = "registered" | "checked_in" | "cancelled";
+
+/** Attendee RSVP captured on the public event page. */
+export interface EventRegistration {
+  id: string;
+  event_id: string;
+  name: string;
+  email: string;
+  phone: string;
+  party_size: number;
+  status: RegistrationStatus;
+  confirmation_code: string;
+  checked_in_at: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 /** Org cap for a calendar month and location_key (matches event.location_key). */

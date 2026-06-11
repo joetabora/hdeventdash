@@ -13,6 +13,7 @@ import {
   normalizePlaybookMarketingDates,
   type PlaybookMarketing,
 } from "@/lib/playbook-marketing";
+import { generateEventSlug } from "@/lib/registration";
 
 function normalizeManagerPatch(
   patch: Record<string, unknown>
@@ -66,7 +67,24 @@ export async function PATCH(
       );
       const parsed = parseWithSchema(eventManagerPatchSchema, normalized);
       if (!parsed.ok) return parsed.response;
-      const row = await updateEvent(session.supabase, idCheck.id, parsed.data);
+
+      const updates: Record<string, unknown> = { ...parsed.data };
+      // Turning registration on mints a public slug once; it stays stable
+      // afterwards so shared links keep working.
+      if (parsed.data.registration_enabled === true) {
+        const { data: current } = await session.supabase
+          .from("events")
+          .select("name, public_slug")
+          .eq("id", idCheck.id)
+          .single();
+        if (current && !current.public_slug) {
+          updates.public_slug = generateEventSlug(
+            (parsed.data.name as string | undefined) ?? current.name
+          );
+        }
+      }
+
+      const row = await updateEvent(session.supabase, idCheck.id, updates);
       return NextResponse.json(row);
     }
 

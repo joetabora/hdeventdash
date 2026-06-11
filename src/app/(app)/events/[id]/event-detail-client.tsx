@@ -32,6 +32,7 @@ import type { EventBudgetPeer } from "@/lib/budgets";
 import { eventDateToYearMonth } from "@/lib/budgets";
 import { useEventController } from "@/hooks/use-event-controller";
 import { SwapMeetSection } from "@/components/events/swap-meet-section";
+import { RegistrationSection } from "@/components/events/registration-section";
 import {
   NewEventPlaybookForm,
   type NewEventPlaybookSubmitPayload,
@@ -55,6 +56,7 @@ import {
   Printer,
   Sparkles,
   Store,
+  Ticket,
   X,
 } from "lucide-react";
 import {
@@ -366,6 +368,22 @@ export function EventDetailClient({
                   Add Swap Meet
                 </Button>
               </div>
+            ) : null}
+
+            {c.canManageEvents || c.event.registration_enabled ? (
+              <CollapsibleSection
+                key={`registration-${c.event.id}`}
+                icon={<Ticket className="w-4.5 h-4.5" />}
+                title="Registration & Check-in"
+                autoOpenOnDesktop
+                mobileCollapsed
+              >
+                <RegistrationSection
+                  event={c.event}
+                  canManage={c.canManageEvents}
+                  onEventUpdate={c.setEvent}
+                />
+              </CollapsibleSection>
             ) : null}
           </div>
 

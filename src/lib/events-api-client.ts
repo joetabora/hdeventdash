@@ -12,6 +12,8 @@ import type {
   MediaTag,
   SwapMeetSpot,
   SwapMeetSpotSize,
+  EventRegistration,
+  RegistrationStatus,
 } from "@/types/database";
 
 export type CreateEventApiBody = z.infer<typeof eventCreateSchema>;
@@ -44,6 +46,30 @@ export async function apiPatchEvent(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
+}
+
+export async function apiListRegistrations(
+  eventId: string
+): Promise<EventRegistration[]> {
+  const res = await apiFetchJson<{ registrations: EventRegistration[] }>(
+    `/api/events/${eventId}/registrations`
+  );
+  return res.registrations;
+}
+
+export async function apiPatchRegistration(
+  eventId: string,
+  registrationId: string,
+  status: RegistrationStatus
+): Promise<EventRegistration> {
+  return apiFetchJson<EventRegistration>(
+    `/api/events/${eventId}/registrations/${registrationId}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    }
+  );
 }
 
 export async function apiDeleteEvent(eventId: string): Promise<void> {
