@@ -3,7 +3,15 @@
 import { useMemo, useState, useRef, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { LayoutGrid, Calendar, List, BarChart3, PlusCircle } from "lucide-react";
+import {
+  LayoutGrid,
+  Calendar,
+  List,
+  BarChart3,
+  PlusCircle,
+  Download,
+  CalendarPlus,
+} from "lucide-react";
 
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { ChecklistStats } from "@/lib/events";
@@ -11,6 +19,8 @@ import { apiPatchEvent } from "@/lib/events-api-client";
 import { Event, EventStatus } from "@/types/database";
 import { isEventAtRisk } from "@/lib/at-risk";
 import { KanbanBoard } from "@/components/dashboard/kanban-board";
+import { MobileKanban } from "@/components/dashboard/mobile-kanban";
+import { downloadCsv, eventsToCsv } from "@/lib/event-csv";
 import { CalendarView } from "@/components/dashboard/calendar-view";
 import { ListView } from "@/components/dashboard/list-view";
 import { Filters } from "@/components/dashboard/filters";
@@ -161,6 +171,14 @@ export function DashboardContent({
     }
   }
 
+  function handleExportCsv() {
+    const stamp = new Date().toISOString().slice(0, 10);
+    downloadCsv(
+      `events-${stamp}.csv`,
+      eventsToCsv(filteredEvents, checklistStats)
+    );
+  }
+
   const viewDescription =
     currentView === "analytics"
       ? "Performance, attendance, and ROI signals across active events."
@@ -225,6 +243,35 @@ export function DashboardContent({
       </Card>
 
       {currentView !== "analytics" && (
+        <div className="-mt-4 flex flex-wrap items-center justify-end gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={handleExportCsv}
+            disabled={filteredEvents.length === 0}
+            title="Download the events in view as a spreadsheet"
+          >
+            <Download className="h-4 w-4" />
+            Export CSV
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              // Content-Disposition: attachment — downloads without navigating.
+              window.location.href = "/api/events/export/ics";
+            }}
+            title="Download all active events as a calendar file (.ics)"
+          >
+            <CalendarPlus className="h-4 w-4" />
+            Calendar (.ics)
+          </Button>
+        </div>
+      )}
+
+      {currentView !== "analytics" && (
         <RoiTrendsCard trends={aggregates.filtered.roiTrends} />
       )}
 
@@ -262,14 +309,24 @@ export function DashboardContent({
       ) : null}
 
       {currentView === "kanban" && filteredEvents.length > 0 ? (
-        <div className="-mx-2 overflow-x-auto px-2">
-          <KanbanBoard
-            events={filteredEvents}
-            onStatusChange={handleStatusChange}
-            atRiskIds={atRiskIds}
-            readOnly={!canManageEvents}
-          />
-        </div>
+        <>
+          <div className="hidden lg:block -mx-2 overflow-x-auto px-2">
+            <KanbanBoard
+              events={filteredEvents}
+              onStatusChange={handleStatusChange}
+              atRiskIds={atRiskIds}
+              readOnly={!canManageEvents}
+            />
+          </div>
+          <div className="lg:hidden">
+            <MobileKanban
+              events={filteredEvents}
+              onStatusChange={handleStatusChange}
+              atRiskIds={atRiskIds}
+              readOnly={!canManageEvents}
+            />
+          </div>
+        </>
       ) : null}
       {currentView === "calendar" && (
         <CalendarView events={filteredEvents} />
