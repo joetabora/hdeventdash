@@ -73,6 +73,14 @@ export const eventCreateSchema = z
   })
   .strict();
 
+/** Body for POST /api/events/[eventId]/clone. */
+export const eventCloneSchema = z
+  .object({
+    name: z.string().trim().min(1).max(500),
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  })
+  .strict();
+
 export const eventStaffPatchSchema = z
   .object({
     is_live_mode: z.boolean(),

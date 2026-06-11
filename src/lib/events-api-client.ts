@@ -24,6 +24,17 @@ export async function apiCreateEvent(body: CreateEventApiBody): Promise<Event> {
   });
 }
 
+export async function apiCloneEvent(
+  eventId: string,
+  body: { name: string; date: string }
+): Promise<Event> {
+  return apiFetchJson<Event>(`/api/events/${eventId}/clone`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
 export async function apiPatchEvent(
   eventId: string,
   body: Record<string, unknown>

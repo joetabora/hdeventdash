@@ -12,6 +12,7 @@ import { StatusBadge, Badge } from "@/components/ui/badge";
 import { Button, buttonStyles } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DaysUntilEvent } from "@/components/events/days-until";
+import { DuplicateEventButton } from "@/components/events/duplicate-event-button";
 import { formatUsd } from "@/lib/format-currency";
 import { formatEngagementGoalLine } from "@/lib/playbook-marketing";
 import {
@@ -272,6 +273,13 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
                     <Edit className="w-4 h-4" />
                     <span className="hidden md:inline">Edit</span>
                   </Button>
+                )}
+                {canManageEvents && (
+                  <DuplicateEventButton
+                    eventId={event.id}
+                    sourceName={event.name}
+                    sourceDate={event.date}
+                  />
                 )}
                 {isAdmin && (
                   <Button
