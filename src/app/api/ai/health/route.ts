@@ -1,11 +1,19 @@
 import { NextResponse } from "next/server";
+import { requireSession } from "@/lib/api/require-session";
 import { loadAiRuntimeEnv } from "@/lib/ai/env";
 import { checkOllamaHealth } from "@/lib/ai/client";
 
 export const runtime = "nodejs";
 
-/** GET /api/ai/health — ping Ollama and verify the configured model is installed. */
-export async function GET() {
+/**
+ * GET /api/ai/health — ping Ollama and verify the configured model is installed.
+ * Requires a signed-in session (or the internal `x-ai-secret` automation header)
+ * so the Ollama base URL and model list are not exposed publicly.
+ */
+export async function GET(req: Request) {
+  const session = await requireSession(req);
+  if (!session.ok) return session.response;
+
   try {
     const env = loadAiRuntimeEnv();
     const status = await checkOllamaHealth(env);

@@ -51,7 +51,8 @@ npm install
 7. Run `supabase-migration-location-key.sql` after step 6 (`location_key` on events and monthly budgets for matching; `location` is display-only)
 8. Run `supabase-migration-event-nonnegative-checks.sql` after ROI and budgets migrations (CHECK: budgets, revenue fields, and attendance on `events` are ≥ 0 when set; monthly cap amounts are already constrained in step 5)
 9. Run `supabase-migration-query-indexes.sql` after organizations and vendors migrations (`events` by org + date, `checklist_items` by `event_id`, `event_vendors` by `vendor_id`)
-10. Copy your project URL and anon key from **Settings > API**
+10. Run `supabase-migration-staff-guard-and-swap-meet-rbac.sql` after budgets and workflow-enhancements migrations (replaces the staff event-update blocklist with an allowlist — staff may only toggle `is_live_mode` — and requires manager/admin for `swap_meet_spots` writes)
+11. Copy your project URL and anon key from **Settings > API**
 
 ### 3. Configure environment variables
 

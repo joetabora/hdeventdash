@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireSession } from "@/lib/api/require-session";
 import { aiCompleteRequestSchema } from "@/lib/validation/ai-schemas";
 import { parseWithSchema, readJsonBody } from "@/lib/validation/request-json";
 import { runAiPromptTemplate } from "@/lib/ai/run-template";
@@ -9,6 +10,9 @@ export const runtime = "nodejs";
 export const maxDuration = 300;
 
 export async function POST(req: Request) {
+  const session = await requireSession(req);
+  if (!session.ok) return session.response;
+
   const raw = await readJsonBody(req);
   if (!raw.ok) return raw.response;
 

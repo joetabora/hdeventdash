@@ -66,6 +66,12 @@ See [.env.local.example](.env.local.example).
 
 All AI routes use **`runtime = nodejs`**. Failures return structured JSON `{ error, code }` — routes do not crash on unreachable Ollama.
 
+**Authentication:** every AI route requires a signed-in Supabase session. For server-to-server automation, send the **`x-ai-secret`** header matching `AI_INTERNAL_SECRET` (server-only env var, **minimum 32 characters**, compared timing-safely). Unauthenticated requests get `401` — checking health from a shell requires the header:
+
+```bash
+curl -H "x-ai-secret: $AI_INTERNAL_SECRET" https://<your-domain>/api/ai/health
+```
+
 ## Service layer
 
 | Module | Role |
