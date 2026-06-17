@@ -53,8 +53,10 @@ import {
   pendingLineItemInvoiceKey,
   type PendingLineItemInvoice,
 } from "@/lib/playbook-line-item-invoices";
-import { apiUploadDocument } from "@/lib/events-api-client";
-import { EVENT_UPLOAD_ACCEPT_ATTR } from "@/lib/validation/upload-file";
+import {
+  EVENT_UPLOAD_ACCEPT_ATTR,
+  validateEventUploadFile,
+} from "@/lib/validation/upload-file";
 import {
   AI_PROMPT_1_FIXED,
   AI_PROMPT_2_FIXED,
@@ -76,7 +78,6 @@ import {
   Copy,
   ExternalLink,
   FileText,
-  Loader2,
   Plus,
   Trash2,
   Upload,
@@ -159,23 +160,18 @@ function StaticInfoCard({
 
 function LineItemInvoiceField({
   row,
-  eventId,
   documents,
   pendingFile,
   onRowChange,
   onPendingFileChange,
-  onDocumentUploaded,
 }: {
   row: PlaybookFrameworkLineItem;
-  eventId?: string;
   documents: EventDocument[];
   pendingFile: File | null;
   onRowChange: (next: PlaybookFrameworkLineItem) => void;
   onPendingFileChange: (file: File | null) => void;
-  onDocumentUploaded?: (doc: EventDocument) => void;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
   const supabase = getSupabaseBrowserClient();
 
   const attachedDoc = row.invoice_document_id
@@ -184,25 +180,17 @@ function LineItemInvoiceField({
   const displayName =
     pendingFile?.name ?? attachedDoc?.file_name ?? null;
 
-  async function handleFileSelect(file: File | null) {
+  function handleFileSelect(file: File | null) {
     if (!file) return;
-    if (eventId) {
-      setUploading(true);
-      try {
-        const doc = await apiUploadDocument(eventId, file, "invoice");
-        onDocumentUploaded?.(doc);
-        onRowChange({ ...row, invoice_document_id: doc.id });
-        onPendingFileChange(null);
-      } catch (err) {
-        console.error(err);
-        showError(err instanceof Error ? err.message : "Invoice upload failed.");
-      } finally {
-        setUploading(false);
-        if (fileInputRef.current) fileInputRef.current.value = "";
-      }
+    try {
+      validateEventUploadFile(file);
+    } catch (err) {
+      showError(err instanceof Error ? err.message : "Invalid file.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
     onPendingFileChange(file);
+    onRowChange({ ...row, invoice_document_id: null });
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
@@ -229,9 +217,8 @@ function LineItemInvoiceField({
           type="file"
           accept={EVENT_UPLOAD_ACCEPT_ATTR}
           className="hidden"
-          disabled={uploading}
           onChange={(e) => {
-            void handleFileSelect(e.target.files?.[0] ?? null);
+            handleFileSelect(e.target.files?.[0] ?? null);
           }}
         />
         <Button
@@ -239,14 +226,9 @@ function LineItemInvoiceField({
           variant="secondary"
           size="sm"
           className="gap-1.5"
-          disabled={uploading}
           onClick={() => fileInputRef.current?.click()}
         >
-          {uploading ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          ) : (
-            <Upload className="w-3.5 h-3.5" />
-          )}
+          <Upload className="w-3.5 h-3.5" />
           {displayName ? "Replace" : "Upload"}
         </Button>
         {displayName ? (
@@ -254,6 +236,7 @@ function LineItemInvoiceField({
             <span className="inline-flex items-center gap-1 text-xs text-harley-text-muted max-w-[12rem] truncate">
               <FileText className="w-3.5 h-3.5 shrink-0" />
               {displayName}
+              {pendingFile ? " (uploads on save)" : ""}
             </span>
             {attachedDoc && !pendingFile ? (
               <Button
@@ -270,14 +253,13 @@ function LineItemInvoiceField({
               type="button"
               className="text-harley-text-muted hover:text-harley-danger p-1"
               aria-label="Remove invoice"
-              disabled={uploading}
               onClick={handleRemove}
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
           </>
         ) : (
-          <span className="text-xs text-harley-text-muted">Optional PDF or image</span>
+          <span className="text-xs text-harley-text-muted">Optional PDF or image — uploads when you save</span>
         )}
       </div>
     </div>
@@ -290,22 +272,18 @@ function LineItemBucket({
   hint,
   items,
   onChange,
-  eventId,
   documents,
   pendingInvoices,
   onPendingInvoiceChange,
-  onDocumentUploaded,
 }: {
   bucketKey: PlaybookLineItemBucketKey;
   title: string;
   hint: string;
   items: PlaybookFrameworkLineItem[];
   onChange: (next: PlaybookFrameworkLineItem[]) => void;
-  eventId?: string;
   documents: EventDocument[];
   pendingInvoices: Record<string, File>;
   onPendingInvoiceChange: (key: string, file: File | null) => void;
-  onDocumentUploaded?: (doc: EventDocument) => void;
 }) {
   return (
     <div className="space-y-3">
@@ -370,7 +348,6 @@ function LineItemBucket({
             />
             <LineItemInvoiceField
               row={row}
-              eventId={eventId}
               documents={documents}
               pendingFile={
                 pendingInvoices[pendingLineItemInvoiceKey(bucketKey, i)] ?? null
@@ -386,7 +363,6 @@ function LineItemBucket({
                   file
                 )
               }
-              onDocumentUploaded={onDocumentUploaded}
             />
           </div>
         ))}
@@ -726,10 +702,6 @@ export function NewEventPlaybookForm({
     });
   }
 
-  function handleLineItemDocumentUploaded(doc: EventDocument) {
-    setUploadedDocuments((prev) => [doc, ...prev]);
-  }
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     clearError();
@@ -931,11 +903,9 @@ export function NewEventPlaybookForm({
           onChange={(items) =>
             setWorkflow((w) => ({ ...w, food_items: items }))
           }
-          eventId={editSourceEvent?.id}
           documents={uploadedDocuments}
           pendingInvoices={pendingInvoices}
           onPendingInvoiceChange={handlePendingInvoiceChange}
-          onDocumentUploaded={handleLineItemDocumentUploaded}
         />
         <LineItemBucket
           bucketKey="entertainment_items"
@@ -945,11 +915,9 @@ export function NewEventPlaybookForm({
           onChange={(items) =>
             setWorkflow((w) => ({ ...w, entertainment_items: items }))
           }
-          eventId={editSourceEvent?.id}
           documents={uploadedDocuments}
           pendingInvoices={pendingInvoices}
           onPendingInvoiceChange={handlePendingInvoiceChange}
-          onDocumentUploaded={handleLineItemDocumentUploaded}
         />
         <LineItemBucket
           bucketKey="bike_activities_items"
@@ -959,11 +927,9 @@ export function NewEventPlaybookForm({
           onChange={(items) =>
             setWorkflow((w) => ({ ...w, bike_activities_items: items }))
           }
-          eventId={editSourceEvent?.id}
           documents={uploadedDocuments}
           pendingInvoices={pendingInvoices}
           onPendingInvoiceChange={handlePendingInvoiceChange}
-          onDocumentUploaded={handleLineItemDocumentUploaded}
         />
         <LineItemBucket
           bucketKey="engagement_items"
@@ -973,11 +939,9 @@ export function NewEventPlaybookForm({
           onChange={(items) =>
             setWorkflow((w) => ({ ...w, engagement_items: items }))
           }
-          eventId={editSourceEvent?.id}
           documents={uploadedDocuments}
           pendingInvoices={pendingInvoices}
           onPendingInvoiceChange={handlePendingInvoiceChange}
-          onDocumentUploaded={handleLineItemDocumentUploaded}
         />
       </Card>
 

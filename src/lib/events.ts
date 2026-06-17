@@ -372,10 +372,14 @@ export async function uploadDocument(
   if (!orgId) throw new Error("No organization");
 
   const filePath = `${orgId}/${eventId}/${Date.now()}-${file.name}`;
+  const bytes = await file.arrayBuffer();
 
   const { error: uploadError } = await supabase.storage
     .from(EVENT_DOCUMENTS_BUCKET)
-    .upload(filePath, file);
+    .upload(filePath, bytes, {
+      contentType: file.type || "application/octet-stream",
+      upsert: false,
+    });
   if (uploadError) throw uploadError;
 
   const { data, error } = await supabase

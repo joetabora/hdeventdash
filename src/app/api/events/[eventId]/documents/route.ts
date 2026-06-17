@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { getOrgManagerContext } from "@/lib/admin/require-org-manager";
+
+export const runtime = "nodejs";
 import { assertEventInOrganization } from "@/lib/api/event-in-org";
 import { uploadDocument } from "@/lib/events";
 import { documentTagSchema } from "@/lib/validation/event-mutation-schemas";
@@ -64,6 +66,10 @@ export async function POST(
     return NextResponse.json(row);
   } catch (e) {
     console.error("POST /api/events/[eventId]/documents:", e);
-    return NextResponse.json({ error: "Upload failed." }, { status: 500 });
+    const msg =
+      e instanceof Error && e.message.trim()
+        ? e.message
+        : "Upload failed.";
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

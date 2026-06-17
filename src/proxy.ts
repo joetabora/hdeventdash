@@ -12,6 +12,8 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next|favicon.ico|api/ai).*)",
+    // Page routes only — API handlers enforce their own auth. Skipping /api/
+    // avoids middleware interfering with multipart uploads (documents/media).
+    "/((?!_next|favicon.ico|api/).*)",
   ],
 };

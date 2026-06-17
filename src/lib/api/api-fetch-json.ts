@@ -105,10 +105,21 @@ export async function apiFetchJson<T = unknown>(
   input: RequestInfo | URL,
   init?: RequestInit
 ): Promise<T> {
-  const res = await fetch(input, {
-    ...init,
-    credentials: init?.credentials ?? DEFAULT_CREDENTIALS,
-  });
+  let res: Response;
+  try {
+    res = await fetch(input, {
+      ...init,
+      credentials: init?.credentials ?? DEFAULT_CREDENTIALS,
+    });
+  } catch (err) {
+    const msg =
+      err instanceof Error && err.message === "Failed to fetch"
+        ? "Could not reach the server. Check your connection and try again."
+        : err instanceof Error
+          ? err.message
+          : "Network request failed.";
+    throw new ApiError(msg, 0, undefined);
+  }
 
   const { data, rawText } = await readJsonBodyFromResponse(res);
 
