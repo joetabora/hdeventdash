@@ -20,6 +20,8 @@ import {
   Edit,
   FileText,
   Trash2,
+  Download,
+  Loader2,
   Zap,
   ZapOff,
   ExternalLink,
@@ -82,7 +84,8 @@ export type EventDetailHeaderStandardProps = {
   checklistTotal: number;
   showStatusPills: boolean;
   setShowStatusPills: Dispatch<SetStateAction<boolean>>;
-  onToggleLiveMode: () => void | Promise<void>;
+  onDownloadBundle: () => void | Promise<void>;
+  downloadingBundle?: boolean;
   onOpenEdit: () => void;
   onDelete: () => void | Promise<void>;
   onStatusChange: (s: EventStatus) => void | Promise<void>;
@@ -182,7 +185,8 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
     checklistTotal,
     showStatusPills,
     setShowStatusPills,
-    onToggleLiveMode,
+    onDownloadBundle,
+    downloadingBundle = false,
     onOpenEdit,
     onDelete,
     onStatusChange,
@@ -228,11 +232,19 @@ export function EventDetailHeader(props: EventDetailHeaderProps) {
                 <Button
                   variant="secondary"
                   size="sm"
-                  onClick={() => void onToggleLiveMode()}
+                  onClick={() => void onDownloadBundle()}
+                  disabled={downloadingBundle}
                   className="!px-2.5 md:!px-3"
+                  title="Download event report PDF and all uploaded files"
                 >
-                  <Zap className="w-4 h-4" />
-                  <span className="hidden md:inline">Live Mode</span>
+                  {downloadingBundle ? (
+                    <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
+                  ) : (
+                    <Download className="w-4 h-4" />
+                  )}
+                  <span className="hidden md:inline">
+                    {downloadingBundle ? "Preparing…" : "Download"}
+                  </span>
                 </Button>
                 {onOpenPlanningNotes ? (
                   <Button

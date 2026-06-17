@@ -96,6 +96,7 @@ export default async function EventDetailPage({
       initialMonthlyBudgetsForEventMonth={initialMonthlyBudgetsForEventMonth}
       initialSwapMeetSpots={initialSwapMeetSpots}
       initialOrgMarketingArtFormUrl={org?.marketing_art_form_url ?? null}
+      initialOrganizationName={org?.name ?? null}
     />
   );
 }

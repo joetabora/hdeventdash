@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { EventRecap } from "@/components/events/event-recap";
 import {
   DynamicAiAssistant,
@@ -12,6 +12,7 @@ import { EventCommentsModule } from "@/components/events/event-detail/event-comm
 import { EventDetailHeader } from "@/components/events/event-detail/event-detail-header";
 import { EventPlanningNotesPanel } from "@/components/events/event-detail/event-planning-notes-panel";
 import { EventPlaybookPrintDocument } from "@/components/events/event-detail/event-playbook-print-document";
+import { EventReportDocument } from "@/components/events/event-report/event-report-document";
 import { EventPlaybookReadOnlyView } from "@/components/events/event-detail/event-playbook-read-only-view";
 import { EventDetailChecklist } from "@/components/events/event-detail/event-detail-checklist";
 import { EventDetailMedia } from "@/components/events/event-detail/event-detail-media";
@@ -31,6 +32,7 @@ import {
 import type { EventBudgetPeer } from "@/lib/budgets";
 import { eventDateToYearMonth } from "@/lib/budgets";
 import { useEventController } from "@/hooks/use-event-controller";
+import { useEventDownloadBundle } from "@/hooks/use-event-download-bundle";
 import { SwapMeetSection } from "@/components/events/swap-meet-section";
 import { RegistrationSection } from "@/components/events/registration-section";
 import {
@@ -79,6 +81,7 @@ export type EventDetailClientProps = {
   initialSwapMeetSpots: SwapMeetSpot[];
   /** Org default SPM / art form URL (optional). */
   initialOrgMarketingArtFormUrl?: string | null;
+  initialOrganizationName?: string | null;
 };
 
 function phaseContentClass(active: PlaybookPhaseId, panel: PlaybookPhaseId) {
@@ -97,6 +100,7 @@ export function EventDetailClient({
   initialMonthlyBudgetsForEventMonth,
   initialSwapMeetSpots,
   initialOrgMarketingArtFormUrl = null,
+  initialOrganizationName = null,
 }: EventDetailClientProps) {
   const [playbookPhase, setPlaybookPhase] = useState<PlaybookPhaseId>("define");
   const [planningNotesExpandNonce, setPlanningNotesExpandNonce] =
@@ -114,6 +118,36 @@ export function EventDetailClient({
     monthlyBudgetsForEventMonth: initialMonthlyBudgetsForEventMonth,
     swapMeetSpots: initialSwapMeetSpots,
   });
+
+  const reportBundle = useMemo(
+    () => ({
+      event: c.event ?? initialEvent,
+      checklist: c.checklist,
+      documents: c.documents,
+      media: c.media,
+      eventVendors: c.eventVendors,
+      swapMeetSpots: c.swapMeetSpots,
+      organizationName: initialOrganizationName,
+    }),
+    [
+      c.event,
+      initialEvent,
+      c.checklist,
+      c.documents,
+      c.media,
+      c.eventVendors,
+      c.swapMeetSpots,
+      initialOrganizationName,
+    ]
+  );
+
+  const {
+    model: reportModel,
+    imageUrls: reportImageUrls,
+    downloading: downloadingBundle,
+    download: handleDownloadBundle,
+    reportContainerRef,
+  } = useEventDownloadBundle(reportBundle);
 
   const goToSupportingAi = useCallback(() => {
     setPlaybookPhase("supporting");
@@ -272,7 +306,8 @@ export function EventDetailClient({
             checklistTotal={c.checklistTotal}
             showStatusPills={c.showStatusPills}
             setShowStatusPills={c.setShowStatusPills}
-            onToggleLiveMode={c.handleToggleLiveMode}
+            onDownloadBundle={handleDownloadBundle}
+            downloadingBundle={downloadingBundle}
             onOpenEdit={scrollToPlaybookForm}
             onDelete={c.handleDelete}
             onStatusChange={c.handleStatusChange}
@@ -536,6 +571,14 @@ export function EventDetailClient({
             swapMeetSpots={c.swapMeetSpots}
             eventVendors={c.eventVendors}
           />
+        </div>
+
+        <div
+          ref={reportContainerRef}
+          className="event-report-print-only"
+          aria-hidden
+        >
+          <EventReportDocument model={reportModel} imageUrls={reportImageUrls} />
         </div>
       </div>
 
