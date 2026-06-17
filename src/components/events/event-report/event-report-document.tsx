@@ -378,7 +378,7 @@ export function EventReportDocument({
         <img
           src="/MKElogo.png"
           alt="Milwaukee Harley-Davidson"
-          className="ereport-header-logo pointer-events-none absolute right-6 top-6 z-10 h-14 w-auto max-w-[min(42%,9rem)] object-contain sm:right-10 sm:top-8 sm:h-16"
+          className="ereport-header-logo pointer-events-none absolute right-6 top-6 z-10 h-auto w-auto max-h-[8.5rem] max-w-[15rem] object-contain sm:right-10 sm:top-8"
           width={416}
           height={136}
           decoding="async"

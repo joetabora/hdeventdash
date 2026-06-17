@@ -337,7 +337,7 @@ export function EventPlaybookPrintDocument({
         <img
           src="/MKElogo.png"
           alt="Milwaukee Harley-Davidson"
-          className="eprint-header-logo"
+          className="eprint-header-logo h-auto w-auto max-h-[8.5rem] max-w-[15rem] object-contain"
           width={416}
           height={136}
           decoding="async"

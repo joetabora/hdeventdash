@@ -369,6 +369,7 @@ html.event-live-shell header h1 {
     margin-bottom: 1.25rem;
     padding-bottom: 0.75rem;
     padding-top: 0.15rem;
+    padding-right: 15.5rem;
     border-bottom: 2pt solid #000;
   }
 
@@ -376,9 +377,10 @@ html.event-live-shell header h1 {
     position: absolute;
     top: 0;
     right: 0;
-    max-height: 2.75rem;
+    height: auto;
     width: auto;
-    max-width: min(42%, 9rem);
+    max-height: 8.5rem;
+    max-width: 15rem;
     object-fit: contain;
   }
 
@@ -649,6 +651,11 @@ html.event-live-shell header h1 {
   .event-report-print .ereport-header-logo {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+    height: auto;
+    width: auto;
+    max-height: 8.5rem;
+    max-width: 15rem;
+    object-fit: contain;
   }
 
   .event-report-print .ereport-section {
