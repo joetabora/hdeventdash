@@ -1,7 +1,7 @@
 import JSZip from "jszip";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { prepareClonedDocumentForHtml2Canvas } from "@/lib/html2canvas-capture";
+import { buildCaptureClone, prepareClonedDocumentForHtml2Canvas } from "@/lib/html2canvas-capture";
 import { createSignedEventDocumentUrls } from "@/lib/events";
 import type { EventDocument, EventMedia } from "@/types/database";
 
@@ -52,24 +52,82 @@ async function waitForImages(container: HTMLElement, timeoutMs = 15000): Promise
 
 async function generateReportPdfBlob(element: HTMLElement): Promise<Blob> {
   await waitForImages(element);
-  const html2pdf = (await import("html2pdf.js")).default;
-  return html2pdf()
-    .set({
-      margin: [0.45, 0.45, 0.45, 0.45],
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        windowWidth: element.scrollWidth,
-        onclone: (clonedDoc: Document, clonedElement: HTMLElement) => {
-          prepareClonedDocumentForHtml2Canvas(clonedDoc, clonedElement);
-        },
+
+  const captureRoot = buildCaptureClone(element);
+  captureRoot.style.position = "fixed";
+  captureRoot.style.left = "-10000px";
+  captureRoot.style.top = "0";
+  captureRoot.style.pointerEvents = "none";
+  document.body.appendChild(captureRoot);
+
+  try {
+    await waitForImages(captureRoot);
+    const html2canvas = (await import("html2canvas")).default;
+    const { jsPDF } = await import("jspdf");
+
+    const canvas = await html2canvas(captureRoot, {
+      backgroundColor: "#ffffff",
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      windowWidth: captureRoot.scrollWidth,
+      onclone: (clonedDoc: Document, clonedElement: HTMLElement) => {
+        prepareClonedDocumentForHtml2Canvas(clonedDoc, clonedElement);
       },
-      jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
-    })
-    .from(element)
-    .outputPdf("blob");
+    });
+
+    return canvasToPdfBlob(canvas, jsPDF);
+  } finally {
+    captureRoot.remove();
+  }
+}
+
+function canvasToPdfBlob(
+  canvas: HTMLCanvasElement,
+  jsPDF: typeof import("jspdf").jsPDF
+): Blob {
+  const margin = 0.45;
+  const pageWidth = 8.5;
+  const pageHeight = 11;
+  const contentWidth = pageWidth - margin * 2;
+  const contentHeight = pageHeight - margin * 2;
+  const pxPageHeight = Math.floor((canvas.width * contentHeight) / contentWidth);
+
+  const pdf = new jsPDF({ unit: "in", format: "letter", orientation: "portrait" });
+  let position = 0;
+  let page = 0;
+
+  while (position < canvas.height) {
+    const sliceHeight = Math.min(pxPageHeight, canvas.height - position);
+    const pageCanvas = document.createElement("canvas");
+    pageCanvas.width = canvas.width;
+    pageCanvas.height = sliceHeight;
+    const ctx = pageCanvas.getContext("2d");
+    if (!ctx) throw new Error("Could not render PDF page.");
+
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+    ctx.drawImage(
+      canvas,
+      0,
+      position,
+      canvas.width,
+      sliceHeight,
+      0,
+      0,
+      canvas.width,
+      sliceHeight
+    );
+
+    const imgData = pageCanvas.toDataURL("image/jpeg", 0.98);
+    const imgHeight = (sliceHeight * contentWidth) / canvas.width;
+    if (page > 0) pdf.addPage();
+    pdf.addImage(imgData, "JPEG", margin, margin, contentWidth, imgHeight);
+    position += pxPageHeight;
+    page += 1;
+  }
+
+  return pdf.output("blob");
 }
 
 async function fetchBlob(url: string): Promise<Blob | null> {

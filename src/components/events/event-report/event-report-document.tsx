@@ -209,7 +209,10 @@ function renderSection(
         <section key={section.id} className="ereport-section break-inside-avoid">
           <ReportSectionHeading>{section.title}</ReportSectionHeading>
           {section.highlight ? (
-            <p className="mt-3 rounded-md border border-[#ff6600]/25 bg-[#fff4eb] px-3 py-2 text-sm text-[#5c3d1e]">
+            <p
+              className="mt-3 rounded-md bg-[#fff4eb] px-3 py-2 text-sm text-[#5c3d1e]"
+              style={{ border: "1px solid rgba(255, 102, 0, 0.25)" }}
+            >
               {section.highlight}
             </p>
           ) : null}
@@ -373,7 +376,13 @@ export function EventReportDocument({
 
   return (
     <article className="event-report-print bg-white text-[#141312] ring-1 ring-[#e8e4df]">
-      <header className="ereport-cover relative overflow-hidden border-b border-[#e8e4df] bg-gradient-to-br from-[#141312] via-[#1f1d1b] to-[#2b2926] px-6 py-10 text-white sm:px-10 sm:py-12">
+      <header
+        className="ereport-cover relative overflow-hidden border-b border-[#e8e4df] px-6 py-10 text-white sm:px-10 sm:py-12"
+        style={{
+          backgroundImage:
+            "linear-gradient(to bottom right, #141312, #1f1d1b, #2b2926)",
+        }}
+      >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/MKElogo.png"
@@ -395,18 +404,34 @@ export function EventReportDocument({
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#ff8533]">
             {model.organizationName ?? "Event operations"}
           </p>
-          <p className="mt-3 text-[11px] font-medium uppercase tracking-[0.16em] text-white/55">
+          <p
+            className="mt-3 text-[11px] font-medium uppercase tracking-[0.16em]"
+            style={{ color: "rgba(255, 255, 255, 0.55)" }}
+          >
             Executive event report
           </p>
           <h1 className="font-display-heading mt-4 text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
             {model.eventTitle}
           </h1>
           <div className="mt-5 flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-wide">
-            <span className="rounded-full bg-[#ff6600]/20 px-3 py-1 text-[#ffb380] ring-1 ring-[#ff6600]/35">
+            <span
+              className="rounded-full px-3 py-1 text-[#ffb380] ring-1"
+              style={{
+                backgroundColor: "rgba(255, 102, 0, 0.2)",
+                boxShadow: "inset 0 0 0 1px rgba(255, 102, 0, 0.35)",
+              }}
+            >
               {model.eventStatusLabel}
             </span>
             {model.eventTypeLabel ? (
-              <span className="rounded-full bg-white/10 px-3 py-1 text-white/80 ring-1 ring-white/15">
+              <span
+                className="rounded-full px-3 py-1 ring-1"
+                style={{
+                  backgroundColor: "rgba(255, 255, 255, 0.1)",
+                  color: "rgba(255, 255, 255, 0.8)",
+                  boxShadow: "inset 0 0 0 1px rgba(255, 255, 255, 0.15)",
+                }}
+              >
                 {model.eventTypeLabel}
               </span>
             ) : null}
