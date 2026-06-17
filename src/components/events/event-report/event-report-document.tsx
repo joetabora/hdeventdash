@@ -352,13 +352,6 @@ function renderSection(
           </div>
         </section>
       );
-    case "analytics":
-      return (
-        <section key={section.id} className="ereport-section break-inside-avoid">
-          <ReportSectionHeading>{section.title}</ReportSectionHeading>
-          <KeyValueGrid rows={section.rows} />
-        </section>
-      );
     default:
       return null;
   }

@@ -39,6 +39,15 @@ function hasText(v: string | null | undefined): boolean {
   return trim(v).length > 0;
 }
 
+function checklistItemHasInput(item: ChecklistItem): boolean {
+  return (
+    item.is_checked ||
+    hasText(item.assignee) ||
+    hasText(item.comment) ||
+    (item.estimated_cost != null && item.estimated_cost > 0)
+  );
+}
+
 function statusLabel(status: Event["status"]): string {
   return EVENT_STATUSES.find((s) => s.value === status)?.label ?? status;
 }
@@ -204,7 +213,9 @@ export function buildEventReportModel(bundle: EventReportDataBundle): EventRepor
     });
   }
 
-  const weekItems = itemsInSection(checklist, "Event Week Flow");
+  const weekItems = itemsInSection(checklist, "Event Week Flow").filter(
+    checklistItemHasInput
+  );
   if (weekItems.length > 0) {
     sections.push({
       id: "schedule",
@@ -330,14 +341,6 @@ export function buildEventReportModel(bundle: EventReportDataBundle): EventRepor
       kpiRows.push({ label: "ROI on cost", value: `${pct.toFixed(1)}%` });
     }
   }
-  const metricsItems = itemsInSection(checklist, "Metrics for Success");
-  const metricsDone = metricsItems.filter((i) => i.is_checked).length;
-  if (metricsItems.length > 0) {
-    kpiRows.push({
-      label: "Success metrics tracked",
-      value: `${metricsDone} of ${metricsItems.length} complete`,
-    });
-  }
   if (kpiRows.length > 0) {
     sections.push({
       id: "kpis",
@@ -425,22 +428,26 @@ export function buildEventReportModel(bundle: EventReportDataBundle): EventRepor
   for (const [label, done] of preLabels) {
     if (done) logisticsRows.push({ label, value: "Complete" });
   }
-  const materialsRows = w.materials_checklist ?? [];
-  const materialChecklist = itemsInSection(checklist, "Checklist / Materials");
-  const preEventChecklist = itemsInSection(checklist, "Pre-Event Preparation");
+  const materialsRows = (w.materials_checklist ?? []).filter(
+    (m) => hasText(m.description) || hasText(m.notes)
+  );
+  const materialChecklist = itemsInSection(checklist, "Checklist / Materials").filter(
+    checklistItemHasInput
+  );
+  const preEventChecklist = itemsInSection(checklist, "Pre-Event Preparation").filter(
+    checklistItemHasInput
+  );
   if (logisticsRows.length > 0 || materialsRows.length > 0 || preEventChecklist.length > 0) {
     sections.push({
       id: "logistics",
       title: "Logistics & preparation",
       rows: logisticsRows,
       materials: [
-        ...materialsRows
-          .filter((m) => hasText(m.item) || hasText(m.description) || hasText(m.notes))
-          .map((m) => ({
-            label: trim(m.item) || "Material",
-            checked: true,
-            comment: [m.description, m.notes].filter(hasText).join(" · ") || undefined,
-          })),
+        ...materialsRows.map((m) => ({
+          label: trim(m.item) || "Material",
+          checked: true,
+          comment: [m.description, m.notes].filter(hasText).join(" · ") || undefined,
+        })),
         ...checklistRows(preEventChecklist),
       ],
     });
@@ -500,31 +507,6 @@ export function buildEventReportModel(bundle: EventReportDataBundle): EventRepor
         filePath: m.file_path,
       })),
     });
-  }
-
-  const analyticsRows: { label: string; value: string }[] = [];
-  const totalChecklist = checklist.length;
-  const doneChecklist = checklist.filter((i) => i.is_checked).length;
-  if (totalChecklist > 0) {
-    analyticsRows.push({
-      label: "Checklist completion",
-      value: `${Math.round((doneChecklist / totalChecklist) * 100)}% (${doneChecklist}/${totalChecklist})`,
-    });
-  }
-  if (event.attendance != null) {
-    analyticsRows.push({
-      label: "Recorded attendance",
-      value: event.attendance.toLocaleString(),
-    });
-  }
-  if (hasAnyRoiData(event) && totalRoiRevenue(event) > 0) {
-    analyticsRows.push({
-      label: "Total tracked revenue",
-      value: formatUsd(totalRoiRevenue(event)),
-    });
-  }
-  if (analyticsRows.length > 0) {
-    sections.push({ id: "analytics", title: "Analytics snapshot", rows: analyticsRows });
   }
 
   return {

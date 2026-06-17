@@ -28,7 +28,6 @@ import {
   EVENT_TO_WEBSITE_LINES,
   EVENT_WEEK_FLOW_COPY,
   INTERNAL_COMMUNICATION_LINES,
-  METRICS_FOR_SUCCESS_LINES,
   NEW_EVENT_DEFAULT_QR_GOAL,
   NEW_EVENT_PURPOSE_LINES,
   POST_EVENT_FOLLOW_UP_COPY,
@@ -38,6 +37,10 @@ import {
 function dash(v: string | null | undefined): string {
   const t = (v ?? "").trim();
   return t || "—";
+}
+
+function hasText(v: string | null | undefined): boolean {
+  return (v ?? "").trim().length > 0;
 }
 
 function mediaFilePathForPlaybookId(
@@ -59,12 +62,14 @@ function printLineItems(
   key: keyof PlaybookWorkflow,
   documentsById: Map<string, EventDocument>
 ) {
-  const items = (w[key] as PlaybookWorkflow["food_items"]) ?? [];
-  if (!items.length) {
-    return (
-      <p className="eprint-muted eprint-small">No line items recorded.</p>
-    );
-  }
+  const items = ((w[key] as PlaybookWorkflow["food_items"]) ?? []).filter(
+    (row) =>
+      hasText(row.name) ||
+      hasText(row.description) ||
+      (row.cost ?? 0) > 0 ||
+      Boolean(row.invoice_document_id)
+  );
+  if (!items.length) return null;
   return (
     <table className="eprint-table">
       <thead>
@@ -204,6 +209,127 @@ export function EventPlaybookPrintDocument({
       event.event_type
     : null;
 
+  const eventDetailRows: { label: string; value: string }[] = [];
+  if (hasText(event.location)) {
+    eventDetailRows.push({ label: "Place", value: event.location.trim() });
+  }
+  if (hasText(event.name)) {
+    eventDetailRows.push({ label: "Event title", value: event.name.trim() });
+  }
+  if (event.date) {
+    eventDetailRows.push({
+      label: "Date",
+      value: format(parseISO(event.date), "MMMM d, yyyy"),
+    });
+  }
+  const timeStart = (event.event_time_start ?? "").trim();
+  const timeEnd = (event.event_time_end ?? "").trim();
+  if (timeStart || timeEnd) {
+    eventDetailRows.push({
+      label: "Start / end time",
+      value: [timeStart, timeEnd].filter(Boolean).join(" — "),
+    });
+  }
+  const coreActivities = (event.core_activities ?? event.description ?? "").trim();
+  if (coreActivities) {
+    eventDetailRows.push({ label: "Core activities", value: coreActivities });
+  }
+  if (eventTypeLabel) {
+    eventDetailRows.push({ label: "Event type", value: eventTypeLabel });
+  }
+  if (
+    event.planned_budget != null &&
+    Number.isFinite(Number(event.planned_budget)) &&
+    Number(event.planned_budget) > 0
+  ) {
+    eventDetailRows.push({
+      label: "Planned budget",
+      value: formatUsd(Number(event.planned_budget)),
+    });
+  }
+
+  const copyPromptRows = (
+    [
+      ["Event name", cp.event_name],
+      ["Date", cp.event_date_text],
+      ["Location", cp.location],
+      ["Who it's for", cp.who_its_for],
+      ["Food", cp.food],
+      ["Entertainment", cp.entertainment],
+      ["Perks / discounts", cp.perks_discounts],
+      ["Tone", cp.tone],
+      ["Phrases to include", cp.phrases],
+      ["RSVP notes", cp.rsvp_notes],
+    ] as const
+  ).filter(([, val]) => hasText(val));
+
+  const webCopyRows = (
+    [
+      ["Summary", pm.web_summary],
+      ["SEO meta title", pm.seo_meta_title],
+      ["SEO meta description", pm.seo_meta_description],
+      ["Page URL", pm.web_page_url],
+      ["Page copy", w.web_extra?.page_copy],
+    ] as const
+  ).filter(([, val]) => hasText(val));
+
+  const facebookRows = (
+    [
+      ["Name", fb.name],
+      ["Details", fb.details],
+      ["Stored Facebook event copy", pm.facebook_event_copy],
+    ] as const
+  ).filter(([, val]) => hasText(val));
+
+  const roleRows = (
+    [
+      ["Marketing lead", roles.marketing_lead],
+      ["Sales team", roles.sales_team],
+      ["Service team", roles.service_team],
+      ["MotorClothes", roles.motorclothes],
+      ["GM / owner", roles.gm_owner],
+      ["Volunteers / charities", roles.volunteers_charities],
+    ] as const
+  ).filter(([, val]) => hasText(val));
+
+  const materialsRows = (w.materials_checklist ?? []).filter(
+    (row) => hasText(row.description) || hasText(row.notes)
+  );
+
+  const preEventChecks = [
+    pre.theme_vendors_complete && "Theme & activities: Finalize theme and secure outside vendors",
+    pre.permits_complete && "Permits / approvals: food, music, raffles submitted",
+    pre.publish_sop_complete && "Publish to Facebook / website — SOP complete",
+    pre.canva_web_banner_downloaded && "Web banner in Canva — downloaded & saved",
+    pre.canva_fb_cover_downloaded && "FB Event cover in Canva — downloaded & saved",
+  ].filter(Boolean) as string[];
+
+  const marketingAssetRows = assets.filter((a) => a.requested || hasText(a.notes));
+
+  const hasFilledBudgetBucket = (key: keyof PlaybookWorkflow) =>
+    ((w[key] as PlaybookWorkflow["food_items"]) ?? []).some(
+      (row) =>
+        hasText(row.name) ||
+        hasText(row.description) ||
+        (row.cost ?? 0) > 0 ||
+        Boolean(row.invoice_document_id)
+    );
+
+  const hasActivityBudgets =
+    hasFilledBudgetBucket("food_items") ||
+    hasFilledBudgetBucket("entertainment_items") ||
+    hasFilledBudgetBucket("bike_activities_items") ||
+    hasFilledBudgetBucket("engagement_items");
+
+  const hasPreEventSection =
+    preEventChecks.length > 0 ||
+    hasText(pm.art_request_sent_at) ||
+    hasText(pm.art_finals_received_at) ||
+    hasText(pm.pam_map_approval_at) ||
+    pre.pam_map_accepted ||
+    pm.pam_map_approval_accepted ||
+    marketingAssetRows.length > 0;
+
   return (
     <article className="event-playbook-print text-black bg-white">
       <header className="eprint-cover">
@@ -252,107 +378,115 @@ export function EventPlaybookPrintDocument({
         </p>
       </section>
 
+      {eventDetailRows.length > 0 ? (
       <section className="eprint-section">
         <h2 className="eprint-h2">Event details</h2>
         <table className="eprint-table eprint-kv">
           <tbody>
-            <tr>
-              <th scope="row">Place</th>
-              <td>{dash(event.location)}</td>
-            </tr>
-            <tr>
-              <th scope="row">Event title</th>
-              <td>{dash(event.name)}</td>
-            </tr>
-            <tr>
-              <th scope="row">Date</th>
-              <td>
-                {event.date
-                  ? format(parseISO(event.date), "MMMM d, yyyy")
-                  : "—"}
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Start / end time</th>
-              <td>
-                {dash(event.event_time_start)} — {dash(event.event_time_end)}
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Core activities</th>
-              <td>{dash(event.core_activities ?? event.description)}</td>
-            </tr>
-            <tr>
-              <th scope="row">Event type</th>
-              <td>{eventTypeLabel ?? "—"}</td>
-            </tr>
-            <tr>
-              <th scope="row">Planned budget</th>
-              <td>
-                {event.planned_budget != null &&
-                Number.isFinite(Number(event.planned_budget))
-                  ? formatUsd(Number(event.planned_budget))
-                  : "—"}
-              </td>
-            </tr>
+            {eventDetailRows.map(({ label, value }) => (
+              <tr key={label}>
+                <th scope="row">{label}</th>
+                <td>{value}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </section>
+      ) : null}
 
+      {hasActivityBudgets ? (
       <section className="eprint-section">
         <h2 className="eprint-h2">Activity budgets</h2>
-        <h3 className="eprint-h3">Food &amp; refreshments</h3>
-        {printLineItems(w, "food_items", documentsById)}
-        <h3 className="eprint-h3">Entertainment / vendors</h3>
-        {printLineItems(w, "entertainment_items", documentsById)}
-        <h3 className="eprint-h3">Bike-related or general activities</h3>
-        {printLineItems(w, "bike_activities_items", documentsById)}
-        <h3 className="eprint-h3">Engagement opportunities</h3>
-        {printLineItems(w, "engagement_items", documentsById)}
+        {hasFilledBudgetBucket("food_items") ? (
+          <>
+            <h3 className="eprint-h3">Food &amp; refreshments</h3>
+            {printLineItems(w, "food_items", documentsById)}
+          </>
+        ) : null}
+        {hasFilledBudgetBucket("entertainment_items") ? (
+          <>
+            <h3 className="eprint-h3">Entertainment / vendors</h3>
+            {printLineItems(w, "entertainment_items", documentsById)}
+          </>
+        ) : null}
+        {hasFilledBudgetBucket("bike_activities_items") ? (
+          <>
+            <h3 className="eprint-h3">Bike-related or general activities</h3>
+            {printLineItems(w, "bike_activities_items", documentsById)}
+          </>
+        ) : null}
+        {hasFilledBudgetBucket("engagement_items") ? (
+          <>
+            <h3 className="eprint-h3">Engagement opportunities</h3>
+            {printLineItems(w, "engagement_items", documentsById)}
+          </>
+        ) : null}
       </section>
+      ) : null}
 
+      {hasPreEventSection ? (
       <section className="eprint-section">
         <h2 className="eprint-h2">Pre-event preparation</h2>
-        <ul className="eprint-checklist">
-          <li>
-            {boolMark(pre.theme_vendors_complete)} Theme &amp; activities:
-            Finalize theme and secure outside vendors
-          </li>
-          <li>
-            {boolMark(pre.permits_complete)} Permits / approvals: food, music,
-            raffles submitted
-          </li>
-        </ul>
+        {preEventChecks.length > 0 ? (
+          <ul className="eprint-checklist">
+            {preEventChecks.map((line) => (
+              <li key={line}>☑ {line}</li>
+            ))}
+          </ul>
+        ) : null}
 
+        {(hasText(pm.art_request_sent_at) ||
+          hasText(pm.art_finals_received_at) ||
+          hasText(pm.pam_map_approval_at) ||
+          pre.pam_map_accepted ||
+          pm.pam_map_approval_accepted ||
+          marketingAssetRows.length > 0) && (
+          <>
         <h3 className="eprint-h3">Marketing assets</h3>
         <p className="eprint-small">
           Art request form (SPM):{" "}
           <span className="eprint-break-all">{artUrl}</span>
         </p>
+        {(hasText(pm.art_request_sent_at) ||
+          hasText(pm.art_finals_received_at) ||
+          hasText(pm.pam_map_approval_at) ||
+          pre.pam_map_accepted ||
+          pm.pam_map_approval_accepted) && (
         <table className="eprint-table eprint-kv eprint-small">
           <tbody>
-            <tr>
-              <th scope="row">Request sent</th>
-              <td>{dash(pm.art_request_sent_at)}</td>
-            </tr>
-            <tr>
-              <th scope="row">Finals received</th>
-              <td>{dash(pm.art_finals_received_at)}</td>
-            </tr>
-            <tr>
-              <th scope="row">PAM / MAP approval (date)</th>
-              <td>{dash(pm.pam_map_approval_at)}</td>
-            </tr>
-            <tr>
-              <th scope="row">PAM / MAP accepted</th>
-              <td>{boolMark(pre.pam_map_accepted ?? pm.pam_map_approval_accepted)}</td>
-            </tr>
+            {hasText(pm.art_request_sent_at) ? (
+              <tr>
+                <th scope="row">Request sent</th>
+                <td>{pm.art_request_sent_at!.trim()}</td>
+              </tr>
+            ) : null}
+            {hasText(pm.art_finals_received_at) ? (
+              <tr>
+                <th scope="row">Finals received</th>
+                <td>{pm.art_finals_received_at!.trim()}</td>
+              </tr>
+            ) : null}
+            {hasText(pm.pam_map_approval_at) ? (
+              <tr>
+                <th scope="row">PAM / MAP approval (date)</th>
+                <td>{pm.pam_map_approval_at!.trim()}</td>
+              </tr>
+            ) : null}
+            {(pre.pam_map_accepted || pm.pam_map_approval_accepted) ? (
+              <tr>
+                <th scope="row">PAM / MAP accepted</th>
+                <td>{boolMark(pre.pam_map_accepted ?? pm.pam_map_approval_accepted)}</td>
+              </tr>
+            ) : null}
           </tbody>
         </table>
+        )}
 
+        {marketingAssetRows.length > 0 ? (
+          <>
         <h4 className="eprint-h4">Assets requested</h4>
         <ul className="eprint-list eprint-two-col">
-          {assets.map((a) => (
+          {marketingAssetRows.map((a) => (
             <li key={a.key}>
               {boolMark(a.requested)}{" "}
               {catalogLabelByKey.get(a.key) ?? a.key}
@@ -360,41 +494,24 @@ export function EventPlaybookPrintDocument({
             </li>
           ))}
         </ul>
-
-        <ul className="eprint-checklist eprint-spaced">
-          <li>
-            {boolMark(pre.publish_sop_complete)} Publish to Facebook / website — SOP complete
-          </li>
-          <li>
-            {boolMark(pre.canva_web_banner_downloaded)} Web banner in Canva — downloaded &amp; saved
-          </li>
-          <li>
-            {boolMark(pre.canva_fb_cover_downloaded)} FB Event cover in Canva — downloaded &amp; saved
-          </li>
-        </ul>
+          </>
+        ) : null}
+          </>
+        )}
       </section>
+      ) : null}
 
+      {copyPromptRows.length > 0 ? (
       <section className="eprint-section">
         <h2 className="eprint-h2">Copy development</h2>
         <h3 className="eprint-h3">Prompt 1</h3>
         <p className="eprint-preserve">{AI_PROMPT_1_FIXED}</p>
         <table className="eprint-table eprint-kv">
           <tbody>
-            {[
-              ["Event name", cp.event_name],
-              ["Date", cp.event_date_text],
-              ["Location", cp.location],
-              ["Who it's for", cp.who_its_for],
-              ["Food", cp.food],
-              ["Entertainment", cp.entertainment],
-              ["Perks / discounts", cp.perks_discounts],
-              ["Tone", cp.tone],
-              ["Phrases to include", cp.phrases],
-              ["RSVP notes", cp.rsvp_notes],
-            ].map(([label, val]) => (
+            {copyPromptRows.map(([label, val]) => (
               <tr key={label}>
                 <th scope="row">{label}</th>
-                <td>{dash(val)}</td>
+                <td>{val!.trim()}</td>
               </tr>
             ))}
           </tbody>
@@ -404,37 +521,31 @@ export function EventPlaybookPrintDocument({
         <h3 className="eprint-h3">Prompt 3</h3>
         <p className="eprint-preserve">{AI_PROMPT_3_FIXED}</p>
       </section>
+      ) : null}
 
+      {(webCopyRows.length > 0 ||
+        pre.upload_to_website_complete ||
+        webGraphicPrintUrl ||
+        pageBannerPrintUrl) ? (
       <section className="eprint-section">
         <h2 className="eprint-h2">Web copy</h2>
+        {webCopyRows.length > 0 ? (
         <table className="eprint-table eprint-kv">
           <tbody>
-            <tr>
-              <th scope="row">Summary</th>
-              <td>{dash(pm.web_summary)}</td>
-            </tr>
-            <tr>
-              <th scope="row">SEO meta title</th>
-              <td>{dash(pm.seo_meta_title)}</td>
-            </tr>
-            <tr>
-              <th scope="row">SEO meta description</th>
-              <td>{dash(pm.seo_meta_description)}</td>
-            </tr>
-            <tr>
-              <th scope="row">Upload to website complete</th>
-              <td>{boolMark(pre.upload_to_website_complete)}</td>
-            </tr>
-            <tr>
-              <th scope="row">Page URL</th>
-              <td className="eprint-break-all">{dash(pm.web_page_url)}</td>
-            </tr>
-            <tr>
-              <th scope="row">Page copy</th>
-              <td>{dash(w.web_extra?.page_copy)}</td>
-            </tr>
+            {webCopyRows.map(([label, val]) => (
+              <tr key={label}>
+                <th scope="row">{label}</th>
+                <td className={label === "Page URL" ? "eprint-break-all" : undefined}>
+                  {val!.trim()}
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
+        ) : null}
+        {pre.upload_to_website_complete ? (
+          <p className="eprint-small mt-2">☑ Upload to website complete</p>
+        ) : null}
         {webGraphicPrintUrl || pageBannerPrintUrl ? (
           <div className="eprint-web-assets">
             {webGraphicPrintUrl ? (
@@ -466,51 +577,58 @@ export function EventPlaybookPrintDocument({
           </div>
         ) : null}
       </section>
+      ) : null}
 
+      {facebookRows.length > 0 ? (
       <section className="eprint-section">
         <h2 className="eprint-h2">Facebook copy</h2>
         <table className="eprint-table eprint-kv">
           <tbody>
-            <tr>
-              <th scope="row">Name</th>
-              <td>{dash(fb.name)}</td>
-            </tr>
-            <tr>
-              <th scope="row">Details</th>
-              <td className="eprint-preserve">{dash(fb.details)}</td>
-            </tr>
-            <tr>
-              <th scope="row">Stored Facebook event copy</th>
-              <td className="eprint-preserve">{dash(pm.facebook_event_copy)}</td>
-            </tr>
+            {facebookRows.map(([label, val]) => (
+              <tr key={label}>
+                <th scope="row">{label}</th>
+                <td className={label === "Details" || label === "Stored Facebook event copy" ? "eprint-preserve" : undefined}>
+                  {val!.trim()}
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </section>
+      ) : null}
 
-      {(event.giveaway_description ||
-        event.giveaway_link ||
-        event.rsvp_incentive ||
-        event.rsvp_link) && (
+      {(hasText(event.giveaway_description) ||
+        hasText(event.giveaway_link) ||
+        hasText(event.rsvp_incentive) ||
+        hasText(event.rsvp_link)) && (
         <section className="eprint-section">
           <h2 className="eprint-h2">Promotions &amp; RSVP (event record)</h2>
           <table className="eprint-table eprint-kv">
             <tbody>
+              {hasText(event.giveaway_description) ? (
               <tr>
                 <th scope="row">Giveaway</th>
-                <td>{dash(event.giveaway_description)}</td>
+                <td>{event.giveaway_description!.trim()}</td>
               </tr>
+              ) : null}
+              {hasText(event.giveaway_link) ? (
               <tr>
                 <th scope="row">Giveaway link</th>
-                <td className="eprint-break-all">{dash(event.giveaway_link)}</td>
+                <td className="eprint-break-all">{event.giveaway_link!.trim()}</td>
               </tr>
+              ) : null}
+              {hasText(event.rsvp_incentive) ? (
               <tr>
                 <th scope="row">RSVP incentive</th>
-                <td>{dash(event.rsvp_incentive)}</td>
+                <td>{event.rsvp_incentive!.trim()}</td>
               </tr>
+              ) : null}
+              {hasText(event.rsvp_link) ? (
               <tr>
                 <th scope="row">RSVP link</th>
-                <td className="eprint-break-all">{dash(event.rsvp_link)}</td>
+                <td className="eprint-break-all">{event.rsvp_link!.trim()}</td>
               </tr>
+              ) : null}
             </tbody>
           </table>
         </section>
@@ -556,38 +674,23 @@ export function EventPlaybookPrintDocument({
         <p className="eprint-preserve eprint-week">{POST_EVENT_FOLLOW_UP_COPY}</p>
       </section>
 
+      {roleRows.length > 0 ? (
       <section className="eprint-section">
         <h2 className="eprint-h2">Roles &amp; responsibilities</h2>
         <table className="eprint-table eprint-kv">
           <tbody>
-            {(
-              [
-                ["Marketing lead", roles.marketing_lead],
-                ["Sales team", roles.sales_team],
-                ["Service team", roles.service_team],
-                ["MotorClothes", roles.motorclothes],
-                ["GM / owner", roles.gm_owner],
-                ["Volunteers / charities", roles.volunteers_charities],
-              ] as const
-            ).map(([label, val]) => (
+            {roleRows.map(([label, val]) => (
               <tr key={label}>
                 <th scope="row">{label}</th>
-                <td>{dash(val)}</td>
+                <td>{val!.trim()}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </section>
+      ) : null}
 
-      <section className="eprint-section eprint-static">
-        <h2 className="eprint-h2">Metrics for success</h2>
-        <ul className="eprint-list">
-          {METRICS_FOR_SUCCESS_LINES.map((line) => (
-            <li key={line}>{line}</li>
-          ))}
-        </ul>
-      </section>
-
+      {materialsRows.length > 0 ? (
       <section className="eprint-section">
         <h2 className="eprint-h2">Materials checklist</h2>
         <table className="eprint-table">
@@ -599,16 +702,17 @@ export function EventPlaybookPrintDocument({
             </tr>
           </thead>
           <tbody>
-            {(w.materials_checklist ?? []).map((row) => (
+            {materialsRows.map((row) => (
               <tr key={row.item}>
                 <td>{row.item}</td>
-                <td>{dash(row.description)}</td>
-                <td>{dash(row.notes)}</td>
+                <td>{hasText(row.description) ? row.description!.trim() : "—"}</td>
+                <td>{hasText(row.notes) ? row.notes!.trim() : "—"}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </section>
+      ) : null}
 
       {eventVendors.length > 0 ? (
         <section className="eprint-section">
