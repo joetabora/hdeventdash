@@ -1,4 +1,6 @@
 import { apiFetchJson } from "@/lib/api/api-fetch-json";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { uploadEventDocumentClient } from "@/lib/upload-event-document-client";
 import type { z } from "zod";
 import { eventCreateSchema } from "@/lib/validation/event-mutation-schemas";
 import type {
@@ -143,17 +145,16 @@ export async function apiDeleteComment(
 export async function apiUploadDocument(
   eventId: string,
   file: File,
-  tag: DocumentTag
+  tag: DocumentTag,
+  organizationId?: string | null
 ): Promise<EventDocument> {
-  const fd = new FormData();
-  fd.append("file", file);
-  fd.append("tag", tag);
-  return apiFetchJson<EventDocument>(
-    `/api/events/${eventId}/documents`,
-    {
-      method: "POST",
-      body: fd,
-    }
+  const supabase = getSupabaseBrowserClient();
+  return uploadEventDocumentClient(
+    supabase,
+    eventId,
+    file,
+    tag,
+    organizationId
   );
 }
 

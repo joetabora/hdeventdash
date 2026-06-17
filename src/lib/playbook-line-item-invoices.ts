@@ -32,13 +32,19 @@ export function parsePendingLineItemInvoiceKey(
 export async function applyPendingLineItemInvoices(
   eventId: string,
   workflow: PlaybookWorkflow,
-  pending: PendingLineItemInvoice[]
+  pending: PendingLineItemInvoice[],
+  organizationId?: string | null
 ): Promise<PlaybookWorkflow> {
   if (!pending.length) return workflow;
 
   const next: PlaybookWorkflow = { ...workflow };
   for (const { bucket, index, file } of pending) {
-    const doc = await apiUploadDocument(eventId, file, "invoice");
+    const doc = await apiUploadDocument(
+      eventId,
+      file,
+      "invoice",
+      organizationId
+    );
     const items = [...(next[bucket] ?? [])];
     if (!items[index]) continue;
     items[index] = { ...items[index], invoice_document_id: doc.id };

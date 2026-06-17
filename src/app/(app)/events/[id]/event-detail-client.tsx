@@ -167,7 +167,8 @@ export function EventDetailClient({
         const mergedWf = await applyPendingLineItemInvoices(
           ev.id,
           body.playbook_workflow ?? {},
-          pendingLineItemInvoices
+          pendingLineItemInvoices,
+          ev.organization_id
         );
         const updated = await apiPatchEvent(ev.id, {
           ...body,

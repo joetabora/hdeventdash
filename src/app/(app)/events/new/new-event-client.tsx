@@ -63,7 +63,8 @@ export function NewEventClient({
       const mergedWf = await applyPendingLineItemInvoices(
         event.id,
         body.playbook_workflow ?? {},
-        pendingLineItemInvoices
+        pendingLineItemInvoices,
+        event.organization_id
       );
       const patchBody: Parameters<typeof apiPatchEvent>[1] = {};
       if (webGraphicFile || pageBannerFile) {
