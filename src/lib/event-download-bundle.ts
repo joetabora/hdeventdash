@@ -1,6 +1,7 @@
 import JSZip from "jszip";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { prepareClonedDocumentForHtml2Canvas } from "@/lib/html2canvas-capture";
 import { createSignedEventDocumentUrls } from "@/lib/events";
 import type { EventDocument, EventMedia } from "@/types/database";
 
@@ -61,6 +62,9 @@ async function generateReportPdfBlob(element: HTMLElement): Promise<Blob> {
         useCORS: true,
         logging: false,
         windowWidth: element.scrollWidth,
+        onclone: (clonedDoc: Document, clonedElement: HTMLElement) => {
+          prepareClonedDocumentForHtml2Canvas(clonedDoc, clonedElement);
+        },
       },
       jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
     })

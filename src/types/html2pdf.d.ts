@@ -3,7 +3,9 @@ declare module "html2pdf.js" {
     margin?: number | number[];
     filename?: string;
     image?: { type?: string; quality?: number };
-    html2canvas?: Record<string, unknown>;
+    html2canvas?: Record<string, unknown> & {
+      onclone?: (clonedDoc: Document, clonedElement: HTMLElement) => void;
+    };
     jsPDF?: Record<string, unknown>;
     pagebreak?: { mode?: string | string[] };
     [key: string]: unknown;

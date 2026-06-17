@@ -372,7 +372,7 @@ export function EventReportDocument({
   }
 
   return (
-    <article className="event-report-print bg-white text-[#141312] shadow-[var(--shadow-elevated)] ring-1 ring-[#e8e4df]">
+    <article className="event-report-print bg-white text-[#141312] ring-1 ring-[#e8e4df]">
       <header className="ereport-cover relative overflow-hidden border-b border-[#e8e4df] bg-gradient-to-br from-[#141312] via-[#1f1d1b] to-[#2b2926] px-6 py-10 text-white sm:px-10 sm:py-12">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
