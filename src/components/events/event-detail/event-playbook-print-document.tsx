@@ -1,10 +1,11 @@
 "use client";
 
 import { format, parseISO } from "date-fns";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   EVENT_TYPES,
   type Event,
+  type EventDocument,
   type EventMedia,
   type EventVendorWithVendor,
   type SwapMeetSpot,
@@ -53,7 +54,11 @@ function boolMark(done: boolean | undefined): string {
   return done ? "☑" : "☐";
 }
 
-function printLineItems(w: PlaybookWorkflow, key: keyof PlaybookWorkflow) {
+function printLineItems(
+  w: PlaybookWorkflow,
+  key: keyof PlaybookWorkflow,
+  documentsById: Map<string, EventDocument>
+) {
   const items = (w[key] as PlaybookWorkflow["food_items"]) ?? [];
   if (!items.length) {
     return (
@@ -67,20 +72,27 @@ function printLineItems(w: PlaybookWorkflow, key: keyof PlaybookWorkflow) {
           <th>Name / vendor</th>
           <th>Description</th>
           <th className="eprint-num">Est. cost</th>
+          <th>Invoice</th>
         </tr>
       </thead>
       <tbody>
-        {items.map((row, i) => (
-          <tr key={i}>
-            <td>{dash(row.name)}</td>
-            <td>{dash(row.description)}</td>
-            <td className="eprint-num">
-              {row.cost != null && Number(row.cost) > 0
-                ? formatUsd(Number(row.cost))
-                : "—"}
-            </td>
-          </tr>
-        ))}
+        {items.map((row, i) => {
+          const invoiceDoc = row.invoice_document_id
+            ? documentsById.get(row.invoice_document_id)
+            : undefined;
+          return (
+            <tr key={i}>
+              <td>{dash(row.name)}</td>
+              <td>{dash(row.description)}</td>
+              <td className="eprint-num">
+                {row.cost != null && Number(row.cost) > 0
+                  ? formatUsd(Number(row.cost))
+                  : "—"}
+              </td>
+              <td>{invoiceDoc?.file_name ?? (row.invoice_document_id ? "Attached" : "—")}</td>
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   );
@@ -89,17 +101,23 @@ function printLineItems(w: PlaybookWorkflow, key: keyof PlaybookWorkflow) {
 export function EventPlaybookPrintDocument({
   event,
   eventMedia,
+  eventDocuments = [],
   orgMarketingArtFormUrl,
   swapMeetSpots = [],
   eventVendors = [],
 }: {
   event: Event;
   eventMedia: EventMedia[];
+  eventDocuments?: EventDocument[];
   orgMarketingArtFormUrl: string | null;
   swapMeetSpots?: SwapMeetSpot[];
   eventVendors?: EventVendorWithVendor[];
 }) {
   const w = getPlaybookWorkflow(event);
+  const documentsById = useMemo(
+    () => new Map(eventDocuments.map((d) => [d.id, d])),
+    [eventDocuments]
+  );
   const pre = w.pre_event ?? {};
   const cp = w.copy_prompts ?? {};
   const fb = w.facebook ?? {};
@@ -284,13 +302,13 @@ export function EventPlaybookPrintDocument({
       <section className="eprint-section">
         <h2 className="eprint-h2">Activity budgets</h2>
         <h3 className="eprint-h3">Food &amp; refreshments</h3>
-        {printLineItems(w, "food_items")}
+        {printLineItems(w, "food_items", documentsById)}
         <h3 className="eprint-h3">Entertainment / vendors</h3>
-        {printLineItems(w, "entertainment_items")}
+        {printLineItems(w, "entertainment_items", documentsById)}
         <h3 className="eprint-h3">Bike-related or general activities</h3>
-        {printLineItems(w, "bike_activities_items")}
+        {printLineItems(w, "bike_activities_items", documentsById)}
         <h3 className="eprint-h3">Engagement opportunities</h3>
-        {printLineItems(w, "engagement_items")}
+        {printLineItems(w, "engagement_items", documentsById)}
       </section>
 
       <section className="eprint-section">

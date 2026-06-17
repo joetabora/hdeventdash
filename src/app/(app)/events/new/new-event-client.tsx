@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiCreateEvent, apiPatchEvent, apiUploadMedia } from "@/lib/events-api-client";
+import { applyPendingLineItemInvoices } from "@/lib/playbook-line-item-invoices";
 import { apiFetchJson } from "@/lib/api/api-fetch-json";
 import {
   NewEventPlaybookForm,
@@ -40,7 +41,12 @@ export function NewEventClient({
   }, []);
 
   const handleCreate = useCallback(
-    async ({ body, webGraphicFile, pageBannerFile }: NewEventPlaybookSubmitPayload) => {
+    async ({
+      body,
+      webGraphicFile,
+      pageBannerFile,
+      pendingLineItemInvoices,
+    }: NewEventPlaybookSubmitPayload) => {
       const event = await apiCreateEvent(body);
       let mergedPm = normalizePlaybookMarketingDates({
         ...getPlaybookMarketing(event),
@@ -54,8 +60,20 @@ export function NewEventClient({
         const m = await apiUploadMedia(event.id, pageBannerFile, "marketing_asset");
         mergedPm = { ...mergedPm, page_banner_media_id: m.id };
       }
+      const mergedWf = await applyPendingLineItemInvoices(
+        event.id,
+        body.playbook_workflow ?? {},
+        pendingLineItemInvoices
+      );
+      const patchBody: Parameters<typeof apiPatchEvent>[1] = {};
       if (webGraphicFile || pageBannerFile) {
-        await apiPatchEvent(event.id, { playbook_marketing: mergedPm });
+        patchBody.playbook_marketing = mergedPm;
+      }
+      if (pendingLineItemInvoices.length > 0) {
+        patchBody.playbook_workflow = mergedWf;
+      }
+      if (Object.keys(patchBody).length > 0) {
+        await apiPatchEvent(event.id, patchBody);
       }
       router.push(`/events/${event.id}`);
     },

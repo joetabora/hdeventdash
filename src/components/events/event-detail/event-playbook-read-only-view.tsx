@@ -3,6 +3,7 @@
 import { EventPlaybookPrintDocument } from "@/components/events/event-detail/event-playbook-print-document";
 import type {
   Event,
+  EventDocument,
   EventMedia,
   EventVendorWithVendor,
   SwapMeetSpot,
@@ -12,12 +13,14 @@ import type {
 export function EventPlaybookReadOnlyView({
   event,
   eventMedia,
+  eventDocuments = [],
   orgMarketingArtFormUrl,
   swapMeetSpots,
   eventVendors,
 }: {
   event: Event;
   eventMedia: EventMedia[];
+  eventDocuments?: EventDocument[];
   orgMarketingArtFormUrl?: string | null;
   swapMeetSpots: SwapMeetSpot[];
   eventVendors: EventVendorWithVendor[];
@@ -35,6 +38,7 @@ export function EventPlaybookReadOnlyView({
         <EventPlaybookPrintDocument
           event={event}
           eventMedia={eventMedia}
+          eventDocuments={eventDocuments}
           orgMarketingArtFormUrl={orgMarketingArtFormUrl ?? null}
           swapMeetSpots={swapMeetSpots}
           eventVendors={eventVendors}

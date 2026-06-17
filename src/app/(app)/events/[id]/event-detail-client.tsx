@@ -41,6 +41,7 @@ import {
   apiPatchEvent,
   apiUploadMedia,
 } from "@/lib/events-api-client";
+import { applyPendingLineItemInvoices } from "@/lib/playbook-line-item-invoices";
 import {
   getPlaybookMarketing,
   normalizePlaybookMarketingDates,
@@ -138,7 +139,8 @@ export function EventDetailClient({
     async (payload: NewEventPlaybookSubmitPayload) => {
       const ev = c.event;
       if (!ev) return;
-      const { body, webGraphicFile, pageBannerFile } = payload;
+      const { body, webGraphicFile, pageBannerFile, pendingLineItemInvoices } =
+        payload;
       try {
         const formPm = body.playbook_marketing as PlaybookMarketing | undefined;
         const basePm = normalizePlaybookMarketingDates({
@@ -162,12 +164,21 @@ export function EventDetailClient({
           );
           mergedPm = { ...mergedPm, page_banner_media_id: m.id };
         }
+        const mergedWf = await applyPendingLineItemInvoices(
+          ev.id,
+          body.playbook_workflow ?? {},
+          pendingLineItemInvoices
+        );
         const updated = await apiPatchEvent(ev.id, {
           ...body,
+          playbook_workflow: mergedWf,
           playbook_marketing: mergedPm,
         });
         c.setEvent(updated);
         await c.refetch.media();
+        if (pendingLineItemInvoices.length > 0) {
+          await c.refetch.documents();
+        }
         void c.refetch.budgetContextForMonth(eventDateToYearMonth(updated.date));
       } catch (err) {
         console.error(err);
@@ -307,6 +318,7 @@ export function EventDetailClient({
                   key={c.event.updated_at ?? c.event.id}
                   editSourceEvent={c.event}
                   eventMedia={c.media}
+                  eventDocuments={c.documents}
                   allEvents={c.budgetPeers}
                   prefetchedMonthlyBudgets={c.monthlyBudgetsForEventMonth}
                   prefetchedForYearMonth={c.eventMonthYearMonth}
@@ -318,6 +330,7 @@ export function EventDetailClient({
                 <EventPlaybookReadOnlyView
                   event={c.event}
                   eventMedia={c.media}
+                  eventDocuments={c.documents}
                   orgMarketingArtFormUrl={orgMarketingArtFormUrl}
                   swapMeetSpots={c.swapMeetSpots}
                   eventVendors={c.eventVendors}
@@ -517,6 +530,7 @@ export function EventDetailClient({
           <EventPlaybookPrintDocument
             event={c.event}
             eventMedia={c.media}
+            eventDocuments={c.documents}
             orgMarketingArtFormUrl={orgMarketingArtFormUrl}
             swapMeetSpots={c.swapMeetSpots}
             eventVendors={c.eventVendors}

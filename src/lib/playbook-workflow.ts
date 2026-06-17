@@ -8,7 +8,19 @@ export type PlaybookFrameworkLineItem = {
   name?: string | null;
   description?: string | null;
   cost?: number | null;
+  /** event_documents.id when an invoice/receipt is attached to this line */
+  invoice_document_id?: string | null;
 };
+
+export const PLAYBOOK_LINE_ITEM_BUCKETS = [
+  "food_items",
+  "entertainment_items",
+  "bike_activities_items",
+  "engagement_items",
+] as const;
+
+export type PlaybookLineItemBucketKey =
+  (typeof PLAYBOOK_LINE_ITEM_BUCKETS)[number];
 
 export type PlaybookMaterialRow = {
   item: string;
@@ -66,6 +78,7 @@ const lineItemSchema = z
     name: z.union([z.string().max(500), z.null()]).optional(),
     description: z.union([z.string().max(4000), z.null()]).optional(),
     cost: z.union([moneyNonneg, z.null()]).optional(),
+    invoice_document_id: z.union([z.string().uuid(), z.null()]).optional(),
   })
   .strict();
 

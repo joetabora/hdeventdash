@@ -7,6 +7,7 @@ import {
   parsePlaybookWorkflow,
   type PlaybookWorkflow,
 } from "@/lib/playbook-workflow";
+import { stripLineItemInvoiceRefs } from "@/lib/playbook-line-item-invoices";
 
 /**
  * Builders for the "Duplicate event" flow.
@@ -21,10 +22,10 @@ import {
 export function clonePlaybookWorkflow(raw: unknown): PlaybookWorkflow | null {
   const source = parsePlaybookWorkflow(raw);
   if (!source) return null;
-  return {
+  return stripLineItemInvoiceRefs({
     ...source,
     pre_event: {},
-  };
+  });
 }
 
 /**
