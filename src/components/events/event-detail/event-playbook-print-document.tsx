@@ -333,6 +333,15 @@ export function EventPlaybookPrintDocument({
   return (
     <article className="event-playbook-print text-black bg-white">
       <header className="eprint-cover">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/MKElogo.png"
+          alt="Milwaukee Harley-Davidson"
+          className="eprint-header-logo"
+          width={416}
+          height={136}
+          decoding="async"
+        />
         <p className="eprint-kicker">Milwaukee Harley-Davidson</p>
         <h1 className="eprint-title">Event Playbook</h1>
         <h2 className="eprint-event-name">{dash(event.name)}</h2>

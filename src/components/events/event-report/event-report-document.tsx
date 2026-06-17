@@ -374,6 +374,15 @@ export function EventReportDocument({
   return (
     <article className="event-report-print bg-white text-[#141312] shadow-[var(--shadow-elevated)] ring-1 ring-[#e8e4df]">
       <header className="ereport-cover relative overflow-hidden border-b border-[#e8e4df] bg-gradient-to-br from-[#141312] via-[#1f1d1b] to-[#2b2926] px-6 py-10 text-white sm:px-10 sm:py-12">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/MKElogo.png"
+          alt="Milwaukee Harley-Davidson"
+          className="ereport-header-logo pointer-events-none absolute right-6 top-6 z-10 h-14 w-auto max-w-[min(42%,9rem)] object-contain sm:right-10 sm:top-8 sm:h-16"
+          width={416}
+          height={136}
+          decoding="async"
+        />
         <div
           className="pointer-events-none absolute inset-0 opacity-[0.12]"
           style={{

@@ -364,10 +364,22 @@ html.event-live-shell header h1 {
   }
 
   .event-playbook-print .eprint-cover {
+    position: relative;
     text-align: center;
     margin-bottom: 1.25rem;
     padding-bottom: 0.75rem;
+    padding-top: 0.15rem;
     border-bottom: 2pt solid #000;
+  }
+
+  .event-playbook-print .eprint-header-logo {
+    position: absolute;
+    top: 0;
+    right: 0;
+    max-height: 2.75rem;
+    width: auto;
+    max-width: min(42%, 9rem);
+    object-fit: contain;
   }
 
   .event-playbook-print .eprint-kicker {
@@ -632,6 +644,11 @@ html.event-live-shell header h1 {
     print-color-adjust: exact;
     page-break-after: avoid;
     break-after: avoid;
+  }
+
+  .event-report-print .ereport-header-logo {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   .event-report-print .ereport-section {
